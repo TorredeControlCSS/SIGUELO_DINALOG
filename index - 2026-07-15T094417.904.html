@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Torre de Control - Portal Central</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #ececec;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    color: #333;
+  }
+  .header {
+    background: #0C447C;
+    color: #fff;
+    padding: 18px 28px;
+    border-bottom: 3px solid #1e5a9e;
+  }
+  .header h1 { font-size: 20px; font-weight: 600; letter-spacing: .3px; }
+  .header p { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
+
+  .toolbar {
+    background: #fff;
+    border-bottom: 1px solid #a8a8a8;
+    padding: 10px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  #buscar {
+    flex: 1;
+    max-width: 380px;
+    padding: 6px 10px;
+    border: 1px solid #a8a8a8;
+    border-radius: 2px;
+    font-size: 13px;
+  }
+  .contador { font-size: 12px; color: #666; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    padding: 22px 28px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #a8a8a8;
+    border-radius: 2px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  .card:hover {
+    border-color: #1e5a9e;
+    box-shadow: 0 1px 4px rgba(30,90,158,.25);
+  }
+  .card .sistema {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+  .card h2 { font-size: 15px; font-weight: 600; color: #1e5a9e; margin-bottom: 6px; }
+  .card p  { font-size: 12px; color: #555; line-height: 1.4; flex: 1; }
+  .card .link {
+    font-size: 11px;
+    color: #999;
+    margin-top: 10px;
+    word-break: break-all;
+    border-top: 1px solid #ececec;
+    padding-top: 8px;
+  }
+  .footer {
+    padding: 16px 28px;
+    font-size: 11px;
+    color: #888;
+    border-top: 1px solid #a8a8a8;
+    background: #fff;
+  }
+  .no-result { padding: 20px 28px; color: #888; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>TORRE DE CONTROL &mdash; PORTAL CENTRAL</h1>
+  <p>DINALOG / CEDIS Panam&aacute; &middot; Acceso a sistemas y tableros</p>
+</div>
+
+<div class="toolbar">
+  <input id="buscar" type="text" placeholder="Buscar sistema o p&aacute;gina...">
+  <span class="contador" id="contador"></span>
+</div>
+
+<div class="grid" id="grid"></div>
+<div class="no-result" id="noResult" style="display:none;">No se encontraron resultados.</div>
+
+<div class="footer">
+  Enlaces a GitHub Pages (org: TorredeControlCSS). Cada tarjeta abre una p&aacute;gina en pesta&ntilde;a nueva.
+</div>
+
+<script>
+const PAGINAS = [
+  { sistema:"Asignaci&oacute;n F8", nombre:"Asignaci&oacute;n",
+    desc:"Dashboard de asignaci&oacute;n sistem&aacute;tica de F8.",
+    url:"https://torredecontrolcss.github.io/ASIGNACION_F8/" },
+  { sistema:"Asignaci&oacute;n F8", nombre:"Confirmaci&oacute;n F8",
+    desc:"Confirmaci&oacute;n de F8.",
+    url:"https://torredecontrolcss.github.io/ASIGNACION_F8/confirmacion_f8.html" },
+  { sistema:"Asignaci&oacute;n F8", nombre:"Panel de Despacho",
+    desc:"Panel de despacho (triage, calendario, OTIF, termograf&iacute;a).",
+    url:"https://torredecontrolcss.github.io/ASIGNACION_F8/panel_despacho.html" },
+
+  { sistema:"S&Iacute;GUELO", nombre:"Solicitud de Cita",
+    desc:"Solicitud de citas de proveedores.",
+    url:"https://torredecontrolcss.github.io/SIGUELO/solicitud_cita.html" },
+  { sistema:"S&Iacute;GUELO", nombre:"Panel de Confirmaci&oacute;n",
+    desc:"Confirmaci&oacute;n de citas de proveedores.",
+    url:"https://torredecontrolcss.github.io/SIGUELO/panel_confirmacion.html" },
+
+  { sistema:"Reposici&oacute;n UE", nombre:"Simulador de Reposici&oacute;n",
+    desc:"Simulador de capacidad de reposici&oacute;n.",
+    url:"https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html" },
+  { sistema:"Reposici&oacute;n UE", nombre:"Reposici&oacute;n UE",
+    desc:"Reposici&oacute;n a Unidades Ejecutoras.",
+    url:"https://torredecontrolcss.github.io/REPOSICION_UE_CSS/reposicion_ue.html" },
+
+  { sistema:"Seguire", nombre:"Seguire",
+    desc:"M&oacute;dulo Seguire (inicio).",
+    url:"https://torredecontrolcss.github.io/seguire/" },
+  { sistema:"Seguire", nombre:"Tr&aacute;nsitos",
+    desc:"Tr&aacute;nsitos.",
+    url:"https://torredecontrolcss.github.io/seguire/transitos.html" },
+
+  { sistema:"RH Biom&eacute;trico", nombre:"RH Biom&eacute;trico",
+    desc:"An&aacute;lisis de biom&eacute;trico de DINALOG.",
+    url:"https://torredecontrolcss.github.io/RH_BIOMETRICO/" },
+
+  { sistema:"Dashboard Pedidos F8 v2", nombre:"Mis Tiempos",
+    desc:"Portal de tiempos (autoservicio).",
+    url:"https://torredecontrolcss.github.io/Dashboard_Pedidos-_F8v2/mis_tiempos.html" },
+
+  { sistema:"Curvas de Inventario", nombre:"Curvas de Inventario",
+    desc:"Curvas de inventario CSS.",
+    url:"https://torredecontrolcss.github.io/Curvas_de_Inventario/" },
+
+  { sistema:"Pantalla de Turnos", nombre:"Pantalla de Turnos",
+    desc:"Pantalla de turnos.",
+    url:"https://torredecontrolcss.github.io/Pantalla_de_Turnos/" }
+];
+
+const grid = document.getElementById("grid");
+const contador = document.getElementById("contador");
+const noResult = document.getElementById("noResult");
+const buscar = document.getElementById("buscar");
+
+function render(filtro){
+  const f = (filtro||"").toLowerCase();
+  grid.innerHTML = "";
+  let n = 0;
+  PAGINAS.forEach(p => {
+    const texto = (p.sistema + " " + p.nombre + " " + p.desc).toLowerCase()
+                   .replace(/&[a-z]+;/g,"");
+    if (f && texto.indexOf(f) === -1) return;
+    n++;
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = p.url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.innerHTML =
+      '<div class="sistema">'+p.sistema+'</div>' +
+      '<h2>'+p.nombre+'</h2>' +
+      '<p>'+p.desc+'</p>' +
+      '<div class="link">'+p.url+'</div>';
+    grid.appendChild(a);
+  });
+  contador.textContent = n + " p&aacute;gina" + (n===1?"":"s");
+  noResult.style.display = n===0 ? "block" : "none";
+}
+
+buscar.addEventListener("input", e => render(e.target.value));
+render("");
+</script>
+
+</body>
+</html>
