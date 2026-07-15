@@ -25,30 +25,9 @@
     width: 46px;
     height: 46px;
     flex-shrink: 0;
-    background: #fff;
-    border-radius: 50%;
-    padding: 3px;
   }
   .header h1 { font-size: 20px; font-weight: 600; letter-spacing: .3px; }
   .header p { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
-
-  .toolbar {
-    background: #fff;
-    border-bottom: 1px solid #a8a8a8;
-    padding: 10px 28px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  #buscar {
-    flex: 1;
-    max-width: 380px;
-    padding: 6px 10px;
-    border: 1px solid #a8a8a8;
-    border-radius: 2px;
-    font-size: 13px;
-  }
-  .contador { font-size: 12px; color: #666; }
 
   .grid {
     display: grid;
@@ -96,7 +75,6 @@
     border-top: 1px solid #a8a8a8;
     background: #fff;
   }
-  .no-result { padding: 20px 28px; color: #888; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -109,13 +87,7 @@
   </div>
 </div>
 
-<div class="toolbar">
-  <input id="buscar" type="text" placeholder="Buscar sistema o p&aacute;gina...">
-  <span class="contador" id="contador"></span>
-</div>
-
 <div class="grid" id="grid"></div>
-<div class="no-result" id="noResult" style="display:none;">No se encontraron resultados.</div>
 
 <div class="footer">
   Enlaces a GitHub Pages (org: TorredeControlCSS). Cada tarjeta abre una p&aacute;gina en pesta&ntilde;a nueva.
@@ -172,37 +144,20 @@ const PAGINAS = [
 ];
 
 const grid = document.getElementById("grid");
-const contador = document.getElementById("contador");
-const noResult = document.getElementById("noResult");
-const buscar = document.getElementById("buscar");
 
-function render(filtro){
-  const f = (filtro||"").toLowerCase();
-  grid.innerHTML = "";
-  let n = 0;
-  PAGINAS.forEach(p => {
-    const texto = (p.sistema + " " + p.nombre + " " + p.desc).toLowerCase()
-                   .replace(/&[a-z]+;/g,"");
-    if (f && texto.indexOf(f) === -1) return;
-    n++;
-    const a = document.createElement("a");
-    a.className = "card";
-    a.href = p.url;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.innerHTML =
-      '<div class="sistema">'+p.sistema+'</div>' +
-      '<h2>'+p.nombre+'</h2>' +
-      '<p>'+p.desc+'</p>' +
-      '<div class="link">'+p.url+'</div>';
-    grid.appendChild(a);
-  });
-  contador.textContent = n + " p&aacute;gina" + (n===1?"":"s");
-  noResult.style.display = n===0 ? "block" : "none";
-}
-
-buscar.addEventListener("input", e => render(e.target.value));
-render("");
+PAGINAS.forEach(p => {
+  const a = document.createElement("a");
+  a.className = "card";
+  a.href = p.url;
+  a.target = "_blank";
+  a.rel = "noopener";
+  a.innerHTML =
+    '<div class="sistema">'+p.sistema+'</div>' +
+    '<h2>'+p.nombre+'</h2>' +
+    '<p>'+p.desc+'</p>' +
+    '<div class="link">'+p.url+'</div>';
+  grid.appendChild(a);
+});
 </script>
 
 </body>
