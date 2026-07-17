@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Panel de Productividad · DINALOG / CEDIS</title>
-<link rel="icon" href="favicon.ico">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
     --azul:#1e5a9e; --azul-osc:#0C447C; --bg:#ececec; --borde:#a8a8a8;
@@ -15,8 +15,6 @@
   body{margin:0;background:var(--bg);color:var(--texto);
        font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;}
   .num{font-family:Consolas,"Courier New",monospace;}
-
-  /* ---- barra superior ---- */
   header{background:var(--azul-osc);color:#fff;padding:10px 16px;
          display:flex;align-items:center;gap:14px;border-bottom:3px solid #08325c;}
   header .logo{width:38px;height:38px;flex:0 0 auto;object-fit:contain;
@@ -24,8 +22,6 @@
   header h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.2px;}
   header .sub{font-size:11px;opacity:.8;margin-top:1px;}
   header .estado{margin-left:auto;font-size:11px;text-align:right;opacity:.9;}
-
-  /* ---- controles ---- */
   .controles{background:var(--panel);border-bottom:1px solid var(--borde);
              padding:8px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:end;}
   .campo{display:flex;flex-direction:column;gap:2px;}
@@ -37,27 +33,20 @@
   .btn:hover{background:var(--azul-osc);}
   .btn.sec{background:#fff;color:var(--azul-osc);}
   .btn.sec:hover{background:#eef3f9;}
-
-  /* ---- pestañas ---- */
   nav.tabs{background:var(--panel);border-bottom:1px solid var(--borde);
            display:flex;flex-wrap:wrap;padding:0 8px;}
   nav.tabs button{background:none;border:none;border-bottom:3px solid transparent;
            padding:9px 14px;font-size:12.5px;cursor:pointer;color:var(--gris);font-weight:500;}
   nav.tabs button.act{color:var(--azul-osc);border-bottom-color:var(--azul);font-weight:600;}
   nav.tabs button:hover{color:var(--azul-osc);}
-
-  /* ---- contenido ---- */
   main{padding:14px 16px;}
   .tab-pane{display:none;}
   .tab-pane.act{display:block;}
   .pane-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
   .pane-head h2{font-size:14px;margin:0;color:var(--azul-osc);}
-  .pane-head .peri{font-size:11px;color:var(--gris);background:#eef3f9;padding:2px 8px;
-                   border:1px solid #cfe0f0;}
+  .pane-head .peri{font-size:11px;color:var(--gris);background:#eef3f9;padding:2px 8px;border:1px solid #cfe0f0;}
   .nota{font-size:11px;color:var(--gris);margin:0 0 8px;line-height:1.4;
         border-left:3px solid var(--azul);padding:5px 10px;background:#fafcff;}
-
-  /* ---- tablas ---- */
   .tabla-wrap{overflow-x:auto;border:1px solid var(--borde);background:#fff;}
   table{border-collapse:collapse;width:100%;font-size:12px;}
   thead th{background:var(--head);color:#fff;text-align:left;padding:6px 8px;
@@ -77,16 +66,21 @@
   .chip.bad{color:var(--rojo);border-color:var(--rojo);background:#fdf0ef;}
   .chip.sinp{color:var(--gris);border-color:var(--borde);background:#f2f2f2;}
   .score{font-family:Consolas,monospace;font-weight:700;padding:2px 7px;color:#fff;display:inline-block;min-width:34px;text-align:center;}
-
-  /* ---- cobertura ---- */
-  .cobertura{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px;}
-  .cob-card{border:1px solid var(--borde);background:#fff;padding:6px 10px;min-width:120px;}
-  .cob-card .et{font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.4px;}
-  .cob-card .pc{font-family:Consolas,monospace;font-size:18px;color:var(--azul-osc);}
-  .cob-card .de{font-size:10px;color:var(--gris);}
-
+  .kpis{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px;}
+  .kpi{border:1px solid var(--borde);background:#fff;padding:8px 12px;min-width:130px;cursor:pointer;
+       transition:box-shadow .1s,border-color .1s;}
+  .kpi:hover{border-color:var(--azul);box-shadow:0 1px 4px rgba(30,90,158,.2);}
+  .kpi.sel{border-color:var(--azul);border-width:2px;background:#eef3f9;}
+  .kpi .et{font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.4px;}
+  .kpi .vl{font-family:Consolas,monospace;font-size:20px;color:var(--azul-osc);font-weight:700;}
+  .kpi .de{font-size:10px;color:var(--gris);}
+  .kpi.ok .vl{color:var(--verde);}  .kpi.warn .vl{color:var(--ambar);}  .kpi.bad .vl{color:var(--rojo);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+  .card{border:1px solid var(--borde);background:#fff;padding:10px;}
+  .card h3{margin:0 0 8px;font-size:12px;color:var(--azul-osc);}
+  .chart-box{position:relative;height:280px;}
   .vacio{padding:24px;text-align:center;color:var(--gris);font-size:12px;}
-  .cargando{padding:24px;text-align:center;color:var(--azul-osc);font-size:12px;}
   footer{padding:10px 16px;font-size:10.5px;color:var(--gris);border-top:1px solid var(--borde);
          background:var(--panel);margin-top:16px;}
   select.filtro-etapa{border:1px solid var(--borde);padding:3px 6px;font-size:11px;margin-left:8px;}
@@ -104,94 +98,84 @@
 </header>
 
 <div class="controles">
-  <div class="campo">
-    <label>Desde</label>
-    <input type="date" id="fDesde">
-  </div>
-  <div class="campo">
-    <label>Hasta</label>
-    <input type="date" id="fHasta">
-  </div>
-  <div class="campo">
-    <label>Ámbito personal</label>
+  <div class="campo"><label>Desde</label><input type="date" id="fDesde"></div>
+  <div class="campo"><label>Hasta</label><input type="date" id="fHasta"></div>
+  <div class="campo"><label>Ámbito personal</label>
     <select id="fAmbito">
-      <option value="almacen">Solo almacén</option>
       <option value="todos">Todo el padrón</option>
+      <option value="almacen">Solo almacén</option>
     </select>
   </div>
   <button class="btn" id="btnAplicar">Aplicar periodo</button>
-  <button class="btn sec" id="btnExcel">Reporte Excel</button>
-  <button class="btn sec" id="btnPDF">Reporte PDF</button>
+  <button class="btn sec" id="btnPDF">Descargar PDF</button>
 </div>
 
-<nav class="tabs" id="tabs">
-  <button data-t="planif" class="act">Planificadores</button>
+<nav class="tabs">
+  <button data-t="resumen" class="act">Resumen</button>
+  <button data-t="planif">Planificadores</button>
   <button data-t="kdesp">KARDEX · Despacho</button>
   <button data-t="kmayor">KARDEX · Carga mayor</button>
-  <button data-t="almacen">Almacén por etapa</button>
-  <button data-t="asis">Cumplimiento asistencia</button>
+  <button data-t="almacen">Almacén y flujo</button>
+  <button data-t="asis">Asistencia</button>
 </nav>
 
 <main>
-  <!-- PLANIFICADORES -->
-  <section class="tab-pane act" id="pane-planif">
-    <div class="pane-head">
-      <h2>Planificadores · Salud de inventario</h2>
-      <span class="peri">Estado actual del abastecimiento (acumulado)</span>
+  <section class="tab-pane act" id="pane-resumen">
+    <div class="pane-head"><h2>Resumen ejecutivo</h2><span class="peri" id="periResumen"></span></div>
+    <div class="kpis" id="kpisResumen"></div>
+    <div class="grid2">
+      <div class="card"><h3>Top facturadores (documentos F8 netos)</h3><div class="chart-box"><canvas id="chFact"></canvas></div></div>
+      <div class="card"><h3>Puntualidad media por área (%)</h3><div class="chart-box"><canvas id="chPunt"></canvas></div></div>
     </div>
-    <p class="nota">Ranking por salud de la cartera de renglones asignada a cada planificador:
-      óptimos y bajos suman, agotados/críticos/vencidos/excesos penalizan. El score ponderado
-      pesa más los fallos en renglones de alta criticidad (clase ABC-XYZ).</p>
+  </section>
+
+  <section class="tab-pane" id="pane-planif">
+    <div class="pane-head"><h2>Planificadores · Salud de inventario</h2><span class="peri">Estado actual del abastecimiento</span></div>
+    <p class="nota">Ranking por salud de la cartera asignada. Óptimos suman; agotados/críticos/vencidos/excesos penalizan. El ponderado pesa la criticidad ABC-XYZ.</p>
+    <div class="grid2">
+      <div class="card"><h3>Score vs. tamaño de cartera</h3><div class="chart-box"><canvas id="chScoreCartera"></canvas></div></div>
+      <div class="card"><h3>Cartera sana vs. cartera crítica</h3><div class="chart-box"><canvas id="chSanaCritica"></canvas></div></div>
+    </div>
     <div class="tabla-wrap"><table id="tbl-planif"><thead></thead><tbody></tbody></table></div>
   </section>
 
-  <!-- KARDEX DESPACHO -->
   <section class="tab-pane" id="pane-kdesp">
-    <div class="pane-head">
-      <h2>KARDEX · Despacho a Unidades Ejecutoras</h2>
-      <span class="peri" id="peri-kdesp">Documentos F8 · neto del periodo</span>
-    </div>
-    <p class="nota">Documentos F8 completos facturados hacia UEs, en <b>neto contable</b>:
-      salidas (mov. 313) menos anulaciones (mov. 314). Es el trabajo que efectivamente llegó
-      a destino. Los nombres provienen del padrón (usuario SAP → nombre canónico).</p>
+    <div class="pane-head"><h2>KARDEX · Despacho a Unidades Ejecutoras</h2><span class="peri" id="periKdesp"></span></div>
+    <p class="nota">Documentos F8 completos en neto contable: salidas (313) menos anulaciones (314). Es el trabajo que efectivamente llegó a destino.</p>
     <div class="tabla-wrap"><table id="tbl-kdesp"><thead></thead><tbody></tbody></table></div>
   </section>
 
-  <!-- KARDEX MAYOR -->
   <section class="tab-pane" id="pane-kmayor">
-    <div class="pane-head">
-      <h2>KARDEX · Carga en el libro mayor</h2>
-      <span class="peri">Todos los movimientos SAP-SAFIRO del periodo</span>
-    </div>
-    <p class="nota">Todos los asientos que cada facturador registró en el mayor, sin excluir
-      ningún movimiento legítimo: entradas (101), salidas (313), temporales (561), anulaciones
-      (102/314/562) y otros. Mide la carga contable total, distinta del despacho a UE.</p>
+    <div class="pane-head"><h2>KARDEX · Carga en el libro mayor</h2><span class="peri" id="periKmayor"></span></div>
+    <p class="nota">Todos los movimientos SAP-SAFIRO por usuario (entradas, salidas, temporales, anulaciones). Mide carga contable total, distinta del despacho a UE. Los usuarios con menos del 2% se agrupan.</p>
     <div class="tabla-wrap"><table id="tbl-kmayor"><thead></thead><tbody></tbody></table></div>
   </section>
 
-  <!-- ALMACEN POR ETAPA -->
   <section class="tab-pane" id="pane-almacen">
-    <div class="pane-head">
-      <h2>Almacén · Ejecución por etapa del Kanban</h2>
-      <span class="peri">Documentos y renglones procesados por persona</span>
-      <select class="filtro-etapa" id="selEtapa"></select>
+    <div class="pane-head"><h2>Almacén y flujo del Kanban</h2><span class="peri" id="periAlmacen"></span></div>
+    <p class="nota">La Torre de Control asigna y recibe el 100% de los documentos. El volumen por grupo se infiere por avance: si un documento llegó a distribución, pasó por picking y empaque de su grupo. Toca una tarjeta de etapa para filtrar la tabla de abajo.</p>
+    <div class="kpis" id="kpisCobertura"></div>
+    <div class="grid2">
+      <div class="card"><h3>Latencia entre etapas (días medianos)</h3><div class="chart-box"><canvas id="chLatencia"></canvas></div></div>
+      <div class="card"><h3>Documentos por grupo</h3><div class="chart-box"><canvas id="chGrupo"></canvas></div></div>
     </div>
-    <p class="nota">Producción por etapa del flujo de 12 fases. La <b>cobertura</b> indica qué
-      porcentaje de los pedidos de cada etapa ya registra ejecutor nominado; las etapas con
-      captura por PIN (iniciada 13-jul-2026) irán completándose con el uso diario.</p>
-    <div class="cobertura" id="cobertura"></div>
+    <h3 style="font-size:12px;color:var(--azul-osc);margin:12px 0 6px;">Torre de Control</h3>
+    <div class="tabla-wrap" style="margin-bottom:12px;"><table id="tbl-torre"><thead></thead><tbody></tbody></table></div>
+    <h3 style="font-size:12px;color:var(--azul-osc);margin:12px 0 6px;">Producción por grupo</h3>
+    <div class="tabla-wrap" style="margin-bottom:12px;"><table id="tbl-grupo"><thead></thead><tbody></tbody></table></div>
+    <h3 style="font-size:12px;color:var(--azul-osc);margin:12px 0 6px;">Etapas con captura de ejecutor
+      <select class="filtro-etapa" id="selEtapa"></select></h3>
     <div class="tabla-wrap"><table id="tbl-almacen"><thead></thead><tbody></tbody></table></div>
   </section>
 
-  <!-- ASISTENCIA -->
   <section class="tab-pane" id="pane-asis">
-    <div class="pane-head">
-      <h2>Cumplimiento de asistencia</h2>
-      <span class="peri" id="peri-asis">Fichajes biométricos del periodo</span>
+    <div class="pane-head"><h2>Cumplimiento de asistencia</h2><span class="peri" id="periAsis"></span></div>
+    <p class="nota">Fichajes biométricos crudos (primera marca de cada día = entrada). No se infiere ausentismo. Consolidado por cédula: quien ficha en dos relojes aparece una sola vez.</p>
+    <div class="kpis" id="kpisAsis"></div>
+    <div class="campo" style="margin-bottom:8px;max-width:260px;">
+      <label>Filtrar por área</label>
+      <select id="selArea"><option value="">Todas las áreas</option></select>
     </div>
-    <p class="nota" id="nota-asis">Asistencia calculada desde los fichajes reales del biométrico.
-      Cada día con marca cuenta como asistido; se compara la hora de entrada con la jornada
-      esperada para clasificar puntual o tarde. No se infiere ausentismo.</p>
     <div class="tabla-wrap"><table id="tbl-asis"><thead></thead><tbody></tbody></table></div>
   </section>
 </main>
@@ -203,302 +187,259 @@
 </footer>
 
 <script>
-/* =========================================================================
- *  CONFIGURACIÓN — dos WebApps (respeta la regla de oro: RH_MASTER aparte)
- * ========================================================================= */
 var API_MOTOR = 'https://script.google.com/macros/s/AKfycbyVHDQ8IuVHibz259AiEvZ-jUfVC7fxvSSqC-wfaiiq1_13C9_TK4dVtPK0SMW4sZoJ/exec';
-var API_RH    = 'https://script.google.com/macros/s/AKfycby_lXwc1VIzyj5qV2kxaZBzhiBiHQ3wPbRG3raRov_Ij2lFEtBnqTGb_1DmCglx37V_/exec';
+var API_RH    = 'https://script.google.com/macros/s/AKfycby_lXwc1VIzyj5qV2kxaZBzhiBiHQ3wPbRG3raRov_lj2lFEtBnqTGb_1DmCglx37V_/exec';
 
-/* Estado global */
-var DATA = { planif:null, prod:null, rh:null };
-var SORT = {};  // por tabla: {col, dir}
+var DATA = { prod:null, rh:null, planif:null };
+var SORT = {};
+var CHARTS = {};
 
-/* ---------- JSONP genérico ---------- */
 function jsonp(baseUrl, params){
   return new Promise(function(resolve, reject){
     var cb = 'cb_' + Math.random().toString(36).slice(2);
+    var s;
     var timer = setTimeout(function(){ cleanup(); reject(new Error('timeout')); }, 45000);
-    function cleanup(){ clearTimeout(timer); delete window[cb];
-                        if(s && s.parentNode) s.parentNode.removeChild(s); }
+    function cleanup(){ clearTimeout(timer); delete window[cb]; if(s&&s.parentNode) s.parentNode.removeChild(s); }
     window[cb] = function(resp){ cleanup(); resolve(resp); };
-    var q = Object.keys(params).map(function(k){
-      return encodeURIComponent(k)+'='+encodeURIComponent(params[k]); }).join('&');
-    var s = document.createElement('script');
+    var q = Object.keys(params).map(function(k){ return encodeURIComponent(k)+'='+encodeURIComponent(params[k]); }).join('&');
+    s = document.createElement('script');
     s.src = baseUrl + '?' + q + '&callback=' + cb;
     s.onerror = function(){ cleanup(); reject(new Error('network')); };
     document.body.appendChild(s);
   });
 }
 
-/* ---------- helpers de formato ---------- */
-function n(v){ return (v==null||v==='')?'0':Number(v).toLocaleString('es-PA'); }
-function pct(v){ return (v==null)?'—':v+'%'; }
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
-  return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
-function colorScore(v){ if(v>=70)return'var(--verde)'; if(v>=45)return'var(--ambar)'; return'var(--rojo)'; }
-function chipPunt(p){ if(p==null)return'<span class="chip sinp">s/d</span>';
-  var c = p>=90?'ok':(p>=75?'warn':'bad'); return '<span class="chip '+c+'">'+p+'%</span>'; }
+function n(v){ return Number(v||0).toLocaleString('en-US'); }
+function el(id){ return document.getElementById(id); }
+function periodo(){ var d=el('fDesde').value,h=el('fHasta').value,o={}; if(d)o.from=d; if(h)o.to=h; return o; }
+function chipPunt(p){ if(p==null) return '<span class="chip sinp">s/d</span>'; var c=p>=90?'ok':(p>=75?'warn':'bad'); return '<span class="chip '+c+'">'+p+'%</span>'; }
 
-/* =========================================================================
- *  TABLA GENÉRICA con orden por columna
- * ========================================================================= */
 function pintarTabla(tblId, cols, filas){
-  var tbl = document.getElementById(tblId);
-  var thead = tbl.querySelector('thead'), tbody = tbl.querySelector('tbody');
-  var st = SORT[tblId] || {};
-  thead.innerHTML = '<tr>' + cols.map(function(c,i){
-    var arw = (st.col===i) ? (st.dir>0?'▲':'▼') : '';
-    return '<th data-i="'+i+'">'+esc(c.h)+'<span class="arw">'+arw+'</span></th>';
-  }).join('') + '</tr>';
-
-  if(!filas.length){ tbody.innerHTML='<tr><td colspan="'+cols.length+'" class="vacio">Sin datos en el periodo seleccionado.</td></tr>'; return; }
-
-  if(st.col!=null){
-    var c = cols[st.col];
-    filas = filas.slice().sort(function(a,b){
-      var va=c.v(a), vb=c.v(b);
-      if(typeof va==='number' && typeof vb==='number') return (va-vb)*st.dir;
-      return String(va).localeCompare(String(vb),'es')*st.dir;
-    });
-  }
-
-  tbody.innerHTML = filas.map(function(f,ri){
-    return '<tr>'+cols.map(function(c){
-      var cls = c.cls?(' class="'+c.cls+'"'):'';
-      return '<td'+cls+'>'+(c.r?c.r(f,ri):esc(c.v(f)))+'</td>';
-    }).join('')+'</tr>';
-  }).join('');
-
-  thead.querySelectorAll('th').forEach(function(th){
-    th.onclick = function(){
-      var i = +th.dataset.i;
-      var cur = SORT[tblId]||{};
-      SORT[tblId] = { col:i, dir:(cur.col===i? -cur.dir : -1) };
-      pintarTabla(tblId, cols, filas);
-    };
-  });
+  var tbl=el(tblId), thead=tbl.querySelector('thead'), tbody=tbl.querySelector('tbody');
+  var st=SORT[tblId];
+  if(st){ var c=cols[st.col]; filas=filas.slice().sort(function(a,b){
+      var va=a[c.key],vb=b[c.key];
+      if(typeof va==='number'&&typeof vb==='number') return st.dir*(va-vb);
+      return st.dir*String(va==null?'':va).localeCompare(String(vb==null?'':vb),'es'); }); }
+  thead.innerHTML='<tr>'+cols.map(function(c,i){ var ar=st&&st.col===i?(st.dir>0?'▲':'▼'):''; return '<th data-i="'+i+'">'+c.h+' <span class="arw">'+ar+'</span></th>'; }).join('')+'</tr>';
+  thead.querySelectorAll('th').forEach(function(th){ th.onclick=function(){ var i=+th.getAttribute('data-i');
+      if(SORT[tblId]&&SORT[tblId].col===i) SORT[tblId].dir*=-1; else SORT[tblId]={col:i,dir:1}; pintarTabla(tblId,cols,filas); }; });
+  if(!filas.length){ tbody.innerHTML='<tr><td colspan="'+cols.length+'" class="vacio">Sin datos en el periodo.</td></tr>'; return; }
+  tbody.innerHTML=filas.map(function(f){ return '<tr>'+cols.map(function(c){
+      var v=c.fmt?c.fmt(f[c.key],f):(f[c.key]==null?'':f[c.key]); return '<td class="'+(c.cls||'')+'">'+v+'</td>'; }).join('')+'</tr>'; }).join('');
 }
 
-/* =========================================================================
- *  RENDER · PLANIFICADORES
- * ========================================================================= */
+function chart(canvasId, type, data, options){
+  if(CHARTS[canvasId]) CHARTS[canvasId].destroy();
+  var ctx=el(canvasId).getContext('2d');
+  CHARTS[canvasId]=new Chart(ctx,{type:type,data:data,options:Object.assign({responsive:true,maintainAspectRatio:false,animation:false},options||{})});
+}
+
+function renderResumen(){
+  var p=DATA.prod||{}, rh=DATA.rh||{}, rf=p.rango_facturacion||{};
+  el('periResumen').textContent = rf.from ? ('Facturación '+rf.from+' a '+rf.to+' · '+rf.dias+' días') : 'Acumulado';
+  var totFact=(p.kardex_despacho||[]).reduce(function(s,x){return s+(x.docs_netos||0);},0);
+  var asis=rh.personas||[];
+  var punt=asis.length?Math.round(asis.reduce(function(s,x){return s+(x.pct_puntualidad||0);},0)/asis.length):0;
+  var factDia=rf.dias?Math.round(totFact/rf.dias):0;
+  var ciclo=(p.ciclo_total||{}).mediana;
+  var kp=[
+    {et:'Facturación a UE',vl:n(totFact),de:factDia+' docs/día',cls:''},
+    {et:'Personal medido',vl:n(asis.length),de:'de '+n(rh.total_padron||asis.length)+' en padrón',cls:''},
+    {et:'Puntualidad global',vl:punt+'%',de:punt>=90?'nivel bueno':(punt>=75?'aceptable':'requiere atención'),cls:punt>=90?'ok':(punt>=75?'warn':'bad')},
+    {et:'Ciclo del pedido',vl:(ciclo!=null?ciclo+'d':'s/d'),de:'emisión → distribución',cls:''}
+  ];
+  el('kpisResumen').innerHTML=kp.map(function(k){return '<div class="kpi '+k.cls+'"><div class="et">'+k.et+'</div><div class="vl">'+k.vl+'</div><div class="de">'+k.de+'</div></div>';}).join('');
+  var top=(p.kardex_despacho||[]).slice(0,10);
+  chart('chFact','bar',{labels:top.map(function(x){return x.nombre;}),datasets:[{label:'Docs netos',data:top.map(function(x){return x.docs_netos;}),backgroundColor:'#1e5a9e'}]},{indexAxis:'y',plugins:{legend:{display:false}}});
+  var porArea={}; asis.forEach(function(x){var a=x.area||'(sin área)';(porArea[a]=porArea[a]||[]).push(x);});
+  var areas=Object.keys(porArea).map(function(a){var g=porArea[a];return {area:a,punt:Math.round(g.reduce(function(s,x){return s+(x.pct_puntualidad||0);},0)/g.length)};}).sort(function(a,b){return b.punt-a.punt;});
+  chart('chPunt','bar',{labels:areas.map(function(x){return x.area;}),datasets:[{label:'Puntualidad %',data:areas.map(function(x){return x.punt;}),backgroundColor:areas.map(function(x){return x.punt>=90?'#2e7d32':(x.punt>=75?'#c77700':'#b3261e');})}]},{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{max:100}}});
+}
+
 function renderPlanif(){
-  var d = DATA.planif; if(!d){ return; }
-  var filas = (d.analistas||[]).filter(function(a){ return a.analista!=='SIN ASIGNAR'; });
-  var cols = [
-    {h:'#', cls:'rank', v:function(f,i){return i+1;}, r:function(f,i){return (SORT['tbl-planif']&&SORT['tbl-planif'].col!=null)?'':(i+1);}},
-    {h:'Planificador', v:function(f){return f.analista;}},
-    {h:'Score salud', v:function(f){return f.score_salud;}, cls:'n',
-      r:function(f){return '<span class="score" style="background:'+colorScore(f.score_salud)+'">'+f.score_salud+'</span>';}},
-    {h:'Score ponderado', v:function(f){return f.score_ponderado;}, cls:'n',
-      r:function(f){return '<span class="score" style="background:'+colorScore(f.score_ponderado)+'">'+f.score_ponderado+'</span>';}},
-    {h:'Renglones', v:function(f){return f.total;}, cls:'n', r:function(f){return n(f.total);}},
-    {h:'Óptimos', v:function(f){return f.optimos;}, cls:'n', r:function(f){return n(f.optimos);}},
-    {h:'Agotados', v:function(f){return f.agotados;}, cls:'n', r:function(f){return n(f.agotados);}},
-    {h:'Críticos', v:function(f){return f.criticos;}, cls:'n', r:function(f){return n(f.criticos);}},
-    {h:'% problema', v:function(f){return f.pct_problema;}, cls:'n', r:function(f){return f.pct_problema+'%';}}
-  ];
-  pintarTabla('tbl-planif', cols, filas);
+  var pl=(DATA.planif&&DATA.planif.analistas)||[];
+  pl=pl.filter(function(a){return a.analista!=='SIN ASIGNAR';});
+  function col(a){return a.score_salud>=45?'#2e7d32':(a.score_salud>=30?'#c77700':(a.score_salud>=15?'#7c3aed':'#b3261e'));}
+  chart('chScoreCartera','scatter',{datasets:[{label:'Planificadores',
+    data:pl.map(function(a){return {x:a.total,y:a.score_salud,lbl:a.analista};}),
+    backgroundColor:pl.map(col),pointRadius:7,pointHoverRadius:9}]},
+    {plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.raw.lbl+' · score '+c.raw.y+' · '+c.raw.x+' renglones';}}}},
+     scales:{x:{title:{display:true,text:'Renglones asignados'}},y:{title:{display:true,text:'Score'}}}});
+  chart('chSanaCritica','scatter',{datasets:[{label:'Planificadores',
+    data:pl.map(function(a){var t=Math.max(1,a.total);return {x:Math.round(100*(a.agotados+a.criticos)/t),y:Math.round(100*(a.optimos+(a.bajos||0))/t),lbl:a.analista};}),
+    backgroundColor:pl.map(col),pointRadius:7,pointHoverRadius:9}]},
+    {plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.raw.lbl+' · sana '+c.raw.y+'% · crítica '+c.raw.x+'%';}}}},
+     scales:{x:{title:{display:true,text:'% cartera en agotado+crítico'},max:100},y:{title:{display:true,text:'% cartera óptimo+bajo'},max:100}}});
+  pl.forEach(function(a,i){a.rk=i+1;});
+  pintarTabla('tbl-planif',[
+    {h:'#',key:'rk',cls:'rank'},{h:'Planificador',key:'analista'},
+    {h:'Score',key:'score_salud',cls:'n',fmt:function(v){var c=v>=45?'#2e7d32':(v>=30?'#c77700':(v>=15?'#7c3aed':'#b3261e'));return '<span class="score" style="background:'+c+'">'+v+'</span>';}},
+    {h:'Pond.',key:'score_ponderado',cls:'n'},{h:'Renglones',key:'total',cls:'n',fmt:n},
+    {h:'Óptimos',key:'optimos',cls:'n'},{h:'Agotados',key:'agotados',cls:'n'},{h:'Críticos',key:'criticos',cls:'n'},
+    {h:'Vencidos',key:'skus_vencidos',cls:'n'},{h:'Valor riesgo B/.',key:'valor_riesgo',cls:'n',fmt:n},
+    {h:'GAP neto',key:'gap_pos_suma',cls:'n',fmt:n},{h:'% problema',key:'pct_problema',cls:'n',fmt:function(v){return v+'%';}}
+  ], pl);
 }
 
-/* =========================================================================
- *  RENDER · KARDEX DESPACHO
- * ========================================================================= */
 function renderKdesp(){
-  var d = DATA.prod; if(!d){ return; }
-  var filas = d.kardex_despacho||[];
-  var max = Math.max(1, filas.reduce(function(m,f){return Math.max(m,f.docs_netos);},0));
-  var cols = [
-    {h:'#', cls:'rank', v:function(f){return f.rank;}},
-    {h:'Facturador', v:function(f){return f.nombre;},
-      r:function(f){return esc(f.nombre)+(f.sin_padron?' <span class="chip sinp">sin padrón</span>':'');}},
-    {h:'Docs netos', v:function(f){return f.docs_netos;}, cls:'n',
-      r:function(f){return '<span class="num">'+n(f.docs_netos)+'</span> <span class="barra"><i style="width:'+Math.round(100*f.docs_netos/max)+'%"></i></span>';}},
-    {h:'Salidas (313)', v:function(f){return f.docs_salida;}, cls:'n', r:function(f){return n(f.docs_salida);}},
-    {h:'Anulaciones (314)', v:function(f){return f.docs_anulados;}, cls:'n', r:function(f){return n(f.docs_anulados);}},
-    {h:'Usuario SAP', v:function(f){return f.usuario_sap;}}
-  ];
-  pintarTabla('tbl-kdesp', cols, filas);
+  var d=(DATA.prod&&DATA.prod.kardex_despacho)||[];
+  var rf=(DATA.prod&&DATA.prod.rango_facturacion)||{};
+  el('periKdesp').textContent=rf.from?(rf.from+' a '+rf.to):'';
+  var max=Math.max(1,d.reduce(function(m,x){return Math.max(m,x.docs_netos);},0));
+  pintarTabla('tbl-kdesp',[
+    {h:'#',key:'rank',cls:'rank'},
+    {h:'Facturador',key:'nombre',fmt:function(v,f){return v+(f.sin_padron?' <span class="chip sinp">sin padrón</span>':'');}},
+    {h:'Docs netos',key:'docs_netos',cls:'n',fmt:function(v){return v+' <span class="barra"><i style="width:'+Math.round(100*v/max)+'%"></i></span>';}},
+    {h:'Salidas (313)',key:'docs_salida',cls:'n',fmt:n},{h:'Anulaciones (314)',key:'docs_anulados',cls:'n',fmt:n},
+    {h:'Usuario SAP',key:'usuario_sap'}
+  ], d);
 }
 
-/* =========================================================================
- *  RENDER · KARDEX MAYOR
- * ========================================================================= */
 function renderKmayor(){
-  var d = DATA.prod; if(!d){ return; }
-  var filas = d.kardex_mayor||[];
-  var cols = [
-    {h:'#', cls:'rank', v:function(f){return f.rank;}},
-    {h:'Usuario', v:function(f){return f.nombre;},
-      r:function(f){return esc(f.nombre)+(f.sin_padron?' <span class="chip sinp">sin padrón</span>':'');}},
-    {h:'Total mov.', v:function(f){return f.total_movimientos;}, cls:'n', r:function(f){return n(f.total_movimientos);}},
-    {h:'Entradas (101)', v:function(f){return f.entradas;}, cls:'n', r:function(f){return n(f.entradas);}},
-    {h:'Salidas (313)', v:function(f){return f.salidas;}, cls:'n', r:function(f){return n(f.salidas);}},
-    {h:'Temporales (561)', v:function(f){return f.temporales;}, cls:'n', r:function(f){return n(f.temporales);}},
-    {h:'Anulaciones', v:function(f){return f.anula_entradas+f.anula_salidas+f.anula_temporales;}, cls:'n',
-      r:function(f){return n(f.anula_entradas+f.anula_salidas+f.anula_temporales);}},
-    {h:'Otros', v:function(f){return f.otros;}, cls:'n', r:function(f){return n(f.otros);}}
-  ];
-  pintarTabla('tbl-kmayor', cols, filas);
+  var arr=(DATA.prod&&DATA.prod.kardex_mayor)||[];
+  el('periKmayor').textContent=el('periKdesp').textContent;
+  var total=arr.reduce(function(s,x){return s+x.total_movimientos;},0), umbral=total*0.02;
+  var prin=arr.filter(function(x){return x.total_movimientos>=umbral;});
+  var min=arr.filter(function(x){return x.total_movimientos<umbral;});
+  var filas=prin.map(function(x,i){return {rk:i+1,nombre:x.nombre,sin_padron:x.sin_padron,total_movimientos:x.total_movimientos,
+    entradas:x.entradas,salidas:x.salidas,temporales:x.temporales,anul:(x.anula_entradas+x.anula_salidas+x.anula_temporales),otros:x.otros};});
+  if(min.length){ var a=min.reduce(function(a,x){a.t+=x.total_movimientos;a.e+=x.entradas;a.s+=x.salidas;a.tm+=x.temporales;a.an+=(x.anula_entradas+x.anula_salidas+x.anula_temporales);a.o+=x.otros;return a;},{t:0,e:0,s:0,tm:0,an:0,o:0});
+    filas.push({rk:filas.length+1,nombre:'Otros '+min.length+' usuarios (< 2% c/u)',sin_padron:false,total_movimientos:a.t,entradas:a.e,salidas:a.s,temporales:a.tm,anul:a.an,otros:a.o}); }
+  pintarTabla('tbl-kmayor',[
+    {h:'#',key:'rk',cls:'rank'},
+    {h:'Usuario',key:'nombre',fmt:function(v,f){return v+(f.sin_padron?' <span class="chip sinp">sin padrón</span>':'');}},
+    {h:'Total mov.',key:'total_movimientos',cls:'n',fmt:n},{h:'Entradas',key:'entradas',cls:'n',fmt:n},
+    {h:'Salidas',key:'salidas',cls:'n',fmt:n},{h:'Temporales',key:'temporales',cls:'n',fmt:n},
+    {h:'Anulaciones',key:'anul',cls:'n',fmt:n},{h:'Otros',key:'otros',cls:'n',fmt:n}
+  ], filas);
 }
 
-/* =========================================================================
- *  RENDER · ALMACÉN POR ETAPA
- * ========================================================================= */
 function renderAlmacen(){
-  var d = DATA.prod; if(!d){ return; }
-  // cobertura
-  var cob = document.getElementById('cobertura');
-  cob.innerHTML = (d.cobertura||[]).map(function(c){
-    return '<div class="cob-card"><div class="et">'+esc(c.etapa)+'</div>'+
-      '<div class="pc">'+c.pct+'%</div>'+
-      '<div class="de">'+n(c.con_ejecutor)+' / '+n(c.total_en_etapa)+' con ejecutor</div></div>';
-  }).join('');
-
-  // selector de etapa
-  var sel = document.getElementById('selEtapa');
-  if(!sel.dataset.ready){
-    sel.innerHTML = (d.almacen||[]).map(function(e){
-      return '<option value="'+e.etapa+'">'+esc(e.label)+'</option>'; }).join('');
-    sel.dataset.ready='1';
-    sel.onchange = pintarEtapaAlmacen;
-  }
+  var p=DATA.prod||{};
+  var cob=p.cobertura||[];
+  el('kpisCobertura').innerHTML=cob.map(function(c){var cls=c.pct>=80?'ok':(c.pct>=40?'warn':'bad');
+    return '<div class="kpi '+cls+'" data-etapa="'+c.etapa+'"><div class="et">'+c.etapa+'</div><div class="vl">'+c.pct+'%</div><div class="de">'+n(c.con_ejecutor)+' / '+n(c.total_en_etapa)+' con ejecutor</div></div>';}).join('');
+  el('kpisCobertura').querySelectorAll('.kpi').forEach(function(k){ k.onclick=function(){
+      var et=k.getAttribute('data-etapa'), sel=el('selEtapa');
+      for(var i=0;i<sel.options.length;i++){ if(sel.options[i].text.toUpperCase().indexOf(et.toUpperCase())>=0){ sel.selectedIndex=i; break; } }
+      pintarEtapaAlmacen();
+      el('kpisCobertura').querySelectorAll('.kpi').forEach(function(x){x.classList.remove('sel');});
+      k.classList.add('sel'); }; });
+  var lat=(p.latencias||[]).filter(function(l){return l.mediana!=null;});
+  chart('chLatencia','bar',{labels:lat.map(function(l){return l.etapa;}),datasets:[{label:'Días',data:lat.map(function(l){return l.mediana;}),backgroundColor:lat.map(function(l){return l.mediana>5?'#b3261e':'#c77700';})}]},{indexAxis:'y',plugins:{legend:{display:false}}});
+  var gr=p.almacen_por_grupo||[];
+  chart('chGrupo','bar',{labels:gr.map(function(g){return g.grupo;}),datasets:[{label:'Docs',data:gr.map(function(g){return g.docs;}),backgroundColor:'#2e7d32'}]},{indexAxis:'y',plugins:{legend:{display:false}}});
+  pintarTabla('tbl-torre',[{h:'Persona',key:'nombre'},{h:'Función',key:'funcion'},{h:'Documentos',key:'docs',cls:'n',fmt:n}], p.torre_control||[]);
+  pintarTabla('tbl-grupo',[
+    {h:'Grupo',key:'grupo'},{h:'Documentos',key:'docs',cls:'n',fmt:n},{h:'Renglones',key:'renglones',cls:'n',fmt:n},
+    {h:'Avanzados',key:'avanzados',cls:'n',fmt:n},
+    {h:'% avance',key:'pct_avance',cls:'n',fmt:function(v){var c=v>=70?'ok':(v>=40?'warn':'bad');return '<span class="chip '+c+'">'+v+'%</span>';}},
+    {h:'Almacenistas',key:'almacenistas',fmt:function(v){return (v||[]).join(', ')||'—';}}
+  ], gr);
+  var etapas=(p.almacen||[]).filter(function(e){return e.personas&&e.personas.length;});
+  var sel=el('selEtapa');
+  sel.innerHTML=etapas.map(function(e){return '<option value="'+e.etapa+'">'+e.label+'</option>';}).join('')||'<option>Sin captura aún</option>';
+  sel.onchange=pintarEtapaAlmacen;
   pintarEtapaAlmacen();
 }
 function pintarEtapaAlmacen(){
-  var d = DATA.prod; var sel = document.getElementById('selEtapa');
-  var etapa = (d.almacen||[]).filter(function(e){return e.etapa===sel.value;})[0] || {personas:[]};
-  var max = Math.max(1, etapa.personas.reduce(function(m,p){return Math.max(m,p.docs);},0));
-  var cols = [
-    {h:'#', cls:'rank', v:function(f){return f.rank;}},
-    {h:'Persona', v:function(f){return f.nombre;}},
-    {h:'Rol', v:function(f){return f.rol||'—';}},
-    {h:'Documentos', v:function(f){return f.docs;}, cls:'n',
-      r:function(f){return '<span class="num">'+n(f.docs)+'</span> <span class="barra"><i style="width:'+Math.round(100*f.docs/max)+'%"></i></span>';}},
-    {h:'Renglones', v:function(f){return f.renglones;}, cls:'n', r:function(f){return n(f.renglones);}}
-  ];
-  pintarTabla('tbl-almacen', cols, etapa.personas);
+  var p=DATA.prod||{}, sel=el('selEtapa');
+  var etapa=(p.almacen||[]).filter(function(e){return e.etapa===sel.value;})[0]||{personas:[]};
+  var max=Math.max(1,etapa.personas.reduce(function(m,x){return Math.max(m,x.docs);},0));
+  pintarTabla('tbl-almacen',[
+    {h:'#',key:'rank',cls:'rank'},{h:'Persona',key:'nombre'},{h:'Rol',key:'rol'},
+    {h:'Documentos',key:'docs',cls:'n',fmt:function(v){return v+' <span class="barra"><i style="width:'+Math.round(100*v/max)+'%"></i></span>';}},
+    {h:'Renglones',key:'renglones',cls:'n',fmt:n}
+  ], etapa.personas);
 }
 
-/* =========================================================================
- *  RENDER · ASISTENCIA
- * ========================================================================= */
 function renderAsis(){
-  var d = DATA.rh; if(!d){ return; }
-  if(d.nota_metodologica) document.getElementById('nota-asis').textContent = d.nota_metodologica;
-  var filas = d.personas||[];
-  var maxD = Math.max(1, filas.reduce(function(m,f){return Math.max(m,f.dias_asistidos);},0));
-  var cols = [
-    {h:'#', cls:'rank', v:function(f,i){return i+1;}, r:function(f,i){return (SORT['tbl-asis']&&SORT['tbl-asis'].col!=null)?'':(i+1);}},
-    {h:'Persona', v:function(f){return f.nombre;}},
-    {h:'Área', v:function(f){return f.area||'—';}},
-    {h:'Días asistidos', v:function(f){return f.dias_asistidos;}, cls:'n',
-      r:function(f){return '<span class="num">'+n(f.dias_asistidos)+'</span> <span class="barra"><i style="width:'+Math.round(100*f.dias_asistidos/maxD)+'%"></i></span>';}},
-    {h:'A tiempo', v:function(f){return f.a_tiempo;}, cls:'n', r:function(f){return n(f.a_tiempo);}},
-    {h:'Tardanzas', v:function(f){return f.tardanzas;}, cls:'n', r:function(f){return n(f.tardanzas);}},
-    {h:'Min. tarde prom.', v:function(f){return f.minutos_tarde_prom;}, cls:'n', r:function(f){return n(f.minutos_tarde_prom);}},
-    {h:'Puntualidad', v:function(f){return f.pct_puntualidad==null?-1:f.pct_puntualidad;}, cls:'n',
-      r:function(f){return chipPunt(f.pct_puntualidad);}}
-  ];
-  pintarTabla('tbl-asis', cols, filas);
+  var rh=DATA.rh||{}, asis=rh.personas||[];
+  el('periAsis').textContent='Consolidado por cédula · '+n(rh.con_fichaje||asis.length)+' con fichaje';
+  var punt=asis.length?Math.round(asis.reduce(function(s,x){return s+(x.pct_puntualidad||0);},0)/asis.length):0;
+  var ejemplar=asis.filter(function(x){return x.pct_puntualidad>=98;}).length;
+  var atencion=asis.filter(function(x){return x.pct_puntualidad!=null&&x.pct_puntualidad<70;}).length;
+  el('kpisAsis').innerHTML=[
+    {et:'Con fichaje',vl:n(asis.length),de:'de '+n(rh.total_padron||0)+' en padrón',cls:''},
+    {et:'Puntualidad media',vl:punt+'%',de:'',cls:punt>=90?'ok':(punt>=75?'warn':'bad')},
+    {et:'Puntualidad ejemplar',vl:n(ejemplar),de:'≥ 98%',cls:'ok'},
+    {et:'Requieren atención',vl:n(atencion),de:'< 70%',cls:'bad'}
+  ].map(function(k){return '<div class="kpi '+k.cls+'"><div class="et">'+k.et+'</div><div class="vl">'+k.vl+'</div><div class="de">'+k.de+'</div></div>';}).join('');
+  var areas=Array.from(new Set(asis.map(function(x){return x.area||'(sin área)';}))).sort();
+  var sel=el('selArea'), prev=sel.value;
+  sel.innerHTML='<option value="">Todas las áreas</option>'+areas.map(function(a){return '<option value="'+a+'">'+a+'</option>';}).join('');
+  if(prev) sel.value=prev;
+  sel.onchange=pintarAsis;
+  pintarAsis();
 }
-
-/* =========================================================================
- *  CARGA DE DATOS
- * ========================================================================= */
-function periodo(){
-  var p = {};
-  var fd = document.getElementById('fDesde').value;
-  var fh = document.getElementById('fHasta').value;
-  if(fd) p.from = fd;
-  if(fh) p.to = fh;
-  return p;
+function pintarAsis(){
+  var asis=(DATA.rh&&DATA.rh.personas)||[];
+  var area=el('selArea').value;
+  if(area) asis=asis.filter(function(x){return (x.area||'(sin área)')===area;});
+  asis=asis.slice().sort(function(a,b){return (b.pct_puntualidad||0)-(a.pct_puntualidad||0);});
+  pintarTabla('tbl-asis',[
+    {h:'Persona',key:'nombre'},{h:'Área',key:'area'},{h:'Días asistidos',key:'dias_asistidos',cls:'n',fmt:n},
+    {h:'A tiempo',key:'a_tiempo',cls:'n',fmt:n},{h:'Tardanzas',key:'tardanzas',cls:'n',fmt:n},
+    {h:'Min. tarde prom.',key:'minutos_tarde_prom',cls:'n',fmt:n},{h:'Puntualidad',key:'pct_puntualidad',cls:'n',fmt:chipPunt}
+  ], asis);
 }
-function setEstado(txt){ document.getElementById('estadoCarga').textContent = txt; }
 
 function cargarTodo(){
-  setEstado('Cargando…');
-  var per = periodo();
-  var amb = document.getElementById('fAmbito').value;
-
-  // 1) Planificadores (Motor · reporte analistas)
+  var per=periodo(), amb=el('fAmbito').value;
+  el('estadoCarga').textContent='Cargando…';
+  var pk={file:'kanban_productividad'}; if(per.from)pk.from=per.from; if(per.to)pk.to=per.to;
+  jsonp(API_MOTOR, pk)
+    .then(function(r){ DATA.prod=r; renderResumen(); renderKdesp(); renderKmayor(); renderAlmacen(); estado(); })
+    .catch(function(){ DATA.prod={kardex_despacho:[],kardex_mayor:[],almacen:[],cobertura:[]}; renderResumen(); renderKdesp(); renderKmayor(); renderAlmacen(); });
   jsonp(API_MOTOR, {report:'analistas'})
     .then(function(r){ DATA.planif=r; renderPlanif(); })
     .catch(function(){ DATA.planif={analistas:[]}; renderPlanif(); });
-
-  // 2) Productividad Kanban (Motor)
-  var pk = {file:'kanban_productividad'}; if(per.from)pk.from=per.from; if(per.to)pk.to=per.to;
-  jsonp(API_MOTOR, pk)
-    .then(function(r){ DATA.prod=r; renderKdesp(); renderKmayor(); renderAlmacen(); })
-    .catch(function(){ DATA.prod={kardex_despacho:[],kardex_mayor:[],almacen:[],cobertura:[]};
-                       renderKdesp(); renderKmayor(); renderAlmacen(); });
-
-  // 3) Asistencia (RH_MASTER)
-  var pr = {api:'productividad_rh', ambito:amb}; if(per.from)pr.from=per.from; if(per.to)pr.to=per.to;
+  var pr={api:'productividad_rh', ambito:amb}; if(per.from)pr.from=per.from; if(per.to)pr.to=per.to;
   jsonp(API_RH, pr)
-    .then(function(r){ DATA.rh=r; renderAsis(); actualizarEstado(); })
-    .catch(function(){ DATA.rh={personas:[],nota_metodologica:'No se pudo cargar RH_MASTER. Verifique la URL del WebApp.'};
-                       renderAsis(); actualizarEstado(); });
+    .then(function(r){ DATA.rh=r; renderAsis(); renderResumen(); })
+    .catch(function(){ DATA.rh={personas:[],sin_fichaje:[],nota_metodologica:'No se pudo cargar RH_MASTER.'}; renderAsis(); });
 }
-function actualizarEstado(){
-  var g = (DATA.prod&&DATA.prod.generado) || (DATA.rh&&DATA.rh.generado) || '';
-  setEstado('Actualizado');
-  document.getElementById('footGen').textContent = g ? (' · Generado: '+g) : '';
-}
+function estado(){ var g=(DATA.prod&&DATA.prod.generado)||''; el('estadoCarga').textContent='Actualizado'; el('footGen').textContent=g?' · Generado: '+g:''; }
 
-/* =========================================================================
- *  PESTAÑAS
- * ========================================================================= */
-document.getElementById('tabs').addEventListener('click', function(e){
-  var b = e.target.closest('button'); if(!b) return;
-  document.querySelectorAll('#tabs button').forEach(function(x){x.classList.remove('act');});
-  document.querySelectorAll('.tab-pane').forEach(function(x){x.classList.remove('act');});
-  b.classList.add('act');
-  document.getElementById('pane-'+b.dataset.t).classList.add('act');
-});
-
-document.getElementById('btnAplicar').onclick = cargarTodo;
-document.getElementById('fAmbito').onchange = function(){
-  var per = periodo();
-  var pr = {api:'productividad_rh', ambito:this.value}; if(per.from)pr.from=per.from; if(per.to)pr.to=per.to;
-  jsonp(API_RH, pr).then(function(r){ DATA.rh=r; renderAsis(); }).catch(function(){});
-};
-
-/* =========================================================================
- *  EXPORTAR — Excel y PDF se generan en el BACKEND con identidad institucional
- *  (paleta RX, portada ejecutiva, tablas por rol, hoja de cobertura/notas).
- *  El GAS devuelve una URL de descarga directa.
- * ========================================================================= */
-function descargarReporte(fmt){
-  var per = periodo();
-  var amb = document.getElementById('fAmbito').value;
-  var params = { file:'productividad_reporte', fmt:fmt, ambito:amb };
-  if(per.from) params.from = per.from;
-  if(per.to)   params.to   = per.to;
-  var btnTxt = (fmt==='pdf') ? 'btnPDF' : 'btnExcel';
-  var btn = document.getElementById(btnTxt);
-  var orig = btn.textContent;
-  btn.textContent = 'Generando…'; btn.disabled = true;
-  jsonp(API_MOTOR, params).then(function(r){
-    btn.textContent = orig; btn.disabled = false;
-    if(r && r.ok && r.url){ window.open(r.url, '_blank'); }
-    else { alert('No se pudo generar el reporte. Intente de nuevo.'); }
-  }).catch(function(){
-    btn.textContent = orig; btn.disabled = false;
-    alert('Error al generar el reporte. Verifique la conexión.');
+function descargarPDF(){
+  el('btnPDF').textContent='Generando…';
+  cargarScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js', function(){
+    cargarScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.1/dist/jspdf.plugin.autotable.min.js', function(){ construirPDF(); el('btnPDF').textContent='Descargar PDF'; });
   });
 }
-document.getElementById('btnExcel').onclick = function(){ descargarReporte('xlsx'); };
-document.getElementById('btnPDF').onclick   = function(){ descargarReporte('pdf'); };
+function cargarScript(src, cb){ if(document.querySelector('script[src="'+src+'"]')){ cb(); return; } var s=document.createElement('script'); s.src=src; s.onload=cb; document.body.appendChild(s); }
+function construirPDF(){
+  var jsPDF=window.jspdf.jsPDF, doc=new jsPDF('p','mm','a4'), azul=[12,68,124];
+  doc.setFontSize(14).setFont('helvetica','bold').setTextColor(azul[0],azul[1],azul[2]);
+  doc.text('Informe de Productividad del Personal', 14, 18);
+  doc.setFontSize(9).setFont('helvetica','normal').setTextColor(90,90,90);
+  doc.text('Dirección Nacional de Logística · CEDIS Panamá · CSS', 14, 24);
+  doc.text('Generado: '+new Date().toLocaleString('es-PA',{dateStyle:'short',timeStyle:'short'}), 14, 29);
+  var p=DATA.prod||{}, rh=DATA.rh||{};
+  doc.autoTable({ startY:34, head:[['#','Facturador','Docs netos','Salidas','Anul.']],
+    body:(p.kardex_despacho||[]).slice(0,15).map(function(x){return [x.rank,x.nombre,x.docs_netos,x.docs_salida,x.docs_anulados];}),
+    theme:'grid', styles:{fontSize:8}, headStyles:{fillColor:azul} });
+  var porArea={}; (rh.personas||[]).forEach(function(x){var a=x.area||'(sin área)';(porArea[a]=porArea[a]||[]).push(x);});
+  var resumen=Object.keys(porArea).sort().map(function(a){var g=porArea[a];return [a,g.length,Math.round(g.reduce(function(s,x){return s+(x.pct_puntualidad||0);},0)/g.length)+'%'];});
+  doc.addPage();
+  doc.setFontSize(12).setFont('helvetica','bold').setTextColor(azul[0],azul[1],azul[2]);
+  doc.text('Puntualidad por área', 14, 18);
+  doc.autoTable({ startY:24, head:[['Área','Personas','Puntualidad media']], body:resumen, theme:'grid', styles:{fontSize:8}, headStyles:{fillColor:azul} });
+  doc.save('Productividad_DINALOG_'+new Date().toISOString().slice(0,10)+'.pdf');
+}
 
-/* Arranque: por defecto último mes */
-(function init(){
-  var hoy = new Date();
-  var hace = new Date(); hace.setMonth(hace.getMonth()-1);
-  document.getElementById('fHasta').value = hoy.toISOString().slice(0,10);
-  document.getElementById('fDesde').value = hace.toISOString().slice(0,10);
-  cargarTodo();
-})();
+document.querySelectorAll('nav.tabs button').forEach(function(b){ b.onclick=function(){
+    document.querySelectorAll('nav.tabs button').forEach(function(x){x.classList.remove('act');});
+    document.querySelectorAll('.tab-pane').forEach(function(x){x.classList.remove('act');});
+    b.classList.add('act'); el('pane-'+b.getAttribute('data-t')).classList.add('act'); }; });
+
+el('btnAplicar').onclick=cargarTodo;
+el('btnPDF').onclick=descargarPDF;
+el('fAmbito').onchange=function(){ var per=periodo(), pr={api:'productividad_rh',ambito:this.value};
+  if(per.from)pr.from=per.from; if(per.to)pr.to=per.to;
+  jsonp(API_RH,pr).then(function(r){DATA.rh=r;renderAsis();renderResumen();}).catch(function(){}); };
+cargarTodo();
 </script>
 </body>
 </html>
