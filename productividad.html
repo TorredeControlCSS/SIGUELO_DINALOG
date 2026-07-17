@@ -120,8 +120,8 @@
     </select>
   </div>
   <button class="btn" id="btnAplicar">Aplicar periodo</button>
-  <button class="btn sec" id="btnExcel">Descargar Excel</button>
-  <button class="btn sec" id="btnPDF">Imprimir / PDF</button>
+  <button class="btn sec" id="btnExcel">Reporte Excel</button>
+  <button class="btn sec" id="btnPDF">Reporte PDF</button>
 </div>
 
 <nav class="tabs" id="tabs">
@@ -202,13 +202,12 @@
   <span id="footGen"></span>
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
 <script>
 /* =========================================================================
  *  CONFIGURACIÓN — dos WebApps (respeta la regla de oro: RH_MASTER aparte)
  * ========================================================================= */
 var API_MOTOR = 'https://script.google.com/macros/s/AKfycbyVHDQ8IuVHibz259AiEvZ-jUfVC7fxvSSqC-wfaiiq1_13C9_TK4dVtPK0SMW4sZoJ/exec';
-var API_RH    = 'https://script.google.com/macros/s/AKfycby_lXwc1VIzyj5qV2kxaZBzhiBiHQ3wPbRG3raRov_Ij2lFEtBnqTGb_1DmCglx37V_/exec';
+var API_RH    = 'Rhttps://script.google.com/macros/s/AKfycby_lXwc1VIzyj5qV2kxaZBzhiBiHQ3wPbRG3raRov_Ij2lFEtBnqTGb_1DmCglx37V_/exec';
 
 /* Estado global */
 var DATA = { planif:null, prod:null, rh:null };
@@ -466,53 +465,31 @@ document.getElementById('fAmbito').onchange = function(){
 };
 
 /* =========================================================================
- *  EXPORTAR EXCEL (ExcelJS) — reutiliza el patrón del ecosistema
+ *  EXPORTAR — Excel y PDF se generan en el BACKEND con identidad institucional
+ *  (paleta RX, portada ejecutiva, tablas por rol, hoja de cobertura/notas).
+ *  El GAS devuelve una URL de descarga directa.
  * ========================================================================= */
-document.getElementById('btnExcel').onclick = async function(){
-  if(typeof ExcelJS==='undefined'){ alert('Librería Excel no disponible.'); return; }
-  var wb = new ExcelJS.Workbook();
-  var azul = 'FF0C447C';
-  function hoja(nombre, cols, filas){
-    var ws = wb.addWorksheet(nombre);
-    ws.columns = cols.map(function(c){ return {header:c.h, key:c.k, width:c.w||16}; });
-    ws.getRow(1).eachCell(function(cell){
-      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:azul}};
-      cell.font={color:{argb:'FFFFFFFF'},bold:true,size:10};
-    });
-    filas.forEach(function(f){ ws.addRow(f); });
-  }
-  if(DATA.planif) hoja('Planificadores',
-    [{h:'Planificador',k:'a',w:24},{h:'Score salud',k:'s'},{h:'Score pond.',k:'sp'},
-     {h:'Renglones',k:'t'},{h:'Óptimos',k:'o'},{h:'Agotados',k:'ag'},{h:'Críticos',k:'cr'},{h:'% problema',k:'pp'}],
-    (DATA.planif.analistas||[]).filter(function(x){return x.analista!=='SIN ASIGNAR';}).map(function(x){
-      return {a:x.analista,s:x.score_salud,sp:x.score_ponderado,t:x.total,o:x.optimos,ag:x.agotados,cr:x.criticos,pp:x.pct_problema};}));
-  if(DATA.prod){
-    hoja('KARDEX Despacho',
-      [{h:'#',k:'r',w:6},{h:'Facturador',k:'nom',w:24},{h:'Docs netos',k:'net'},{h:'Salidas 313',k:'sal'},{h:'Anul. 314',k:'anu'},{h:'Usuario SAP',k:'sap'}],
-      (DATA.prod.kardex_despacho||[]).map(function(x){return {r:x.rank,nom:x.nombre,net:x.docs_netos,sal:x.docs_salida,anu:x.docs_anulados,sap:x.usuario_sap};}));
-    hoja('KARDEX Mayor',
-      [{h:'#',k:'r',w:6},{h:'Usuario',k:'nom',w:24},{h:'Total mov.',k:'t'},{h:'Entradas',k:'e'},{h:'Salidas',k:'s'},{h:'Temporales',k:'tp'},{h:'Otros',k:'o'}],
-      (DATA.prod.kardex_mayor||[]).map(function(x){return {r:x.rank,nom:x.nombre,t:x.total_movimientos,e:x.entradas,s:x.salidas,tp:x.temporales,o:x.otros};}));
-    (DATA.prod.almacen||[]).forEach(function(et){
-      if(!et.personas.length) return;
-      hoja('Almacén '+et.label.slice(0,20),
-        [{h:'#',k:'r',w:6},{h:'Persona',k:'nom',w:24},{h:'Rol',k:'rol',w:18},{h:'Documentos',k:'d'},{h:'Renglones',k:'g'}],
-        et.personas.map(function(x){return {r:x.rank,nom:x.nombre,rol:x.rol,d:x.docs,g:x.renglones};}));
-    });
-  }
-  if(DATA.rh) hoja('Asistencia',
-    [{h:'Persona',k:'nom',w:24},{h:'Área',k:'ar',w:18},{h:'Días',k:'d'},{h:'A tiempo',k:'at'},{h:'Tardanzas',k:'ta'},{h:'Min tarde',k:'mt'},{h:'Puntualidad %',k:'pu'}],
-    (DATA.rh.personas||[]).map(function(x){return {nom:x.nombre,ar:x.area,d:x.dias_asistidos,at:x.a_tiempo,ta:x.tardanzas,mt:x.minutos_tarde_prom,pu:x.pct_puntualidad};}));
-
-  var buf = await wb.xlsx.writeBuffer();
-  var blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'Productividad_DINALOG_'+new Date().toISOString().slice(0,10)+'.xlsx';
-  a.click();
-};
-
-document.getElementById('btnPDF').onclick = function(){ window.print(); };
+function descargarReporte(fmt){
+  var per = periodo();
+  var amb = document.getElementById('fAmbito').value;
+  var params = { file:'productividad_reporte', fmt:fmt, ambito:amb };
+  if(per.from) params.from = per.from;
+  if(per.to)   params.to   = per.to;
+  var btnTxt = (fmt==='pdf') ? 'btnPDF' : 'btnExcel';
+  var btn = document.getElementById(btnTxt);
+  var orig = btn.textContent;
+  btn.textContent = 'Generando…'; btn.disabled = true;
+  jsonp(API_MOTOR, params).then(function(r){
+    btn.textContent = orig; btn.disabled = false;
+    if(r && r.ok && r.url){ window.open(r.url, '_blank'); }
+    else { alert('No se pudo generar el reporte. Intente de nuevo.'); }
+  }).catch(function(){
+    btn.textContent = orig; btn.disabled = false;
+    alert('Error al generar el reporte. Verifique la conexión.');
+  });
+}
+document.getElementById('btnExcel').onclick = function(){ descargarReporte('xlsx'); };
+document.getElementById('btnPDF').onclick   = function(){ descargarReporte('pdf'); };
 
 /* Arranque: por defecto último mes */
 (function init(){
