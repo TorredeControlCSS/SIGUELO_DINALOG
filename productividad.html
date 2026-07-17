@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Productividad · DINALOG / CEDIS</title>
+<link rel="icon" href="favicon.ico">
+<style>
+  :root{
+    --azul:#1e5a9e; --azul-osc:#0C447C; --bg:#ececec; --borde:#a8a8a8;
+    --panel:#ffffff; --texto:#222; --gris:#666; --verde:#2e7d32; --ambar:#c77700; --rojo:#b3261e;
+    --fila-alt:#f5f7fa; --head:#0C447C;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--texto);
+       font-family:"Segoe UI",Tahoma,Arial,sans-serif;font-size:13px;}
+  .num{font-family:Consolas,"Courier New",monospace;}
+
+  /* ---- barra superior ---- */
+  header{background:var(--azul-osc);color:#fff;padding:10px 16px;
+         display:flex;align-items:center;gap:14px;border-bottom:3px solid #08325c;}
+  header .logo{width:38px;height:38px;flex:0 0 auto;object-fit:contain;
+               background:#fff;border-radius:50%;padding:1px;}
+  header h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.2px;}
+  header .sub{font-size:11px;opacity:.8;margin-top:1px;}
+  header .estado{margin-left:auto;font-size:11px;text-align:right;opacity:.9;}
+
+  /* ---- controles ---- */
+  .controles{background:var(--panel);border-bottom:1px solid var(--borde);
+             padding:8px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:end;}
+  .campo{display:flex;flex-direction:column;gap:2px;}
+  .campo label{font-size:10px;text-transform:uppercase;color:var(--gris);letter-spacing:.4px;}
+  .campo input,.campo select{border:1px solid var(--borde);padding:4px 6px;font-size:12px;
+             background:#fff;border-radius:0;min-width:130px;}
+  .btn{border:1px solid var(--azul-osc);background:var(--azul);color:#fff;padding:5px 12px;
+       font-size:12px;cursor:pointer;border-radius:0;}
+  .btn:hover{background:var(--azul-osc);}
+  .btn.sec{background:#fff;color:var(--azul-osc);}
+  .btn.sec:hover{background:#eef3f9;}
+
+  /* ---- pestañas ---- */
+  nav.tabs{background:var(--panel);border-bottom:1px solid var(--borde);
+           display:flex;flex-wrap:wrap;padding:0 8px;}
+  nav.tabs button{background:none;border:none;border-bottom:3px solid transparent;
+           padding:9px 14px;font-size:12.5px;cursor:pointer;color:var(--gris);font-weight:500;}
+  nav.tabs button.act{color:var(--azul-osc);border-bottom-color:var(--azul);font-weight:600;}
+  nav.tabs button:hover{color:var(--azul-osc);}
+
+  /* ---- contenido ---- */
+  main{padding:14px 16px;}
+  .tab-pane{display:none;}
+  .tab-pane.act{display:block;}
+  .pane-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+  .pane-head h2{font-size:14px;margin:0;color:var(--azul-osc);}
+  .pane-head .peri{font-size:11px;color:var(--gris);background:#eef3f9;padding:2px 8px;
+                   border:1px solid #cfe0f0;}
+  .nota{font-size:11px;color:var(--gris);margin:0 0 8px;line-height:1.4;
+        border-left:3px solid var(--azul);padding:5px 10px;background:#fafcff;}
+
+  /* ---- tablas ---- */
+  .tabla-wrap{overflow-x:auto;border:1px solid var(--borde);background:#fff;}
+  table{border-collapse:collapse;width:100%;font-size:12px;}
+  thead th{background:var(--head);color:#fff;text-align:left;padding:6px 8px;
+           font-weight:600;font-size:11px;white-space:nowrap;position:sticky;top:0;
+           cursor:pointer;user-select:none;border-right:1px solid #1a5088;}
+  thead th .arw{opacity:.5;font-size:9px;margin-left:3px;}
+  tbody td{padding:5px 8px;border-bottom:1px solid #e2e2e2;border-right:1px solid #eee;white-space:nowrap;}
+  tbody tr:nth-child(even){background:var(--fila-alt);}
+  tbody tr:hover{background:#e8f0f9;}
+  td.n{text-align:right;font-family:Consolas,monospace;}
+  td.rank{text-align:center;font-family:Consolas,monospace;color:var(--gris);width:34px;}
+  .barra{height:9px;background:#e0e0e0;display:inline-block;vertical-align:middle;width:80px;border:1px solid #ccc;}
+  .barra > i{display:block;height:100%;background:var(--azul);}
+  .chip{font-size:10px;padding:1px 6px;border:1px solid;border-radius:0;font-family:"Segoe UI";}
+  .chip.ok{color:var(--verde);border-color:var(--verde);background:#f0f8f0;}
+  .chip.warn{color:var(--ambar);border-color:var(--ambar);background:#fdf6ec;}
+  .chip.bad{color:var(--rojo);border-color:var(--rojo);background:#fdf0ef;}
+  .chip.sinp{color:var(--gris);border-color:var(--borde);background:#f2f2f2;}
+  .score{font-family:Consolas,monospace;font-weight:700;padding:2px 7px;color:#fff;display:inline-block;min-width:34px;text-align:center;}
+
+  /* ---- cobertura ---- */
+  .cobertura{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px;}
+  .cob-card{border:1px solid var(--borde);background:#fff;padding:6px 10px;min-width:120px;}
+  .cob-card .et{font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:.4px;}
+  .cob-card .pc{font-family:Consolas,monospace;font-size:18px;color:var(--azul-osc);}
+  .cob-card .de{font-size:10px;color:var(--gris);}
+
+  .vacio{padding:24px;text-align:center;color:var(--gris);font-size:12px;}
+  .cargando{padding:24px;text-align:center;color:var(--azul-osc);font-size:12px;}
+  footer{padding:10px 16px;font-size:10.5px;color:var(--gris);border-top:1px solid var(--borde);
+         background:var(--panel);margin-top:16px;}
+  select.filtro-etapa{border:1px solid var(--borde);padding:3px 6px;font-size:11px;margin-left:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <img class="logo" src="icons/icon-512.png" alt="Caja de Seguro Social">
+  <div>
+    <h1>Panel de Productividad del Personal</h1>
+    <div class="sub">Dirección Nacional de Logística · CEDIS Panamá · Torre de Control</div>
+  </div>
+  <div class="estado" id="estadoCarga">Cargando…</div>
+</header>
+
+<div class="controles">
+  <div class="campo">
+    <label>Desde</label>
+    <input type="date" id="fDesde">
+  </div>
+  <div class="campo">
+    <label>Hasta</label>
+    <input type="date" id="fHasta">
+  </div>
+  <div class="campo">
+    <label>Ámbito personal</label>
+    <select id="fAmbito">
+      <option value="almacen">Solo almacén</option>
+      <option value="todos">Todo el padrón</option>
+    </select>
+  </div>
+  <button class="btn" id="btnAplicar">Aplicar periodo</button>
+  <button class="btn sec" id="btnExcel">Descargar Excel</button>
+  <button class="btn sec" id="btnPDF">Imprimir / PDF</button>
+</div>
+
+<nav class="tabs" id="tabs">
+  <button data-t="planif" class="act">Planificadores</button>
+  <button data-t="kdesp">KARDEX · Despacho</button>
+  <button data-t="kmayor">KARDEX · Carga mayor</button>
+  <button data-t="almacen">Almacén por etapa</button>
+  <button data-t="asis">Cumplimiento asistencia</button>
+</nav>
+
+<main>
+  <!-- PLANIFICADORES -->
+  <section class="tab-pane act" id="pane-planif">
+    <div class="pane-head">
+      <h2>Planificadores · Salud de inventario</h2>
+      <span class="peri">Estado actual del abastecimiento (acumulado)</span>
+    </div>
+    <p class="nota">Ranking por salud de la cartera de renglones asignada a cada planificador:
+      óptimos y bajos suman, agotados/críticos/vencidos/excesos penalizan. El score ponderado
+      pesa más los fallos en renglones de alta criticidad (clase ABC-XYZ).</p>
+    <div class="tabla-wrap"><table id="tbl-planif"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <!-- KARDEX DESPACHO -->
+  <section class="tab-pane" id="pane-kdesp">
+    <div class="pane-head">
+      <h2>KARDEX · Despacho a Unidades Ejecutoras</h2>
+      <span class="peri" id="peri-kdesp">Documentos F8 · neto del periodo</span>
+    </div>
+    <p class="nota">Documentos F8 completos facturados hacia UEs, en <b>neto contable</b>:
+      salidas (mov. 313) menos anulaciones (mov. 314). Es el trabajo que efectivamente llegó
+      a destino. Los nombres provienen del padrón (usuario SAP → nombre canónico).</p>
+    <div class="tabla-wrap"><table id="tbl-kdesp"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <!-- KARDEX MAYOR -->
+  <section class="tab-pane" id="pane-kmayor">
+    <div class="pane-head">
+      <h2>KARDEX · Carga en el libro mayor</h2>
+      <span class="peri">Todos los movimientos SAP-SAFIRO del periodo</span>
+    </div>
+    <p class="nota">Todos los asientos que cada facturador registró en el mayor, sin excluir
+      ningún movimiento legítimo: entradas (101), salidas (313), temporales (561), anulaciones
+      (102/314/562) y otros. Mide la carga contable total, distinta del despacho a UE.</p>
+    <div class="tabla-wrap"><table id="tbl-kmayor"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <!-- ALMACEN POR ETAPA -->
+  <section class="tab-pane" id="pane-almacen">
+    <div class="pane-head">
+      <h2>Almacén · Ejecución por etapa del Kanban</h2>
+      <span class="peri">Documentos y renglones procesados por persona</span>
+      <select class="filtro-etapa" id="selEtapa"></select>
+    </div>
+    <p class="nota">Producción por etapa del flujo de 12 fases. La <b>cobertura</b> indica qué
+      porcentaje de los pedidos de cada etapa ya registra ejecutor nominado; las etapas con
+      captura por PIN (iniciada 13-jul-2026) irán completándose con el uso diario.</p>
+    <div class="cobertura" id="cobertura"></div>
+    <div class="tabla-wrap"><table id="tbl-almacen"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <!-- ASISTENCIA -->
+  <section class="tab-pane" id="pane-asis">
+    <div class="pane-head">
+      <h2>Cumplimiento de asistencia</h2>
+      <span class="peri" id="peri-asis">Fichajes biométricos del periodo</span>
+    </div>
+    <p class="nota" id="nota-asis">Asistencia calculada desde los fichajes reales del biométrico.
+      Cada día con marca cuenta como asistido; se compara la hora de entrada con la jornada
+      esperada para clasificar puntual o tarde. No se infiere ausentismo.</p>
+    <div class="tabla-wrap"><table id="tbl-asis"><thead></thead><tbody></tbody></table></div>
+  </section>
+</main>
+
+<footer>
+  Panel generado por la Torre de Control · Los datos reflejan la medición real de la operación.
+  Cifras honestas: donde un dato no está completo, se indica su cobertura en lugar de estimarlo.
+  <span id="footGen"></span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<script>
+/* =========================================================================
+ *  CONFIGURACIÓN — dos WebApps (respeta la regla de oro: RH_MASTER aparte)
+ * ========================================================================= */
+var API_MOTOR = 'https://script.google.com/macros/s/AKfycbyVHDQ8IuVHibz259AiEvZ-jUfVC7fxvSSqC-wfaiiq1_13C9_TK4dVtPK0SMW4sZoJ/exec';
+var API_RH    = 'REEMPLAZAR_CON_URL_WEBAPP_DE_RH_MASTER/exec';
+
+/* Estado global */
+var DATA = { planif:null, prod:null, rh:null };
+var SORT = {};  // por tabla: {col, dir}
+
+/* ---------- JSONP genérico ---------- */
+function jsonp(baseUrl, params){
+  return new Promise(function(resolve, reject){
+    var cb = 'cb_' + Math.random().toString(36).slice(2);
+    var timer = setTimeout(function(){ cleanup(); reject(new Error('timeout')); }, 45000);
+    function cleanup(){ clearTimeout(timer); delete window[cb];
+                        if(s && s.parentNode) s.parentNode.removeChild(s); }
+    window[cb] = function(resp){ cleanup(); resolve(resp); };
+    var q = Object.keys(params).map(function(k){
+      return encodeURIComponent(k)+'='+encodeURIComponent(params[k]); }).join('&');
+    var s = document.createElement('script');
+    s.src = baseUrl + '?' + q + '&callback=' + cb;
+    s.onerror = function(){ cleanup(); reject(new Error('network')); };
+    document.body.appendChild(s);
+  });
+}
+
+/* ---------- helpers de formato ---------- */
+function n(v){ return (v==null||v==='')?'0':Number(v).toLocaleString('es-PA'); }
+function pct(v){ return (v==null)?'—':v+'%'; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+function colorScore(v){ if(v>=70)return'var(--verde)'; if(v>=45)return'var(--ambar)'; return'var(--rojo)'; }
+function chipPunt(p){ if(p==null)return'<span class="chip sinp">s/d</span>';
+  var c = p>=90?'ok':(p>=75?'warn':'bad'); return '<span class="chip '+c+'">'+p+'%</span>'; }
+
+/* =========================================================================
+ *  TABLA GENÉRICA con orden por columna
+ * ========================================================================= */
+function pintarTabla(tblId, cols, filas){
+  var tbl = document.getElementById(tblId);
+  var thead = tbl.querySelector('thead'), tbody = tbl.querySelector('tbody');
+  var st = SORT[tblId] || {};
+  thead.innerHTML = '<tr>' + cols.map(function(c,i){
+    var arw = (st.col===i) ? (st.dir>0?'▲':'▼') : '';
+    return '<th data-i="'+i+'">'+esc(c.h)+'<span class="arw">'+arw+'</span></th>';
+  }).join('') + '</tr>';
+
+  if(!filas.length){ tbody.innerHTML='<tr><td colspan="'+cols.length+'" class="vacio">Sin datos en el periodo seleccionado.</td></tr>'; return; }
+
+  if(st.col!=null){
+    var c = cols[st.col];
+    filas = filas.slice().sort(function(a,b){
+      var va=c.v(a), vb=c.v(b);
+      if(typeof va==='number' && typeof vb==='number') return (va-vb)*st.dir;
+      return String(va).localeCompare(String(vb),'es')*st.dir;
+    });
+  }
+
+  tbody.innerHTML = filas.map(function(f,ri){
+    return '<tr>'+cols.map(function(c){
+      var cls = c.cls?(' class="'+c.cls+'"'):'';
+      return '<td'+cls+'>'+(c.r?c.r(f,ri):esc(c.v(f)))+'</td>';
+    }).join('')+'</tr>';
+  }).join('');
+
+  thead.querySelectorAll('th').forEach(function(th){
+    th.onclick = function(){
+      var i = +th.dataset.i;
+      var cur = SORT[tblId]||{};
+      SORT[tblId] = { col:i, dir:(cur.col===i? -cur.dir : -1) };
+      pintarTabla(tblId, cols, filas);
+    };
+  });
+}
+
+/* =========================================================================
+ *  RENDER · PLANIFICADORES
+ * ========================================================================= */
+function renderPlanif(){
+  var d = DATA.planif; if(!d){ return; }
+  var filas = (d.analistas||[]).filter(function(a){ return a.analista!=='SIN ASIGNAR'; });
+  var cols = [
+    {h:'#', cls:'rank', v:function(f,i){return i+1;}, r:function(f,i){return (SORT['tbl-planif']&&SORT['tbl-planif'].col!=null)?'':(i+1);}},
+    {h:'Planificador', v:function(f){return f.analista;}},
+    {h:'Score salud', v:function(f){return f.score_salud;}, cls:'n',
+      r:function(f){return '<span class="score" style="background:'+colorScore(f.score_salud)+'">'+f.score_salud+'</span>';}},
+    {h:'Score ponderado', v:function(f){return f.score_ponderado;}, cls:'n',
+      r:function(f){return '<span class="score" style="background:'+colorScore(f.score_ponderado)+'">'+f.score_ponderado+'</span>';}},
+    {h:'Renglones', v:function(f){return f.total;}, cls:'n', r:function(f){return n(f.total);}},
+    {h:'Óptimos', v:function(f){return f.optimos;}, cls:'n', r:function(f){return n(f.optimos);}},
+    {h:'Agotados', v:function(f){return f.agotados;}, cls:'n', r:function(f){return n(f.agotados);}},
+    {h:'Críticos', v:function(f){return f.criticos;}, cls:'n', r:function(f){return n(f.criticos);}},
+    {h:'% problema', v:function(f){return f.pct_problema;}, cls:'n', r:function(f){return f.pct_problema+'%';}}
+  ];
+  pintarTabla('tbl-planif', cols, filas);
+}
+
+/* =========================================================================
+ *  RENDER · KARDEX DESPACHO
+ * ========================================================================= */
+function renderKdesp(){
+  var d = DATA.prod; if(!d){ return; }
+  var filas = d.kardex_despacho||[];
+  var max = Math.max(1, filas.reduce(function(m,f){return Math.max(m,f.docs_netos);},0));
+  var cols = [
+    {h:'#', cls:'rank', v:function(f){return f.rank;}},
+    {h:'Facturador', v:function(f){return f.nombre;},
+      r:function(f){return esc(f.nombre)+(f.sin_padron?' <span class="chip sinp">sin padrón</span>':'');}},
+    {h:'Docs netos', v:function(f){return f.docs_netos;}, cls:'n',
+      r:function(f){return '<span class="num">'+n(f.docs_netos)+'</span> <span class="barra"><i style="width:'+Math.round(100*f.docs_netos/max)+'%"></i></span>';}},
+    {h:'Salidas (313)', v:function(f){return f.docs_salida;}, cls:'n', r:function(f){return n(f.docs_salida);}},
+    {h:'Anulaciones (314)', v:function(f){return f.docs_anulados;}, cls:'n', r:function(f){return n(f.docs_anulados);}},
+    {h:'Usuario SAP', v:function(f){return f.usuario_sap;}}
+  ];
+  pintarTabla('tbl-kdesp', cols, filas);
+}
+
+/* =========================================================================
+ *  RENDER · KARDEX MAYOR
+ * ========================================================================= */
+function renderKmayor(){
+  var d = DATA.prod; if(!d){ return; }
+  var filas = d.kardex_mayor||[];
+  var cols = [
+    {h:'#', cls:'rank', v:function(f){return f.rank;}},
+    {h:'Usuario', v:function(f){return f.nombre;},
+      r:function(f){return esc(f.nombre)+(f.sin_padron?' <span class="chip sinp">sin padrón</span>':'');}},
+    {h:'Total mov.', v:function(f){return f.total_movimientos;}, cls:'n', r:function(f){return n(f.total_movimientos);}},
+    {h:'Entradas (101)', v:function(f){return f.entradas;}, cls:'n', r:function(f){return n(f.entradas);}},
+    {h:'Salidas (313)', v:function(f){return f.salidas;}, cls:'n', r:function(f){return n(f.salidas);}},
+    {h:'Temporales (561)', v:function(f){return f.temporales;}, cls:'n', r:function(f){return n(f.temporales);}},
+    {h:'Anulaciones', v:function(f){return f.anula_entradas+f.anula_salidas+f.anula_temporales;}, cls:'n',
+      r:function(f){return n(f.anula_entradas+f.anula_salidas+f.anula_temporales);}},
+    {h:'Otros', v:function(f){return f.otros;}, cls:'n', r:function(f){return n(f.otros);}}
+  ];
+  pintarTabla('tbl-kmayor', cols, filas);
+}
+
+/* =========================================================================
+ *  RENDER · ALMACÉN POR ETAPA
+ * ========================================================================= */
+function renderAlmacen(){
+  var d = DATA.prod; if(!d){ return; }
+  // cobertura
+  var cob = document.getElementById('cobertura');
+  cob.innerHTML = (d.cobertura||[]).map(function(c){
+    return '<div class="cob-card"><div class="et">'+esc(c.etapa)+'</div>'+
+      '<div class="pc">'+c.pct+'%</div>'+
+      '<div class="de">'+n(c.con_ejecutor)+' / '+n(c.total_en_etapa)+' con ejecutor</div></div>';
+  }).join('');
+
+  // selector de etapa
+  var sel = document.getElementById('selEtapa');
+  if(!sel.dataset.ready){
+    sel.innerHTML = (d.almacen||[]).map(function(e){
+      return '<option value="'+e.etapa+'">'+esc(e.label)+'</option>'; }).join('');
+    sel.dataset.ready='1';
+    sel.onchange = pintarEtapaAlmacen;
+  }
+  pintarEtapaAlmacen();
+}
+function pintarEtapaAlmacen(){
+  var d = DATA.prod; var sel = document.getElementById('selEtapa');
+  var etapa = (d.almacen||[]).filter(function(e){return e.etapa===sel.value;})[0] || {personas:[]};
+  var max = Math.max(1, etapa.personas.reduce(function(m,p){return Math.max(m,p.docs);},0));
+  var cols = [
+    {h:'#', cls:'rank', v:function(f){return f.rank;}},
+    {h:'Persona', v:function(f){return f.nombre;}},
+    {h:'Rol', v:function(f){return f.rol||'—';}},
+    {h:'Documentos', v:function(f){return f.docs;}, cls:'n',
+      r:function(f){return '<span class="num">'+n(f.docs)+'</span> <span class="barra"><i style="width:'+Math.round(100*f.docs/max)+'%"></i></span>';}},
+    {h:'Renglones', v:function(f){return f.renglones;}, cls:'n', r:function(f){return n(f.renglones);}}
+  ];
+  pintarTabla('tbl-almacen', cols, etapa.personas);
+}
+
+/* =========================================================================
+ *  RENDER · ASISTENCIA
+ * ========================================================================= */
+function renderAsis(){
+  var d = DATA.rh; if(!d){ return; }
+  if(d.nota_metodologica) document.getElementById('nota-asis').textContent = d.nota_metodologica;
+  var filas = d.personas||[];
+  var maxD = Math.max(1, filas.reduce(function(m,f){return Math.max(m,f.dias_asistidos);},0));
+  var cols = [
+    {h:'#', cls:'rank', v:function(f,i){return i+1;}, r:function(f,i){return (SORT['tbl-asis']&&SORT['tbl-asis'].col!=null)?'':(i+1);}},
+    {h:'Persona', v:function(f){return f.nombre;}},
+    {h:'Área', v:function(f){return f.area||'—';}},
+    {h:'Días asistidos', v:function(f){return f.dias_asistidos;}, cls:'n',
+      r:function(f){return '<span class="num">'+n(f.dias_asistidos)+'</span> <span class="barra"><i style="width:'+Math.round(100*f.dias_asistidos/maxD)+'%"></i></span>';}},
+    {h:'A tiempo', v:function(f){return f.a_tiempo;}, cls:'n', r:function(f){return n(f.a_tiempo);}},
+    {h:'Tardanzas', v:function(f){return f.tardanzas;}, cls:'n', r:function(f){return n(f.tardanzas);}},
+    {h:'Min. tarde prom.', v:function(f){return f.minutos_tarde_prom;}, cls:'n', r:function(f){return n(f.minutos_tarde_prom);}},
+    {h:'Puntualidad', v:function(f){return f.pct_puntualidad==null?-1:f.pct_puntualidad;}, cls:'n',
+      r:function(f){return chipPunt(f.pct_puntualidad);}}
+  ];
+  pintarTabla('tbl-asis', cols, filas);
+}
+
+/* =========================================================================
+ *  CARGA DE DATOS
+ * ========================================================================= */
+function periodo(){
+  var p = {};
+  var fd = document.getElementById('fDesde').value;
+  var fh = document.getElementById('fHasta').value;
+  if(fd) p.from = fd;
+  if(fh) p.to = fh;
+  return p;
+}
+function setEstado(txt){ document.getElementById('estadoCarga').textContent = txt; }
+
+function cargarTodo(){
+  setEstado('Cargando…');
+  var per = periodo();
+  var amb = document.getElementById('fAmbito').value;
+
+  // 1) Planificadores (Motor · reporte analistas)
+  jsonp(API_MOTOR, {report:'analistas'})
+    .then(function(r){ DATA.planif=r; renderPlanif(); })
+    .catch(function(){ DATA.planif={analistas:[]}; renderPlanif(); });
+
+  // 2) Productividad Kanban (Motor)
+  var pk = {file:'kanban_productividad'}; if(per.from)pk.from=per.from; if(per.to)pk.to=per.to;
+  jsonp(API_MOTOR, pk)
+    .then(function(r){ DATA.prod=r; renderKdesp(); renderKmayor(); renderAlmacen(); })
+    .catch(function(){ DATA.prod={kardex_despacho:[],kardex_mayor:[],almacen:[],cobertura:[]};
+                       renderKdesp(); renderKmayor(); renderAlmacen(); });
+
+  // 3) Asistencia (RH_MASTER)
+  var pr = {api:'productividad_rh', ambito:amb}; if(per.from)pr.from=per.from; if(per.to)pr.to=per.to;
+  jsonp(API_RH, pr)
+    .then(function(r){ DATA.rh=r; renderAsis(); actualizarEstado(); })
+    .catch(function(){ DATA.rh={personas:[],nota_metodologica:'No se pudo cargar RH_MASTER. Verifique la URL del WebApp.'};
+                       renderAsis(); actualizarEstado(); });
+}
+function actualizarEstado(){
+  var g = (DATA.prod&&DATA.prod.generado) || (DATA.rh&&DATA.rh.generado) || '';
+  setEstado('Actualizado');
+  document.getElementById('footGen').textContent = g ? (' · Generado: '+g) : '';
+}
+
+/* =========================================================================
+ *  PESTAÑAS
+ * ========================================================================= */
+document.getElementById('tabs').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if(!b) return;
+  document.querySelectorAll('#tabs button').forEach(function(x){x.classList.remove('act');});
+  document.querySelectorAll('.tab-pane').forEach(function(x){x.classList.remove('act');});
+  b.classList.add('act');
+  document.getElementById('pane-'+b.dataset.t).classList.add('act');
+});
+
+document.getElementById('btnAplicar').onclick = cargarTodo;
+document.getElementById('fAmbito').onchange = function(){
+  var per = periodo();
+  var pr = {api:'productividad_rh', ambito:this.value}; if(per.from)pr.from=per.from; if(per.to)pr.to=per.to;
+  jsonp(API_RH, pr).then(function(r){ DATA.rh=r; renderAsis(); }).catch(function(){});
+};
+
+/* =========================================================================
+ *  EXPORTAR EXCEL (ExcelJS) — reutiliza el patrón del ecosistema
+ * ========================================================================= */
+document.getElementById('btnExcel').onclick = async function(){
+  if(typeof ExcelJS==='undefined'){ alert('Librería Excel no disponible.'); return; }
+  var wb = new ExcelJS.Workbook();
+  var azul = 'FF0C447C';
+  function hoja(nombre, cols, filas){
+    var ws = wb.addWorksheet(nombre);
+    ws.columns = cols.map(function(c){ return {header:c.h, key:c.k, width:c.w||16}; });
+    ws.getRow(1).eachCell(function(cell){
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:azul}};
+      cell.font={color:{argb:'FFFFFFFF'},bold:true,size:10};
+    });
+    filas.forEach(function(f){ ws.addRow(f); });
+  }
+  if(DATA.planif) hoja('Planificadores',
+    [{h:'Planificador',k:'a',w:24},{h:'Score salud',k:'s'},{h:'Score pond.',k:'sp'},
+     {h:'Renglones',k:'t'},{h:'Óptimos',k:'o'},{h:'Agotados',k:'ag'},{h:'Críticos',k:'cr'},{h:'% problema',k:'pp'}],
+    (DATA.planif.analistas||[]).filter(function(x){return x.analista!=='SIN ASIGNAR';}).map(function(x){
+      return {a:x.analista,s:x.score_salud,sp:x.score_ponderado,t:x.total,o:x.optimos,ag:x.agotados,cr:x.criticos,pp:x.pct_problema};}));
+  if(DATA.prod){
+    hoja('KARDEX Despacho',
+      [{h:'#',k:'r',w:6},{h:'Facturador',k:'nom',w:24},{h:'Docs netos',k:'net'},{h:'Salidas 313',k:'sal'},{h:'Anul. 314',k:'anu'},{h:'Usuario SAP',k:'sap'}],
+      (DATA.prod.kardex_despacho||[]).map(function(x){return {r:x.rank,nom:x.nombre,net:x.docs_netos,sal:x.docs_salida,anu:x.docs_anulados,sap:x.usuario_sap};}));
+    hoja('KARDEX Mayor',
+      [{h:'#',k:'r',w:6},{h:'Usuario',k:'nom',w:24},{h:'Total mov.',k:'t'},{h:'Entradas',k:'e'},{h:'Salidas',k:'s'},{h:'Temporales',k:'tp'},{h:'Otros',k:'o'}],
+      (DATA.prod.kardex_mayor||[]).map(function(x){return {r:x.rank,nom:x.nombre,t:x.total_movimientos,e:x.entradas,s:x.salidas,tp:x.temporales,o:x.otros};}));
+    (DATA.prod.almacen||[]).forEach(function(et){
+      if(!et.personas.length) return;
+      hoja('Almacén '+et.label.slice(0,20),
+        [{h:'#',k:'r',w:6},{h:'Persona',k:'nom',w:24},{h:'Rol',k:'rol',w:18},{h:'Documentos',k:'d'},{h:'Renglones',k:'g'}],
+        et.personas.map(function(x){return {r:x.rank,nom:x.nombre,rol:x.rol,d:x.docs,g:x.renglones};}));
+    });
+  }
+  if(DATA.rh) hoja('Asistencia',
+    [{h:'Persona',k:'nom',w:24},{h:'Área',k:'ar',w:18},{h:'Días',k:'d'},{h:'A tiempo',k:'at'},{h:'Tardanzas',k:'ta'},{h:'Min tarde',k:'mt'},{h:'Puntualidad %',k:'pu'}],
+    (DATA.rh.personas||[]).map(function(x){return {nom:x.nombre,ar:x.area,d:x.dias_asistidos,at:x.a_tiempo,ta:x.tardanzas,mt:x.minutos_tarde_prom,pu:x.pct_puntualidad};}));
+
+  var buf = await wb.xlsx.writeBuffer();
+  var blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Productividad_DINALOG_'+new Date().toISOString().slice(0,10)+'.xlsx';
+  a.click();
+};
+
+document.getElementById('btnPDF').onclick = function(){ window.print(); };
+
+/* Arranque: por defecto último mes */
+(function init(){
+  var hoy = new Date();
+  var hace = new Date(); hace.setMonth(hace.getMonth()-1);
+  document.getElementById('fHasta').value = hoy.toISOString().slice(0,10);
+  document.getElementById('fDesde').value = hace.toISOString().slice(0,10);
+  cargarTodo();
+})();
+</script>
+</body>
+</html>
