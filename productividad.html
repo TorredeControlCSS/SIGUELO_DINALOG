@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Panel de Productividad · DINALOG / CEDIS</title>
+<link rel="icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="icons/icon-512.png">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
@@ -17,8 +19,7 @@
   .num{font-family:Consolas,"Courier New",monospace;}
   header{background:var(--azul-osc);color:#fff;padding:10px 16px;
          display:flex;align-items:center;gap:14px;border-bottom:3px solid #08325c;}
-  header .logo{width:38px;height:38px;flex:0 0 auto;object-fit:contain;
-               background:#fff;border-radius:50%;padding:1px;}
+  header .logo{width:40px;height:40px;flex:0 0 auto;object-fit:contain;}
   header h1{font-size:15px;margin:0;font-weight:600;letter-spacing:.2px;}
   header .sub{font-size:11px;opacity:.8;margin-top:1px;}
   header .estado{margin-left:auto;font-size:11px;text-align:right;opacity:.9;}
@@ -107,6 +108,7 @@
     </select>
   </div>
   <button class="btn" id="btnAplicar">Aplicar periodo</button>
+  <button class="btn sec" id="btnExcel">Descargar Excel</button>
   <button class="btn sec" id="btnPDF">Descargar PDF</button>
 </div>
 
@@ -188,7 +190,7 @@
 
 <script>
 var API_MOTOR = 'https://script.google.com/macros/s/AKfycbyVHDQ8IuVHibz259AiEvZ-jUfVC7fxvSSqC-wfaiiq1_13C9_TK4dVtPK0SMW4sZoJ/exec';
-var API_RH    = 'https://script.google.com/macros/s/AKfycby_lXwc1VIzyj5qV2kxaZBzhiBiHQ3wPbRG3raRov_Ij2lFEtBnqTGb_1DmCglx37V_/exec';
+var API_RH    = 'https://script.google.com/macros/s/AKfycby_lXwc1VIzyj5qV2kxaZBzhiBiHQ3wPbRG3raRov_lj2lFEtBnqTGb_1DmCglx37V_/exec';
 
 var DATA = { prod:null, rh:null, planif:null };
 var SORT = {};
@@ -318,30 +320,63 @@ function renderKmayor(){
 function renderAlmacen(){
   var p=DATA.prod||{};
   var cob=p.cobertura||[];
+  // tarjetas de etapa accionables: al tocar, filtran la tabla de captura Y resaltan el grupo en gráficos
   el('kpisCobertura').innerHTML=cob.map(function(c){var cls=c.pct>=80?'ok':(c.pct>=40?'warn':'bad');
     return '<div class="kpi '+cls+'" data-etapa="'+c.etapa+'"><div class="et">'+c.etapa+'</div><div class="vl">'+c.pct+'%</div><div class="de">'+n(c.con_ejecutor)+' / '+n(c.total_en_etapa)+' con ejecutor</div></div>';}).join('');
   el('kpisCobertura').querySelectorAll('.kpi').forEach(function(k){ k.onclick=function(){
-      var et=k.getAttribute('data-etapa'), sel=el('selEtapa');
+      var et=k.getAttribute('data-etapa');
+      var yaSel=k.classList.contains('sel');
+      el('kpisCobertura').querySelectorAll('.kpi').forEach(function(x){x.classList.remove('sel');});
+      if(yaSel){ ALM_FILTRO=null; }        // segundo clic = quitar filtro
+      else{ k.classList.add('sel'); ALM_FILTRO=et; }
+      // sincronizar el selector de etapa con captura, si aplica
+      var sel=el('selEtapa');
       for(var i=0;i<sel.options.length;i++){ if(sel.options[i].text.toUpperCase().indexOf(et.toUpperCase())>=0){ sel.selectedIndex=i; break; } }
       pintarEtapaAlmacen();
-      el('kpisCobertura').querySelectorAll('.kpi').forEach(function(x){x.classList.remove('sel');});
-      k.classList.add('sel'); }; });
-  var lat=(p.latencias||[]).filter(function(l){return l.mediana!=null;});
-  chart('chLatencia','bar',{labels:lat.map(function(l){return l.etapa;}),datasets:[{label:'Días',data:lat.map(function(l){return l.mediana;}),backgroundColor:lat.map(function(l){return l.mediana>5?'#b3261e':'#c77700';})}]},{indexAxis:'y',plugins:{legend:{display:false}}});
-  var gr=p.almacen_por_grupo||[];
-  chart('chGrupo','bar',{labels:gr.map(function(g){return g.grupo;}),datasets:[{label:'Docs',data:gr.map(function(g){return g.docs;}),backgroundColor:'#2e7d32'}]},{indexAxis:'y',plugins:{legend:{display:false}}});
+      dibujarAlmacenCharts();   // los gráficos reaccionan al filtro
+    }; });
+  ALM_FILTRO=null;
+  dibujarAlmacenCharts();
+
+  // torre de control (incluye asignación de Ildemaro)
   pintarTabla('tbl-torre',[{h:'Persona',key:'nombre'},{h:'Función',key:'funcion'},{h:'Documentos',key:'docs',cls:'n',fmt:n}], p.torre_control||[]);
+  // producción por grupo, ahora CON latencia por grupo
   pintarTabla('tbl-grupo',[
     {h:'Grupo',key:'grupo'},{h:'Documentos',key:'docs',cls:'n',fmt:n},{h:'Renglones',key:'renglones',cls:'n',fmt:n},
     {h:'Avanzados',key:'avanzados',cls:'n',fmt:n},
     {h:'% avance',key:'pct_avance',cls:'n',fmt:function(v){var c=v>=70?'ok':(v>=40?'warn':'bad');return '<span class="chip '+c+'">'+v+'%</span>';}},
+    {h:'Ciclo mediano (días)',key:'ciclo_mediano',cls:'n',fmt:function(v){return v==null?'s/d':v+'d';}},
     {h:'Almacenistas',key:'almacenistas',fmt:function(v){return (v||[]).join(', ')||'—';}}
-  ], gr);
+  ], p.almacen_por_grupo||[]);
   var etapas=(p.almacen||[]).filter(function(e){return e.personas&&e.personas.length;});
   var sel=el('selEtapa');
   sel.innerHTML=etapas.map(function(e){return '<option value="'+e.etapa+'">'+e.label+'</option>';}).join('')||'<option>Sin captura aún</option>';
   sel.onchange=pintarEtapaAlmacen;
   pintarEtapaAlmacen();
+}
+var ALM_FILTRO=null;
+function dibujarAlmacenCharts(){
+  var p=DATA.prod||{};
+  // latencia POR GRUPO (ciclo mediano de cada grupo), no por etapa suelta
+  var gr=(p.almacen_por_grupo||[]);
+  chart('chLatencia','bar',{
+    labels:gr.map(function(g){return g.grupo;}),
+    datasets:[{label:'Ciclo mediano (días)',data:gr.map(function(g){return g.ciclo_mediano||0;}),
+      backgroundColor:gr.map(function(g){
+        var sel = ALM_FILTRO && g.grupo.toUpperCase().indexOf(ALM_FILTRO.toUpperCase())>=0;
+        var base = (g.ciclo_mediano||0)>13?'#b3261e':((g.ciclo_mediano||0)>7?'#c77700':'#2e7d32');
+        return (ALM_FILTRO && !sel) ? '#cccccc' : base;   // atenúa los no seleccionados
+      })}]
+  },{indexAxis:'y',plugins:{legend:{display:false},title:{display:true,text:'Días medianos emisión→distribución por grupo'}}});
+  // documentos por grupo (reacciona al filtro también)
+  chart('chGrupo','bar',{
+    labels:gr.map(function(g){return g.grupo;}),
+    datasets:[{label:'Docs',data:gr.map(function(g){return g.docs;}),
+      backgroundColor:gr.map(function(g){
+        var sel = ALM_FILTRO && g.grupo.toUpperCase().indexOf(ALM_FILTRO.toUpperCase())>=0;
+        return (ALM_FILTRO && !sel) ? '#cccccc' : '#2e7d32';
+      })}]
+  },{indexAxis:'y',plugins:{legend:{display:false}}});
 }
 function pintarEtapaAlmacen(){
   var p=DATA.prod||{}, sel=el('selEtapa');
@@ -390,11 +425,10 @@ function cargarTodo(){
   el('estadoCarga').textContent='Cargando…';
   var pk={file:'kanban_productividad'}; if(per.from)pk.from=per.from; if(per.to)pk.to=per.to;
   jsonp(API_MOTOR, pk)
-    .then(function(r){ DATA.prod=r; renderResumen(); renderKdesp(); renderKmayor(); renderAlmacen(); estado(); })
-    .catch(function(){ DATA.prod={kardex_despacho:[],kardex_mayor:[],almacen:[],cobertura:[]}; renderResumen(); renderKdesp(); renderKmayor(); renderAlmacen(); });
-  jsonp(API_MOTOR, {report:'analistas'})
-    .then(function(r){ DATA.planif=r; renderPlanif(); })
-    .catch(function(){ DATA.planif={analistas:[]}; renderPlanif(); });
+    .then(function(r){ DATA.prod=r; DATA.planif={analistas:(r.analistas||[])};
+      renderResumen(); renderKdesp(); renderKmayor(); renderAlmacen(); renderPlanif(); estado(); })
+    .catch(function(){ DATA.prod={kardex_despacho:[],kardex_mayor:[],almacen:[],cobertura:[]}; DATA.planif={analistas:[]};
+      renderResumen(); renderKdesp(); renderKmayor(); renderAlmacen(); renderPlanif(); });
   var pr={api:'productividad_rh', ambito:amb}; if(per.from)pr.from=per.from; if(per.to)pr.to=per.to;
   jsonp(API_RH, pr)
     .then(function(r){ DATA.rh=r; renderAsis(); renderResumen(); })
@@ -402,32 +436,75 @@ function cargarTodo(){
 }
 function estado(){ var g=(DATA.prod&&DATA.prod.generado)||''; el('estadoCarga').textContent='Actualizado'; el('footGen').textContent=g?' · Generado: '+g:''; }
 
+/* ---------- EXCEL: descarga el reporte rico del GAS ---------- */
+function descargarExcel(){
+  var per=periodo(), amb=el('fAmbito').value;
+  var q='file=productividad_reporte&fmt=xlsx&ambito='+encodeURIComponent(amb);
+  if(per.from)q+='&from='+per.from; if(per.to)q+='&to='+per.to;
+  el('btnExcel').textContent='Generando…';
+  // el GAS devuelve JSON con {url} de descarga directa
+  jsonp(API_MOTOR, {file:'productividad_reporte',fmt:'xlsx',ambito:amb,from:per.from||'',to:per.to||''})
+    .then(function(r){
+      el('btnExcel').textContent='Descargar Excel';
+      if(r&&r.url){ window.open(r.url,'_blank'); }
+      else{ alert('El reporte se está generando en el servidor. Si no abre, verifica el despliegue del GAS.'); }
+    })
+    .catch(function(){ el('btnExcel').textContent='Descargar Excel';
+      alert('No se pudo generar el Excel. Verifica que el endpoint productividad_reporte esté desplegado.'); });
+}
+
+/* ---------- PDF: captura lo que se ve en el panel (html2canvas) ---------- */
 function descargarPDF(){
   el('btnPDF').textContent='Generando…';
-  cargarScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js', function(){
-    cargarScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.1/dist/jspdf.plugin.autotable.min.js', function(){ construirPDF(); el('btnPDF').textContent='Descargar PDF'; });
+  cargarScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', function(){
+    cargarScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js', function(){
+      capturarPanelPDF();
+    });
   });
 }
-function cargarScript(src, cb){ if(document.querySelector('script[src="'+src+'"]')){ cb(); return; } var s=document.createElement('script'); s.src=src; s.onload=cb; document.body.appendChild(s); }
-function construirPDF(){
-  var jsPDF=window.jspdf.jsPDF, doc=new jsPDF('p','mm','a4'), azul=[12,68,124];
-  doc.setFontSize(14).setFont('helvetica','bold').setTextColor(azul[0],azul[1],azul[2]);
-  doc.text('Informe de Productividad del Personal', 14, 18);
-  doc.setFontSize(9).setFont('helvetica','normal').setTextColor(90,90,90);
-  doc.text('Dirección Nacional de Logística · CEDIS Panamá · CSS', 14, 24);
-  doc.text('Generado: '+new Date().toLocaleString('es-PA',{dateStyle:'short',timeStyle:'short'}), 14, 29);
-  var p=DATA.prod||{}, rh=DATA.rh||{};
-  doc.autoTable({ startY:34, head:[['#','Facturador','Docs netos','Salidas','Anul.']],
-    body:(p.kardex_despacho||[]).slice(0,15).map(function(x){return [x.rank,x.nombre,x.docs_netos,x.docs_salida,x.docs_anulados];}),
-    theme:'grid', styles:{fontSize:8}, headStyles:{fillColor:azul} });
-  var porArea={}; (rh.personas||[]).forEach(function(x){var a=x.area||'(sin área)';(porArea[a]=porArea[a]||[]).push(x);});
-  var resumen=Object.keys(porArea).sort().map(function(a){var g=porArea[a];return [a,g.length,Math.round(g.reduce(function(s,x){return s+(x.pct_puntualidad||0);},0)/g.length)+'%'];});
-  doc.addPage();
-  doc.setFontSize(12).setFont('helvetica','bold').setTextColor(azul[0],azul[1],azul[2]);
-  doc.text('Puntualidad por área', 14, 18);
-  doc.autoTable({ startY:24, head:[['Área','Personas','Puntualidad media']], body:resumen, theme:'grid', styles:{fontSize:8}, headStyles:{fillColor:azul} });
-  doc.save('Productividad_DINALOG_'+new Date().toISOString().slice(0,10)+'.pdf');
+function capturarPanelPDF(){
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF('p','mm','a4');
+  var pageW=doc.internal.pageSize.getWidth(), pageH=doc.internal.pageSize.getHeight();
+  // capturar cada pestaña visible: activamos cada una, la fotografiamos, y la ponemos en una página
+  var tabs=['resumen','planif','kdesp','kmayor','almacen','asis'];
+  var idx=0;
+  function siguiente(){
+    if(idx>=tabs.length){ doc.save('Productividad_DINALOG_'+new Date().toISOString().slice(0,10)+'.pdf'); el('btnPDF').textContent='Descargar PDF'; return; }
+    // mostrar pestaña
+    document.querySelectorAll('.tab-pane').forEach(function(x){x.classList.remove('act');});
+    var pane=el('pane-'+tabs[idx]); pane.classList.add('act');
+    setTimeout(function(){
+      html2canvas(pane,{scale:2,useCORS:true,backgroundColor:'#ffffff',logging:false}).then(function(canvas){
+        var img=canvas.toDataURL('image/jpeg',0.92);
+        var w=pageW-16, h=canvas.height*w/canvas.width;
+        if(idx>0) doc.addPage();
+        // cabecera
+        doc.setFontSize(11).setFont('helvetica','bold').setTextColor(12,68,124);
+        doc.text('Informe de Productividad · '+tabs[idx].toUpperCase(), 8, 10);
+        // imagen (paginada si es muy alta)
+        var top=14, maxH=pageH-top-8;
+        if(h<=maxH){ doc.addImage(img,'JPEG',8,top,w,h); }
+        else{
+          // partir en varias páginas
+          var sliceH=canvas.width*maxH/w;
+          var y=0, first=true;
+          while(y<canvas.height){
+            var c=document.createElement('canvas'); c.width=canvas.width; c.height=Math.min(sliceH,canvas.height-y);
+            c.getContext('2d').drawImage(canvas,0,y,canvas.width,c.height,0,0,canvas.width,c.height);
+            if(!first) doc.addPage();
+            doc.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',8,top,w,c.height*w/canvas.width);
+            y+=sliceH; first=false;
+          }
+        }
+        idx++; siguiente();
+      });
+    }, 350); // dar tiempo a que Chart.js redibuje
+  }
+  siguiente();
 }
+
+function cargarScript(src, cb){ if(document.querySelector('script[src="'+src+'"]')){ cb(); return; } var s=document.createElement('script'); s.src=src; s.onload=cb; document.body.appendChild(s); }
 
 document.querySelectorAll('nav.tabs button').forEach(function(b){ b.onclick=function(){
     document.querySelectorAll('nav.tabs button').forEach(function(x){x.classList.remove('act');});
@@ -435,6 +512,7 @@ document.querySelectorAll('nav.tabs button').forEach(function(b){ b.onclick=func
     b.classList.add('act'); el('pane-'+b.getAttribute('data-t')).classList.add('act'); }; });
 
 el('btnAplicar').onclick=cargarTodo;
+el('btnExcel').onclick=descargarExcel;
 el('btnPDF').onclick=descargarPDF;
 el('fAmbito').onchange=function(){ var per=periodo(), pr={api:'productividad_rh',ambito:this.value};
   if(per.from)pr.from=per.from; if(per.to)pr.to=per.to;
