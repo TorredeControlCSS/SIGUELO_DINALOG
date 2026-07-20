@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carga de Insumos · Productividad DINALOG</title>
+<link rel="icon" href="favicon.ico">
+<style>
+  :root{
+    --azul:#0C447C; --azul2:#1e5a9e; --bg:#ececec; --linea:#a8a8a8;
+    --verde:#2e7d32; --verde-bg:#eaf4e8; --rojo:#a3331f; --rojo-bg:#fbeceb;
+    --ambar:#8a6a00; --ambar-bg:#fff8e1;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:#222;font-size:14px;}
+
+  header{background:var(--azul);color:#fff;padding:12px 18px;display:flex;align-items:center;gap:14px;}
+  header img{width:46px;height:46px;object-fit:contain;flex-shrink:0;}
+  header h1{font-size:16px;margin:0;line-height:1.2;}
+  header .sub{font-size:11px;opacity:.85;margin-top:2px;}
+  header .fecha{margin-left:auto;text-align:right;font-size:11px;opacity:.9;}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:16px 18px 40px;}
+
+  .barra{background:#fff;border:1px solid var(--linea);border-radius:4px;padding:10px 14px;
+         margin-bottom:16px;display:flex;flex-wrap:wrap;gap:14px;align-items:end;}
+  .campo{display:flex;flex-direction:column;gap:3px;}
+  .campo label{font-size:10.5px;text-transform:uppercase;color:#666;letter-spacing:.4px;font-weight:600;}
+  .campo input,.campo select{padding:7px 9px;border:1px solid var(--linea);border-radius:3px;
+         font-size:13px;font-family:inherit;min-width:180px;}
+  .barra .nota{font-size:11.5px;color:#666;flex:1;min-width:220px;line-height:1.4;}
+
+  .resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:18px;}
+  .rk{background:#fff;border:1px solid var(--linea);border-radius:4px;padding:9px 11px;}
+  .rk .t{font-size:10.5px;color:#666;text-transform:uppercase;letter-spacing:.3px;}
+  .rk .v{font-size:20px;font-weight:700;font-family:Consolas,monospace;color:var(--azul);}
+  .rk.ok .v{color:var(--verde);} .rk.pend .v{color:var(--rojo);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;}
+
+  .panel{background:#fff;border:1px solid var(--linea);border-radius:4px;display:flex;flex-direction:column;}
+  .panel-h{background:#f4f8fc;border-bottom:1px solid var(--linea);padding:10px 12px;
+           font-weight:700;color:var(--azul);font-size:13.5px;display:flex;align-items:center;gap:8px;}
+  .num{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--azul);color:#fff;
+       align-items:center;justify-content:center;font-size:12px;flex-shrink:0;font-weight:700;}
+  .panel-b{padding:11px 12px;display:flex;flex-direction:column;gap:9px;flex:1;}
+  .meta{font-size:11.5px;color:#555;line-height:1.45;}
+  .meta b{color:#333;}
+  .badge{display:inline-block;font-size:10px;padding:1px 7px;border-radius:2px;border:1px solid;
+         margin-left:auto;font-weight:600;}
+  .badge.ok{color:var(--verde);border-color:var(--verde);background:var(--verde-bg);}
+  .badge.pend{color:var(--rojo);border-color:var(--rojo);background:var(--rojo-bg);}
+  .badge.sem{color:var(--ambar);border-color:var(--ambar);background:var(--ambar-bg);}
+
+  .dropzone{display:flex;align-items:center;justify-content:center;gap:11px;border:2px dashed #c9a227;
+            border-radius:6px;padding:15px 12px;text-align:left;background:rgba(255,221,87,0.18);
+            cursor:pointer;transition:.15s;}
+  .dropzone:hover,.dropzone.drag{background:rgba(255,210,40,0.32);border-color:#a9851a;}
+  .dropzone .ico{font-size:24px;color:#8a6a00;line-height:1;}
+  .dropzone .t{font-weight:600;color:#6b5400;font-size:13px;}
+  .dropzone .s{font-size:11px;color:#8a7320;margin-top:1px;}
+  .dropzone.listo{border-color:var(--verde);background:var(--verde-bg);}
+  .dropzone.listo .ico,.dropzone.listo .t{color:var(--verde);}
+
+  .sel-area{display:none;}
+  .sel-area.on{display:flex;}
+
+  .btn{padding:8px 14px;border:1px solid var(--azul);background:var(--azul);color:#fff;border-radius:3px;
+       font-size:13px;cursor:pointer;font-family:inherit;width:100%;}
+  .btn:hover{background:var(--azul2);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  .msg{font-size:12px;padding:7px 9px;border-radius:3px;display:none;line-height:1.4;}
+  .msg.info{background:#e7f1fb;color:var(--azul);border:1px solid #b8d4ee;display:block;}
+  .msg.ok{background:var(--verde-bg);color:var(--verde);border:1px solid #b5d4a8;display:block;}
+  .msg.err{background:var(--rojo-bg);color:var(--rojo);border:1px solid #e3b0b0;display:block;}
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid #b8d4ee;border-top-color:var(--azul);
+           border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .hist{margin-top:22px;background:#fff;border:1px solid var(--linea);border-radius:4px;}
+  .hist-h{background:#f4f8fc;border-bottom:1px solid var(--linea);padding:10px 14px;
+          font-weight:700;color:var(--azul);font-size:14px;}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;}
+  th{background:var(--azul);color:#fff;font-weight:600;padding:7px 9px;text-align:left;white-space:nowrap;}
+  td{padding:6px 9px;border-bottom:1px solid #e6e6e6;}
+  tbody tr:nth-child(even){background:#f6f9fc;}
+  .vacio{text-align:center;color:#777;padding:18px;font-size:12.5px;}
+  .mono{font-family:Consolas,'Courier New',monospace;}
+
+  footer{padding:14px 18px;font-size:11px;color:#666;text-align:center;}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="icons/icon-512.png" alt="CSS">
+  <div>
+    <h1>Carga de Insumos · Medición de Productividad</h1>
+    <div class="sub">Dirección Nacional de Logística · CEDIS Panamá · Torre de Control</div>
+  </div>
+  <div class="fecha" id="fechaHoy"></div>
+</header>
+
+<div class="wrap">
+
+  <div class="barra">
+    <div class="campo">
+      <label>Fecha del reporte</label>
+      <input type="date" id="fechaRep">
+    </div>
+    <div class="campo">
+      <label>Quien reporta</label>
+      <input type="text" id="usuario" placeholder="Nombre y apellido">
+    </div>
+    <div class="nota">
+      Cargue cada archivo <b>en el mismo formato en que lo genera su sistema de origen</b>,
+      sin modificar encabezados ni nombres de columna. El procesamiento automático depende de ese formato.
+    </div>
+  </div>
+
+  <div class="resumen" id="resumen"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="hist">
+    <div class="hist-h">Cargas registradas en la fecha seleccionada</div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr>
+          <th>Hora</th><th>Insumo</th><th>Área</th><th>Archivo</th><th>Reportó</th>
+        </tr></thead>
+        <tbody id="tbodyHist"><tr><td colspan="5" class="vacio">Cargando…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Los archivos cargados se almacenan de forma automática y alimentan el sistema de medición de productividad.
+  Torre de Control · DINALOG
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+ *  CONFIGURACIÓN
+ * ═══════════════════════════════════════════════════════════════════ */
+// ⚠️ Pegar aquí la URL del WebApp de INGESTA_INSUMOS.gs tras desplegarlo
+var API_URL = 'REEMPLAZAR_CON_URL_WEBAPP_DE_INGESTA/exec';
+
+/* Catálogo de los 7 insumos — refleja la tabla del memorando */
+var INSUMOS = [
+  { k:'recepcion',  n:1, nombre:'Entradas diarias de recepción',
+    fuente:'Reporte de Excel', resp:'Jefatura de Recepción / Dirección de Abasto',
+    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
+  { k:'salmi',      n:2, nombre:'Distribución, recolección, reservas e inventario',
+    fuente:'WMS SALMI', resp:'Jefatura de Almacén',
+    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
+    areas:['LABORATORIO','MQ','MEDICAMENTOS'] },
+  { k:'mb51',       n:3, nombre:'Reporte MB51 / MB52',
+    fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
+    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
+  { k:'biometrico', n:4, nombre:'Reporte del reloj biométrico',
+    fuente:'Sistema biométrico', resp:'Recursos Humanos',
+    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv,.pdf' },
+  { k:'asistencia', n:5, nombre:'Listas de asistencia escaneadas',
+    fuente:'Lista manuscrita', resp:'Administración',
+    per:'Diaria, al cierre de turno', acepta:'.pdf,.jpg,.jpeg,.png' },
+  { k:'transitos',  n:6, nombre:'Órdenes de compra en tránsito',
+    fuente:'Tablero institucional', resp:'Equipo de Planificación',
+    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
+  { k:'transporte', n:7, nombre:'Cronograma de despachos y entregas',
+    fuente:'Reporte de Excel', resp:'Jefatura de Transporte',
+    per:'Semanal', acepta:'.xlsx,.xls,.csv,.pdf', semanal:true }
+];
+
+var ARCHIVOS = {};   // clave insumo → {base64, nombre, mime}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  UTILIDADES
+ * ═══════════════════════════════════════════════════════════════════ */
+function el(id){ return document.getElementById(id); }
+function hoyISO(){
+  var d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmtFechaLarga(iso){
+  var m=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var p=String(iso).split('-');
+  return p[2]+' de '+m[+p[1]-1]+' de '+p[0];
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  RENDER DE TARJETAS
+ * ═══════════════════════════════════════════════════════════════════ */
+function pintarTarjetas(){
+  el('grid').innerHTML = INSUMOS.map(function(ins){
+    var selArea = ins.areas ? (
+      '<div class="campo sel-area on"><label>Área del reporte</label>' +
+      '<select id="area_'+ins.k+'">' +
+      ins.areas.map(function(a){ return '<option value="'+a+'">'+a+'</option>'; }).join('') +
+      '</select></div>') : '';
+    return (
+    '<div class="panel" id="panel_'+ins.k+'">'+
+      '<div class="panel-h"><span class="num">'+ins.n+'</span>'+ins.nombre+
+        '<span class="badge pend" id="badge_'+ins.k+'">'+(ins.semanal?'SEMANAL':'PENDIENTE')+'</span></div>'+
+      '<div class="panel-b">'+
+        '<div class="meta"><b>Fuente:</b> '+ins.fuente+'<br>'+
+          '<b>Responsable:</b> '+ins.resp+'<br>'+
+          '<b>Periodicidad:</b> '+ins.per+'</div>'+
+        selArea+
+        '<div class="dropzone" id="dz_'+ins.k+'">'+
+          '<div class="ico">&#8681;</div>'+
+          '<div><div class="t" id="dzt_'+ins.k+'">Seleccionar archivo</div>'+
+          '<div class="s">o arrástrelo aquí · '+ins.acepta.replace(/\./g,'').toUpperCase().replace(/,/g,' ')+'</div></div>'+
+        '</div>'+
+        '<input type="file" id="file_'+ins.k+'" accept="'+ins.acepta+'" style="display:none">'+
+        '<div class="msg" id="msg_'+ins.k+'"></div>'+
+        '<button class="btn" id="btn_'+ins.k+'" disabled>Cargar archivo</button>'+
+      '</div>'+
+    '</div>');
+  }).join('');
+
+  INSUMOS.forEach(function(ins){ enlazarTarjeta(ins); });
+}
+
+function enlazarTarjeta(ins){
+  var dz=el('dz_'+ins.k), fi=el('file_'+ins.k), bt=el('btn_'+ins.k);
+
+  dz.addEventListener('click', function(){ fi.click(); });
+  dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', function(){ dz.classList.remove('drag'); });
+  dz.addEventListener('drop', function(e){
+    e.preventDefault(); dz.classList.remove('drag');
+    if(e.dataTransfer.files[0]) tomarArchivo(ins, e.dataTransfer.files[0]);
+  });
+  fi.addEventListener('change', function(e){
+    if(e.target.files[0]) tomarArchivo(ins, e.target.files[0]);
+  });
+  bt.addEventListener('click', function(){ subir(ins); });
+}
+
+function tomarArchivo(ins, file){
+  var lector=new FileReader();
+  lector.onload=function(){
+    ARCHIVOS[ins.k] = {
+      base64: String(lector.result).split(',')[1],
+      nombre: file.name,
+      mime: file.type || 'application/octet-stream'
+    };
+    el('dzt_'+ins.k).textContent = file.name;
+    el('dz_'+ins.k).classList.add('listo');
+    el('btn_'+ins.k).disabled = false;
+    mostrar(ins.k, 'info', 'Archivo listo (' + Math.round(file.size/1024) + ' KB). Presione «Cargar archivo».');
+  };
+  lector.onerror=function(){ mostrar(ins.k,'err','No se pudo leer el archivo.'); };
+  lector.readAsDataURL(file);
+}
+
+function mostrar(k, tipo, texto){
+  var m=el('msg_'+k);
+  m.className='msg '+tipo;
+  m.innerHTML=texto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  SUBIDA AL BACKEND
+ * ═══════════════════════════════════════════════════════════════════ */
+function subir(ins){
+  var arch=ARCHIVOS[ins.k];
+  if(!arch){ mostrar(ins.k,'err','Seleccione primero un archivo.'); return; }
+  var usuario=el('usuario').value.trim();
+  if(!usuario){ mostrar(ins.k,'err','Indique su nombre en «Quien reporta» (arriba).'); el('usuario').focus(); return; }
+
+  var payload={
+    accion:'subirInsumo',
+    insumo:ins.k,
+    area: ins.areas ? el('area_'+ins.k).value : '',
+    fecha: el('fechaRep').value || hoyISO(),
+    nombre: arch.nombre,
+    mime: arch.mime,
+    base64: arch.base64,
+    usuario: usuario
+  };
+
+  el('btn_'+ins.k).disabled=true;
+  mostrar(ins.k,'info','<span class="spinner"></span>Enviando archivo…');
+
+  fetch(API_URL, { method:'POST', body:JSON.stringify(payload) })
+    .then(function(r){ return r.json(); })
+    .then(function(r){
+      if(r && r.ok){
+        mostrar(ins.k,'ok','Archivo almacenado: <span class="mono">'+r.archivo+'</span>');
+        el('badge_'+ins.k).className='badge ok';
+        el('badge_'+ins.k).textContent='RECIBIDO';
+        ARCHIVOS[ins.k]=null;
+        el('dzt_'+ins.k).textContent='Seleccionar archivo';
+        el('dz_'+ins.k).classList.remove('listo');
+        cargarHistorial();
+      } else {
+        mostrar(ins.k,'err','Error: '+((r&&r.error)||'respuesta no válida'));
+        el('btn_'+ins.k).disabled=false;
+      }
+    })
+    .catch(function(err){
+      mostrar(ins.k,'err','No se pudo conectar con el servidor. Verifique su conexión e intente de nuevo.');
+      el('btn_'+ins.k).disabled=false;
+    });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  HISTORIAL Y RESUMEN DEL DÍA
+ * ═══════════════════════════════════════════════════════════════════ */
+function cargarHistorial(){
+  var f=el('fechaRep').value || hoyISO();
+  var cb='cbIng_'+Math.random().toString(36).slice(2);
+  window[cb]=function(r){
+    delete window[cb];
+    if(!r || !r.ok){ el('tbodyHist').innerHTML='<tr><td colspan="5" class="vacio">Sin datos.</td></tr>'; return; }
+    pintarResumen(r.resumen||[]);
+    var cs=r.cargas||[];
+    if(!cs.length){
+      el('tbodyHist').innerHTML='<tr><td colspan="5" class="vacio">Aún no se registran cargas para esta fecha.</td></tr>';
+      return;
+    }
+    el('tbodyHist').innerHTML=cs.map(function(c){
+      var hora=String(c.sello||'').split(' ')[1]||'';
+      return '<tr><td class="mono">'+hora+'</td><td>'+c.insumo_nombre+'</td><td>'+(c.area||'—')+
+             '</td><td class="mono">'+c.archivo+'</td><td>'+(c.usuario||'—')+'</td></tr>';
+    }).join('');
+  };
+  var s=document.createElement('script');
+  s.src=API_URL+'?accion=listarCargas&fecha='+encodeURIComponent(f)+'&callback='+cb;
+  s.onerror=function(){ el('tbodyHist').innerHTML='<tr><td colspan="5" class="vacio">No se pudo consultar el historial.</td></tr>'; };
+  document.body.appendChild(s);
+}
+
+function pintarResumen(res){
+  var recibidos=res.filter(function(r){return r.estado==='RECIBIDO';}).length;
+  var pend=res.length-recibidos;
+  el('resumen').innerHTML =
+    '<div class="rk ok"><div class="t">Insumos recibidos</div><div class="v">'+recibidos+'</div></div>'+
+    '<div class="rk pend"><div class="t">Pendientes</div><div class="v">'+pend+'</div></div>'+
+    '<div class="rk"><div class="t">Total de insumos</div><div class="v">'+res.length+'</div></div>';
+  // reflejar estado en las tarjetas
+  res.forEach(function(r){
+    var b=el('badge_'+r.insumo);
+    if(!b) return;
+    if(r.estado==='RECIBIDO'){ b.className='badge ok'; b.textContent='RECIBIDO'; }
+    else { var ins=INSUMOS.filter(function(x){return x.k===r.insumo;})[0];
+           b.className='badge '+(ins&&ins.semanal?'sem':'pend');
+           b.textContent=(ins&&ins.semanal)?'SEMANAL':'PENDIENTE'; }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  INICIO
+ * ═══════════════════════════════════════════════════════════════════ */
+el('fechaRep').value=hoyISO();
+el('fechaHoy').textContent=fmtFechaLarga(hoyISO());
+el('fechaRep').addEventListener('change', cargarHistorial);
+pintarTarjetas();
+if(API_URL.indexOf('REEMPLAZAR')<0) cargarHistorial();
+else el('tbodyHist').innerHTML='<tr><td colspan="5" class="vacio">Configure API_URL en el script tras desplegar el backend.</td></tr>';
+</script>
+</body>
+</html>
