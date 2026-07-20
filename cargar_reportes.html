@@ -89,6 +89,33 @@
   .mono{font-family:Consolas,'Courier New',monospace;}
 
   footer{padding:14px 18px;font-size:11px;color:#666;text-align:center;}
+
+  /* ── modal de PIN ── */
+  #pinOverlay{display:none;position:fixed;inset:0;background:rgba(12,32,60,.55);
+              z-index:999;align-items:center;justify-content:center;padding:16px;}
+  #pinOverlay.on{display:flex;}
+  .pin-box{background:#fff;border:1px solid var(--linea);border-radius:6px;
+           padding:20px 22px 18px;width:100%;max-width:330px;text-align:center;
+           box-shadow:0 8px 28px rgba(0,0,0,.25);}
+  .pin-ins{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--azul);
+           font-weight:700;margin-bottom:8px;min-height:14px;}
+  .pin-tit{font-size:14px;font-weight:700;color:#222;margin-bottom:3px;}
+  .pin-sub{font-size:11.5px;color:#666;margin-bottom:14px;}
+  .pin-dots{display:flex;gap:12px;justify-content:center;margin-bottom:10px;}
+  .pin-dots i{width:13px;height:13px;border-radius:50%;border:2px solid var(--linea);display:block;}
+  .pin-dots i.on{background:var(--azul);border-color:var(--azul);}
+  .pin-msg{font-size:12px;min-height:34px;color:var(--rojo);line-height:1.35;
+           display:flex;align-items:center;justify-content:center;padding:0 4px;}
+  .pin-msg.ok{color:var(--verde);}
+  .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  .pin-pad button{border:1px solid var(--linea);background:#f7f9fc;border-radius:5px;
+                  padding:13px 0;font-size:18px;font-family:Consolas,monospace;
+                  color:var(--azul);cursor:pointer;}
+  .pin-pad button:hover{background:#eaf0f8;}
+  .pin-pad button:active{background:#dce6f2;}
+  .pin-cancel{border:1px solid var(--linea);background:#fff;color:#555;border-radius:4px;
+              padding:8px 16px;font-size:12.5px;cursor:pointer;width:100%;font-family:inherit;}
+  .pin-cancel:hover{background:#f2f2f2;}
 </style>
 </head>
 <body>
@@ -109,13 +136,10 @@
       <label>Fecha del reporte</label>
       <input type="date" id="fechaRep">
     </div>
-    <div class="campo">
-      <label>Quien reporta</label>
-      <input type="text" id="usuario" placeholder="Nombre y apellido">
-    </div>
     <div class="nota">
       Cargue cada archivo <b>en el mismo formato en que lo genera su sistema de origen</b>,
       sin modificar encabezados ni nombres de columna. El procesamiento automático depende de ese formato.
+      <br><b>Cada carga se valida con el PIN del responsable</b> (últimos cuatro dígitos de su cédula).
     </div>
   </div>
 
@@ -141,6 +165,19 @@
   Los archivos cargados se almacenan de forma automática y alimentan el sistema de medición de productividad.
   Torre de Control · DINALOG
 </footer>
+
+<!-- ══════════ MODAL DE PIN ══════════ -->
+<div id="pinOverlay">
+  <div class="pin-box">
+    <div class="pin-ins" id="pinInsumo"></div>
+    <div class="pin-tit">Ingrese su PIN para autorizar la carga</div>
+    <div class="pin-sub">Últimos cuatro dígitos de su cédula</div>
+    <div class="pin-dots" id="pinDots"><i></i><i></i><i></i><i></i></div>
+    <div class="pin-msg" id="pinMsg"></div>
+    <div class="pin-pad" id="pinPad"></div>
+    <button class="pin-cancel" id="pinCancel">Cancelar</button>
+  </div>
+</div>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════
@@ -270,9 +307,11 @@ function mostrar(k, tipo, texto){
 function subir(ins){
   var arch=ARCHIVOS[ins.k];
   if(!arch){ mostrar(ins.k,'err','Seleccione primero un archivo.'); return; }
-  var usuario=el('usuario').value.trim();
-  if(!usuario){ mostrar(ins.k,'err','Indique su nombre en «Quien reporta» (arriba).'); el('usuario').focus(); return; }
+  // el PIN autoriza la carga: se pide al momento de subir
+  pedirPin(ins, function(pin){ enviarArchivo(ins, arch, pin); });
+}
 
+function enviarArchivo(ins, arch, pin){
   var payload={
     accion:'subirInsumo',
     insumo:ins.k,
@@ -281,7 +320,7 @@ function subir(ins){
     nombre: arch.nombre,
     mime: arch.mime,
     base64: arch.base64,
-    usuario: usuario
+    pin: pin
   };
 
   el('btn_'+ins.k).disabled=true;
@@ -291,7 +330,8 @@ function subir(ins){
     .then(function(r){ return r.json(); })
     .then(function(r){
       if(r && r.ok){
-        mostrar(ins.k,'ok','Archivo almacenado: <span class="mono">'+r.archivo+'</span>');
+        mostrar(ins.k,'ok','Archivo almacenado: <span class="mono">'+r.archivo+'</span>'
+          +(r.cargado_por?('<br>Registrado a nombre de <b>'+r.cargado_por+'</b>'):''));
         el('badge_'+ins.k).className='badge ok';
         el('badge_'+ins.k).textContent='RECIBIDO';
         ARCHIVOS[ins.k]=null;
@@ -308,6 +348,79 @@ function subir(ins){
       el('btn_'+ins.k).disabled=false;
     });
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  MODAL DE PIN — valida contra el padrón antes de subir
+ * ═══════════════════════════════════════════════════════════════════ */
+var PIN_BUF='', PIN_CB=null, PIN_INS=null, PIN_OCUPADO=false;
+
+function pinPintar(){
+  var d=el('pinDots').children;
+  for(var i=0;i<4;i++){ d[i].className = i<PIN_BUF.length ? 'on' : ''; }
+}
+function pinMensaje(txt, ok){
+  var m=el('pinMsg'); m.className='pin-msg'+(ok?' ok':''); m.textContent=txt||'';
+}
+function pedirPin(ins, cb){
+  PIN_BUF=''; PIN_CB=cb; PIN_INS=ins; PIN_OCUPADO=false;
+  el('pinInsumo').textContent=ins.nombre;
+  pinPintar(); pinMensaje('');
+  el('pinOverlay').classList.add('on');
+}
+function cerrarPin(){
+  el('pinOverlay').classList.remove('on');
+  PIN_BUF=''; PIN_CB=null; PIN_INS=null;
+}
+function pinTecla(v){
+  if(PIN_OCUPADO) return;
+  if(v==='C'){ PIN_BUF=''; pinPintar(); pinMensaje(''); return; }
+  if(v==='<'){ PIN_BUF=PIN_BUF.slice(0,-1); pinPintar(); pinMensaje(''); return; }
+  if(PIN_BUF.length>=4) return;
+  PIN_BUF+=v; pinPintar();
+  if(PIN_BUF.length===4) verificarPin();
+}
+function verificarPin(){
+  PIN_OCUPADO=true;
+  pinMensaje('Verificando…');
+  var pin=PIN_BUF, ins=PIN_INS, cb=PIN_CB;
+  var cbn='cbPin_'+Math.random().toString(36).slice(2);
+  window[cbn]=function(r){
+    delete window[cbn];
+    PIN_OCUPADO=false;
+    if(r && r.ok){
+      pinMensaje('Autorizado: '+(r.persona?r.persona.nombre:''), true);
+      setTimeout(function(){ cerrarPin(); if(cb) cb(pin); }, 550);
+    } else {
+      PIN_BUF=''; pinPintar();
+      pinMensaje((r&&r.error)||'PIN no válido.');
+    }
+  };
+  var s=document.createElement('script');
+  s.src=API_URL+'?accion=validarPin&pin='+encodeURIComponent(pin)
+       +'&insumo='+encodeURIComponent(ins.k)+'&callback='+cbn;
+  s.onerror=function(){ PIN_OCUPADO=false; PIN_BUF=''; pinPintar();
+                        pinMensaje('No se pudo verificar. Revise su conexión.'); };
+  document.body.appendChild(s);
+}
+// teclado en pantalla
+(function(){
+  var teclas=['1','2','3','4','5','6','7','8','9','C','0','<'];
+  el('pinPad').innerHTML=teclas.map(function(t){
+    return '<button data-k="'+t+'">'+(t==='<'?'&#9003;':t)+'</button>';
+  }).join('');
+  el('pinPad').querySelectorAll('button').forEach(function(b){
+    b.onclick=function(){ pinTecla(b.getAttribute('data-k')); };
+  });
+  el('pinCancel').onclick=cerrarPin;
+  el('pinOverlay').addEventListener('click',function(e){ if(e.target===el('pinOverlay')) cerrarPin(); });
+  // teclado físico
+  document.addEventListener('keydown',function(e){
+    if(!el('pinOverlay').classList.contains('on')) return;
+    if(/^[0-9]$/.test(e.key)) pinTecla(e.key);
+    else if(e.key==='Backspace') pinTecla('<');
+    else if(e.key==='Escape') cerrarPin();
+  });
+})();
 
 /* ═══════════════════════════════════════════════════════════════════
  *  HISTORIAL Y RESUMEN DEL DÍA
