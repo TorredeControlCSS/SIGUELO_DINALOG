@@ -104,10 +104,10 @@
   .badge{margin-left:0;}
   .badge.parc{color:var(--ambar);border-color:var(--ambar);background:var(--ambar-bg);}
   .rk.parc .v{color:var(--ambar);}
-  .ayuda{font-size:11.5px;color:#6b5400;background:#fff8e1;border:1px solid #f0e0a8;
-         border-radius:3px;padding:7px 9px;line-height:1.4;}
+  .ayuda{font-size:11px;color:#6b5400;background:#fff8e1;border-left:3px solid #e0c060;
+         padding:5px 9px;line-height:1.35;margin-bottom:2px;}
   /* bloques de carga (uno por reporte) */
-  .subs{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px;}
+  .subs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:9px;}
   .carga{border:1px solid #dfe5ec;border-radius:4px;padding:9px 10px;background:#fafcff;
          display:flex;flex-direction:column;gap:8px;}
   .carga-t{font-size:12px;font-weight:700;color:var(--azul);display:flex;align-items:center;gap:7px;}
@@ -115,6 +115,14 @@
             border:1px solid var(--rojo);color:var(--rojo);background:var(--rojo-bg);}
   .sub-chip.ok{border-color:var(--verde);color:var(--verde);background:var(--verde-bg);}
 
+  .btn-tog{border:1px solid var(--azul);background:#fff;color:var(--azul);border-radius:3px;
+           padding:7px 14px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .btn-tog:hover{background:#eef3f9;}
+  .nota a{color:var(--azul);text-decoration:none;font-weight:600;font-size:11px;}
+  .nota a:hover{text-decoration:underline;}
+  .nota-extra{display:none;margin-top:6px;padding-top:6px;border-top:1px solid #e4e9f0;
+              font-size:11px;color:#666;line-height:1.45;}
+  .nota-extra.on{display:block;}
   .chip.ok2{color:var(--verde);border-color:var(--verde);background:var(--verde-bg);}
   .fecha-aviso{font-size:10.5px;color:var(--ambar);font-weight:600;min-height:14px;
                display:none;margin-top:2px;}
@@ -171,11 +179,16 @@
       <div class="fecha-aviso" id="fechaAviso"></div>
     </div>
     <div class="nota">
-      Cargue cada archivo <b>en el mismo formato en que lo genera su sistema de origen</b>,
-      sin modificar encabezados ni nombres de columna. El procesamiento automático depende de ese formato.
-      <br><b>Cada carga se valida con el PIN del responsable</b> (últimos cuatro dígitos de su cédula).
-      El reporte corresponde al día en curso; las cargas de días anteriores se registran como extemporáneas.
+      Cargue el archivo <b>tal como lo genera su sistema</b>, sin modificar encabezados.
+      Cada carga se valida con su <b>PIN</b> (últimos 4 dígitos de la cédula).
+      <a href="#" id="verMas">Más información</a>
+      <div class="nota-extra" id="notaExtra">
+        El procesamiento automático depende del formato original: no modifique estructura,
+        encabezados ni nombres de columna. El reporte corresponde al día en curso; las cargas
+        de días anteriores se admiten hasta 7 días y quedan registradas como extemporáneas.
+      </div>
     </div>
+    <button class="btn-tog" id="btnTodo" type="button">Expandir todo</button>
   </div>
 
   <div class="resumen" id="resumen"></div>
@@ -221,7 +234,7 @@
 // ⚠️ Pegar aquí la URL del WebApp de INGESTA_INSUMOS.gs tras desplegarlo
 var API_URL = 'https://script.google.com/macros/s/AKfycbxSG68fpUjwzFlG8P0ZAx5uTIelUs5pHt-tOt3lNm6SnVhlUBRkjwkgCaXWgPV2kDB0/exec';
 
-/* Catálogo de los 7 insumos — refleja la tabla del memorando */
+/* Catálogo de insumos — refleja la tabla del memorando */
 var INSUMOS = [
   { k:'recepcion',  n:1, nombre:'Entradas diarias de recepción',
     fuente:'Reporte de Excel', resp:'Jefatura de Recepción / Dirección de Abasto',
@@ -229,25 +242,35 @@ var INSUMOS = [
   { k:'salmi',      n:2, nombre:'Reportes WMS SALMI',
     fuente:'WMS SALMI', resp:'Jefatura de Almacén',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
-    subreportes:['DISTRIBUCION','RECOLECCION','RESERVAS','INVENTARIO'] },
-  { k:'mb51',       n:3, nombre:'Reporte MB51 / MB52',
+    subreportes:['DISTRIBUCION','TRAZABILIDAD','RESERVAS','INVENTARIO'] },
+  { k:'mb51',       n:3, nombre:'Reporte MB51',
     fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
-  { k:'biometrico', n:4, nombre:'Reporte del reloj biométrico',
+  { k:'mb52',       n:4, nombre:'Reporte MB52',
+    fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
+    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
+  { k:'biometrico', n:5, nombre:'Reporte del reloj biométrico',
     fuente:'Sistema biométrico', resp:'Recursos Humanos',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv,.pdf' },
-  { k:'asistencia', n:5, nombre:'Listas de asistencia escaneadas',
+  { k:'asistencia', n:6, nombre:'Listas de asistencia escaneadas',
     fuente:'Lista manuscrita escaneada', resp:'Administración',
     per:'Diaria, al cierre de turno', acepta:'.pdf,.jpg,.jpeg,.png',
-    ayuda:'Escaneo o fotografía de las listas firmadas (PDF o imagen).' },
-  { k:'transitos',  n:6, nombre:'Solicitudes enviadas del día',
+    subreportes:['MQ','MEDICAMENTOS','LABORATORIO','TRANSPORTE','ADMINISTRACION'],
+    ayuda:'Escaneo o fotografía de las listas firmadas, una por área.' },
+  { k:'transitos',  n:7, nombre:'Solicitudes enviadas del día',
     fuente:'Tablero Tránsitos de Órdenes de Compra', resp:'Equipo de Planificación',
     per:'Diaria, al cierre de turno', acepta:'.pdf,.jpg,.jpeg,.png,.xlsx,.xls,.csv',
     ayuda:'Captura de las solicitudes de entrega o compra enviadas únicamente en el día.' },
-  { k:'transporte', n:7, nombre:'Cronograma de despachos y entregas',
+  { k:'transporte', n:8, nombre:'Cronograma de despachos y entregas',
     fuente:'Reporte de Excel', resp:'Jefatura de Transporte',
     per:'Semanal', acepta:'.xlsx,.xls,.csv,.pdf', semanal:true }
 ];
+
+var ETIQ_SUB = {
+  DISTRIBUCION:'Distribución', TRAZABILIDAD:'Trazabilidad', RESERVAS:'Reservas', INVENTARIO:'Inventario',
+  MQ:'MQ', MEDICAMENTOS:'Medicamentos', LABORATORIO:'Laboratorio',
+  TRANSPORTE:'Transporte', ADMINISTRACION:'Administración'
+};
 
 var ARCHIVOS = {};   // clave insumo → {base64, nombre, mime}
 
@@ -273,9 +296,6 @@ function fmtFechaLarga(iso){
  *   insumo con reportes→ 'salmi::DISTRIBUCION'
  */
 function idFila(ins, sub){ return sub ? (ins.k+'::'+sub) : ins.k; }
-
-var ETIQ_SUB = { DISTRIBUCION:'Distribución', RECOLECCION:'Recolección',
-                 RESERVAS:'Reservas', INVENTARIO:'Inventario' };
 
 function bloqueCarga(ins, sub){
   var id = idFila(ins, sub);
@@ -554,6 +574,28 @@ function pintarResumen(res){
  *  INICIO
  * ═══════════════════════════════════════════════════════════════════ */
 el('fechaRep').value=hoyISO();
+
+// botón expandir / colapsar todos los insumos
+(function(){
+  var b=el('btnTodo');
+  b.onclick=function(){
+    var abrir = b.textContent.indexOf('Expandir')>=0;
+    document.querySelectorAll('.panel').forEach(function(p){
+      p.classList.toggle('open', abrir);
+    });
+    b.textContent = abrir ? 'Colapsar todo' : 'Expandir todo';
+  };
+})();
+
+// enlace "Más información"
+(function(){
+  var a=el('verMas'), n=el('notaExtra');
+  a.onclick=function(e){
+    e.preventDefault();
+    n.classList.toggle('on');
+    a.textContent = n.classList.contains('on') ? 'Ocultar' : 'Más información';
+  };
+})();
 // ventana permitida: hoy y hasta 7 días atrás
 (function(){
   var f=el('fechaRep');
