@@ -88,6 +88,33 @@
   .vacio{text-align:center;color:#777;padding:18px;font-size:12.5px;}
   .mono{font-family:Consolas,'Courier New',monospace;}
 
+  /* ── acordeón de insumos ── */
+  .grid{display:block;}
+  .panel{margin-bottom:8px;}
+  .panel-h{width:100%;text-align:left;cursor:pointer;font-family:inherit;
+           display:flex;align-items:center;gap:9px;border:none;}
+  .panel-h:hover{background:#eaf1f9;}
+  .ph-tit{flex:1;}
+  .cnt{font-family:Consolas,monospace;font-size:11.5px;color:#555;
+       background:#fff;border:1px solid var(--linea);border-radius:2px;padding:1px 7px;}
+  .chev{font-size:11px;color:#888;transition:transform .15s;}
+  .panel.open .chev{transform:rotate(180deg);}
+  .panel-b{display:none;}
+  .panel.open .panel-b{display:block;}
+  .badge{margin-left:0;}
+  .badge.parc{color:var(--ambar);border-color:var(--ambar);background:var(--ambar-bg);}
+  .rk.parc .v{color:var(--ambar);}
+  .ayuda{font-size:11.5px;color:#6b5400;background:#fff8e1;border:1px solid #f0e0a8;
+         border-radius:3px;padding:7px 9px;line-height:1.4;}
+  /* bloques de carga (uno por reporte) */
+  .subs{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:10px;}
+  .carga{border:1px solid #dfe5ec;border-radius:4px;padding:9px 10px;background:#fafcff;
+         display:flex;flex-direction:column;gap:8px;}
+  .carga-t{font-size:12px;font-weight:700;color:var(--azul);display:flex;align-items:center;gap:7px;}
+  .sub-chip{font-size:9.5px;padding:1px 6px;border-radius:2px;font-weight:600;
+            border:1px solid var(--rojo);color:var(--rojo);background:var(--rojo-bg);}
+  .sub-chip.ok{border-color:var(--verde);color:var(--verde);background:var(--verde-bg);}
+
   footer{padding:14px 18px;font-size:11px;color:#666;text-align:center;}
 
   /* ── modal de PIN ── */
@@ -191,10 +218,10 @@ var INSUMOS = [
   { k:'recepcion',  n:1, nombre:'Entradas diarias de recepción',
     fuente:'Reporte de Excel', resp:'Jefatura de Recepción / Dirección de Abasto',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
-  { k:'salmi',      n:2, nombre:'Distribución, recolección, reservas e inventario',
+  { k:'salmi',      n:2, nombre:'Reportes WMS SALMI',
     fuente:'WMS SALMI', resp:'Jefatura de Almacén',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
-    areas:['LABORATORIO','MQ','MEDICAMENTOS'] },
+    subreportes:['DISTRIBUCION','RECOLECCION','RESERVAS','INVENTARIO'] },
   { k:'mb51',       n:3, nombre:'Reporte MB51 / MB52',
     fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
@@ -202,11 +229,13 @@ var INSUMOS = [
     fuente:'Sistema biométrico', resp:'Recursos Humanos',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv,.pdf' },
   { k:'asistencia', n:5, nombre:'Listas de asistencia escaneadas',
-    fuente:'Lista manuscrita', resp:'Administración',
-    per:'Diaria, al cierre de turno', acepta:'.pdf,.jpg,.jpeg,.png' },
-  { k:'transitos',  n:6, nombre:'Órdenes de compra en tránsito',
-    fuente:'Tablero institucional', resp:'Equipo de Planificación',
-    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
+    fuente:'Lista manuscrita escaneada', resp:'Administración',
+    per:'Diaria, al cierre de turno', acepta:'.pdf,.jpg,.jpeg,.png',
+    ayuda:'Escaneo o fotografía de las listas firmadas (PDF o imagen).' },
+  { k:'transitos',  n:6, nombre:'Solicitudes enviadas del día',
+    fuente:'Tablero Tránsitos de Órdenes de Compra', resp:'Equipo de Planificación',
+    per:'Diaria, al cierre de turno', acepta:'.pdf,.jpg,.jpeg,.png,.xlsx,.xls,.csv',
+    ayuda:'Captura de las solicitudes de entrega o compra enviadas únicamente en el día.' },
   { k:'transporte', n:7, nombre:'Cronograma de despachos y entregas',
     fuente:'Reporte de Excel', resp:'Jefatura de Transporte',
     per:'Semanal', acepta:'.xlsx,.xls,.csv,.pdf', semanal:true }
@@ -231,67 +260,96 @@ function fmtFechaLarga(iso){
 /* ═══════════════════════════════════════════════════════════════════
  *  RENDER DE TARJETAS
  * ═══════════════════════════════════════════════════════════════════ */
+/* Cada fila de carga tiene su propio identificador:
+ *   insumo simple      → 'recepcion'
+ *   insumo con reportes→ 'salmi::DISTRIBUCION'
+ */
+function idFila(ins, sub){ return sub ? (ins.k+'::'+sub) : ins.k; }
+
+var ETIQ_SUB = { DISTRIBUCION:'Distribución', RECOLECCION:'Recolección',
+                 RESERVAS:'Reservas', INVENTARIO:'Inventario' };
+
+function bloqueCarga(ins, sub){
+  var id = idFila(ins, sub);
+  var etiqueta = sub ? (ETIQ_SUB[sub] || sub) : '';
+  return (
+   '<div class="carga" id="carga_'+id+'">'+
+     (sub ? '<div class="carga-t"><span class="sub-chip" id="chip_'+id+'">Pendiente</span>'+etiqueta+'</div>' : '')+
+     '<div class="dropzone" id="dz_'+id+'">'+
+       '<div class="ico">&#8681;</div>'+
+       '<div><div class="t" id="dzt_'+id+'">Seleccionar archivo</div>'+
+       '<div class="s">o arrástrelo aquí · '+ins.acepta.replace(/\./g,'').toUpperCase().replace(/,/g,' ')+'</div></div>'+
+     '</div>'+
+     '<input type="file" id="file_'+id+'" accept="'+ins.acepta+'" style="display:none">'+
+     '<div class="msg" id="msg_'+id+'"></div>'+
+     '<button class="btn" id="btn_'+id+'" disabled>Cargar archivo</button>'+
+   '</div>');
+}
+
 function pintarTarjetas(){
   el('grid').innerHTML = INSUMOS.map(function(ins){
-    var selArea = ins.areas ? (
-      '<div class="campo sel-area on"><label>Área del reporte</label>' +
-      '<select id="area_'+ins.k+'">' +
-      ins.areas.map(function(a){ return '<option value="'+a+'">'+a+'</option>'; }).join('') +
-      '</select></div>') : '';
+    var cuerpo = ins.subreportes
+      ? '<div class="subs">'+ins.subreportes.map(function(s){ return bloqueCarga(ins,s); }).join('')+'</div>'
+      : bloqueCarga(ins, null);
+    var ayuda = ins.ayuda ? '<div class="ayuda">'+ins.ayuda+'</div>' : '';
+    var cuantos = ins.subreportes ? '<span class="cnt" id="cnt_'+ins.k+'">0/'+ins.subreportes.length+'</span>' : '';
     return (
     '<div class="panel" id="panel_'+ins.k+'">'+
-      '<div class="panel-h"><span class="num">'+ins.n+'</span>'+ins.nombre+
-        '<span class="badge pend" id="badge_'+ins.k+'">'+(ins.semanal?'SEMANAL':'PENDIENTE')+'</span></div>'+
-      '<div class="panel-b">'+
-        '<div class="meta"><b>Fuente:</b> '+ins.fuente+'<br>'+
-          '<b>Responsable:</b> '+ins.resp+'<br>'+
+      '<button class="panel-h" id="head_'+ins.k+'" type="button">'+
+        '<span class="num">'+ins.n+'</span>'+
+        '<span class="ph-tit">'+ins.nombre+'</span>'+
+        cuantos+
+        '<span class="badge pend" id="badge_'+ins.k+'">'+(ins.semanal?'SEMANAL':'PENDIENTE')+'</span>'+
+        '<span class="chev">&#9662;</span>'+
+      '</button>'+
+      '<div class="panel-b" id="body_'+ins.k+'">'+
+        '<div class="meta"><b>Fuente:</b> '+ins.fuente+' &nbsp;·&nbsp; '+
+          '<b>Responsable:</b> '+ins.resp+' &nbsp;·&nbsp; '+
           '<b>Periodicidad:</b> '+ins.per+'</div>'+
-        selArea+
-        '<div class="dropzone" id="dz_'+ins.k+'">'+
-          '<div class="ico">&#8681;</div>'+
-          '<div><div class="t" id="dzt_'+ins.k+'">Seleccionar archivo</div>'+
-          '<div class="s">o arrástrelo aquí · '+ins.acepta.replace(/\./g,'').toUpperCase().replace(/,/g,' ')+'</div></div>'+
-        '</div>'+
-        '<input type="file" id="file_'+ins.k+'" accept="'+ins.acepta+'" style="display:none">'+
-        '<div class="msg" id="msg_'+ins.k+'"></div>'+
-        '<button class="btn" id="btn_'+ins.k+'" disabled>Cargar archivo</button>'+
+        ayuda + cuerpo +
       '</div>'+
     '</div>');
   }).join('');
 
-  INSUMOS.forEach(function(ins){ enlazarTarjeta(ins); });
+  INSUMOS.forEach(function(ins){
+    // acordeón
+    el('head_'+ins.k).onclick=function(){ el('panel_'+ins.k).classList.toggle('open'); };
+    if (ins.subreportes) ins.subreportes.forEach(function(s){ enlazarCarga(ins, s); });
+    else enlazarCarga(ins, null);
+  });
 }
 
-function enlazarTarjeta(ins){
-  var dz=el('dz_'+ins.k), fi=el('file_'+ins.k), bt=el('btn_'+ins.k);
-
+function enlazarCarga(ins, sub){
+  var id=idFila(ins,sub);
+  var dz=el('dz_'+id), fi=el('file_'+id), bt=el('btn_'+id);
   dz.addEventListener('click', function(){ fi.click(); });
   dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('drag'); });
   dz.addEventListener('dragleave', function(){ dz.classList.remove('drag'); });
   dz.addEventListener('drop', function(e){
     e.preventDefault(); dz.classList.remove('drag');
-    if(e.dataTransfer.files[0]) tomarArchivo(ins, e.dataTransfer.files[0]);
+    if(e.dataTransfer.files[0]) tomarArchivo(ins, sub, e.dataTransfer.files[0]);
   });
   fi.addEventListener('change', function(e){
-    if(e.target.files[0]) tomarArchivo(ins, e.target.files[0]);
+    if(e.target.files[0]) tomarArchivo(ins, sub, e.target.files[0]);
   });
-  bt.addEventListener('click', function(){ subir(ins); });
+  bt.addEventListener('click', function(){ subir(ins, sub); });
 }
 
-function tomarArchivo(ins, file){
+function tomarArchivo(ins, sub, file){
+  var id=idFila(ins,sub);
   var lector=new FileReader();
   lector.onload=function(){
-    ARCHIVOS[ins.k] = {
+    ARCHIVOS[id] = {
       base64: String(lector.result).split(',')[1],
       nombre: file.name,
       mime: file.type || 'application/octet-stream'
     };
-    el('dzt_'+ins.k).textContent = file.name;
-    el('dz_'+ins.k).classList.add('listo');
-    el('btn_'+ins.k).disabled = false;
-    mostrar(ins.k, 'info', 'Archivo listo (' + Math.round(file.size/1024) + ' KB). Presione «Cargar archivo».');
+    el('dzt_'+id).textContent = file.name;
+    el('dz_'+id).classList.add('listo');
+    el('btn_'+id).disabled = false;
+    mostrar(id, 'info', 'Archivo listo (' + Math.round(file.size/1024) + ' KB). Presione «Cargar archivo».');
   };
-  lector.onerror=function(){ mostrar(ins.k,'err','No se pudo leer el archivo.'); };
+  lector.onerror=function(){ mostrar(id,'err','No se pudo leer el archivo.'); };
   lector.readAsDataURL(file);
 }
 
@@ -304,18 +362,19 @@ function mostrar(k, tipo, texto){
 /* ═══════════════════════════════════════════════════════════════════
  *  SUBIDA AL BACKEND
  * ═══════════════════════════════════════════════════════════════════ */
-function subir(ins){
-  var arch=ARCHIVOS[ins.k];
-  if(!arch){ mostrar(ins.k,'err','Seleccione primero un archivo.'); return; }
-  // el PIN autoriza la carga: se pide al momento de subir
-  pedirPin(ins, function(pin){ enviarArchivo(ins, arch, pin); });
+function subir(ins, sub){
+  var id=idFila(ins,sub);
+  var arch=ARCHIVOS[id];
+  if(!arch){ mostrar(id,'err','Seleccione primero un archivo.'); return; }
+  pedirPin(ins, sub, function(pin){ enviarArchivo(ins, sub, arch, pin); });
 }
 
-function enviarArchivo(ins, arch, pin){
+function enviarArchivo(ins, sub, arch, pin){
+  var id=idFila(ins,sub);
   var payload={
     accion:'subirInsumo',
     insumo:ins.k,
-    area: ins.areas ? el('area_'+ins.k).value : '',
+    subreporte: sub || '',
     fecha: el('fechaRep').value || hoyISO(),
     nombre: arch.nombre,
     mime: arch.mime,
@@ -323,29 +382,27 @@ function enviarArchivo(ins, arch, pin){
     pin: pin
   };
 
-  el('btn_'+ins.k).disabled=true;
-  mostrar(ins.k,'info','<span class="spinner"></span>Enviando archivo…');
+  el('btn_'+id).disabled=true;
+  mostrar(id,'info','<span class="spinner"></span>Enviando archivo…');
 
   fetch(API_URL, { method:'POST', body:JSON.stringify(payload) })
     .then(function(r){ return r.json(); })
     .then(function(r){
       if(r && r.ok){
-        mostrar(ins.k,'ok','Archivo almacenado: <span class="mono">'+r.archivo+'</span>'
+        mostrar(id,'ok','Archivo almacenado: <span class="mono">'+r.archivo+'</span>'
           +(r.cargado_por?('<br>Registrado a nombre de <b>'+r.cargado_por+'</b>'):''));
-        el('badge_'+ins.k).className='badge ok';
-        el('badge_'+ins.k).textContent='RECIBIDO';
-        ARCHIVOS[ins.k]=null;
-        el('dzt_'+ins.k).textContent='Seleccionar archivo';
-        el('dz_'+ins.k).classList.remove('listo');
+        ARCHIVOS[id]=null;
+        el('dzt_'+id).textContent='Seleccionar archivo';
+        el('dz_'+id).classList.remove('listo');
         cargarHistorial();
       } else {
-        mostrar(ins.k,'err','Error: '+((r&&r.error)||'respuesta no válida'));
-        el('btn_'+ins.k).disabled=false;
+        mostrar(id,'err','Error: '+((r&&r.error)||'respuesta no válida'));
+        el('btn_'+id).disabled=false;
       }
     })
     .catch(function(err){
-      mostrar(ins.k,'err','No se pudo conectar con el servidor. Verifique su conexión e intente de nuevo.');
-      el('btn_'+ins.k).disabled=false;
+      mostrar(id,'err','No se pudo conectar con el servidor. Verifique su conexión e intente de nuevo.');
+      el('btn_'+id).disabled=false;
     });
 }
 
@@ -361,9 +418,9 @@ function pinPintar(){
 function pinMensaje(txt, ok){
   var m=el('pinMsg'); m.className='pin-msg'+(ok?' ok':''); m.textContent=txt||'';
 }
-function pedirPin(ins, cb){
+function pedirPin(ins, sub, cb){
   PIN_BUF=''; PIN_CB=cb; PIN_INS=ins; PIN_OCUPADO=false;
-  el('pinInsumo').textContent=ins.nombre;
+  el('pinInsumo').textContent = ins.nombre + (sub ? ' · ' + (ETIQ_SUB[sub]||sub) : '');
   pinPintar(); pinMensaje('');
   el('pinOverlay').classList.add('on');
 }
@@ -451,19 +508,31 @@ function cargarHistorial(){
 
 function pintarResumen(res){
   var recibidos=res.filter(function(r){return r.estado==='RECIBIDO';}).length;
-  var pend=res.length-recibidos;
+  var parciales=res.filter(function(r){return r.estado==='PARCIAL';}).length;
+  var pend=res.filter(function(r){return r.estado==='PENDIENTE';}).length;
   el('resumen').innerHTML =
-    '<div class="rk ok"><div class="t">Insumos recibidos</div><div class="v">'+recibidos+'</div></div>'+
+    '<div class="rk ok"><div class="t">Completos</div><div class="v">'+recibidos+'</div></div>'+
+    (parciales?'<div class="rk parc"><div class="t">Parciales</div><div class="v">'+parciales+'</div></div>':'')+
     '<div class="rk pend"><div class="t">Pendientes</div><div class="v">'+pend+'</div></div>'+
     '<div class="rk"><div class="t">Total de insumos</div><div class="v">'+res.length+'</div></div>';
-  // reflejar estado en las tarjetas
+
   res.forEach(function(r){
     var b=el('badge_'+r.insumo);
     if(!b) return;
+    var ins=INSUMOS.filter(function(x){return x.k===r.insumo;})[0];
     if(r.estado==='RECIBIDO'){ b.className='badge ok'; b.textContent='RECIBIDO'; }
-    else { var ins=INSUMOS.filter(function(x){return x.k===r.insumo;})[0];
-           b.className='badge '+(ins&&ins.semanal?'sem':'pend');
+    else if(r.estado==='PARCIAL'){ b.className='badge parc'; b.textContent='PARCIAL'; }
+    else { b.className='badge '+(ins&&ins.semanal?'sem':'pend');
            b.textContent=(ins&&ins.semanal)?'SEMANAL':'PENDIENTE'; }
+    // contador y chips de subreportes
+    if(r.subreportes){
+      var c=el('cnt_'+r.insumo);
+      if(c) c.textContent=r.completos+'/'+r.total_sub;
+      r.subreportes.forEach(function(s){
+        var ch=el('chip_'+r.insumo+'::'+s.nombre);
+        if(ch){ ch.className='sub-chip'+(s.recibido?' ok':''); ch.textContent=s.recibido?'Recibido':'Pendiente'; }
+      });
+    }
   });
 }
 
