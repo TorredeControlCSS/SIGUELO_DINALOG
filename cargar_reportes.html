@@ -115,6 +115,12 @@
             border:1px solid var(--rojo);color:var(--rojo);background:var(--rojo-bg);}
   .sub-chip.ok{border-color:var(--verde);color:var(--verde);background:var(--verde-bg);}
 
+  .chip.ok2{color:var(--verde);border-color:var(--verde);background:var(--verde-bg);}
+  .fecha-aviso{font-size:10.5px;color:var(--ambar);font-weight:600;min-height:14px;
+               display:none;margin-top:2px;}
+  .fecha-aviso.on{display:block;}
+  .msg.warn{background:var(--ambar-bg);color:var(--ambar);border:1px solid #f0e0a8;display:block;}
+
   footer{padding:14px 18px;font-size:11px;color:#666;text-align:center;}
 
   /* ── modal de PIN ── */
@@ -162,11 +168,13 @@
     <div class="campo">
       <label>Fecha del reporte</label>
       <input type="date" id="fechaRep">
+      <div class="fecha-aviso" id="fechaAviso"></div>
     </div>
     <div class="nota">
       Cargue cada archivo <b>en el mismo formato en que lo genera su sistema de origen</b>,
       sin modificar encabezados ni nombres de columna. El procesamiento automático depende de ese formato.
       <br><b>Cada carga se valida con el PIN del responsable</b> (últimos cuatro dígitos de su cédula).
+      El reporte corresponde al día en curso; las cargas de días anteriores se registran como extemporáneas.
     </div>
   </div>
 
@@ -179,9 +187,9 @@
     <div style="overflow-x:auto;">
       <table>
         <thead><tr>
-          <th>Hora</th><th>Insumo</th><th>Área</th><th>Archivo</th><th>Reportó</th>
+          <th>Hora</th><th>Insumo</th><th>Reporte</th><th>Archivo</th><th>Reportó</th><th>Puntualidad</th>
         </tr></thead>
-        <tbody id="tbodyHist"><tr><td colspan="5" class="vacio">Cargando…</td></tr></tbody>
+        <tbody id="tbodyHist"><tr><td colspan="6" class="vacio">Cargando…</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -389,8 +397,11 @@ function enviarArchivo(ins, sub, arch, pin){
     .then(function(r){ return r.json(); })
     .then(function(r){
       if(r && r.ok){
-        mostrar(id,'ok','Archivo almacenado: <span class="mono">'+r.archivo+'</span>'
-          +(r.cargado_por?('<br>Registrado a nombre de <b>'+r.cargado_por+'</b>'):''));
+        var tipo = r.extemporaneo ? 'warn' : 'ok';
+        var txt = 'Archivo almacenado: <span class="mono">'+r.archivo+'</span>'
+          + (r.cargado_por?('<br>Registrado a nombre de <b>'+r.cargado_por+'</b>'):'');
+        if(r.extemporaneo) txt += '<br><b>Carga extemporánea:</b> '+r.dias_atraso+' día'+(r.dias_atraso===1?'':'s')+' de atraso.';
+        mostrar(id,tipo,txt);
         ARCHIVOS[id]=null;
         el('dzt_'+id).textContent='Seleccionar archivo';
         el('dz_'+id).classList.remove('listo');
@@ -487,22 +498,25 @@ function cargarHistorial(){
   var cb='cbIng_'+Math.random().toString(36).slice(2);
   window[cb]=function(r){
     delete window[cb];
-    if(!r || !r.ok){ el('tbodyHist').innerHTML='<tr><td colspan="5" class="vacio">Sin datos.</td></tr>'; return; }
+    if(!r || !r.ok){ el('tbodyHist').innerHTML='<tr><td colspan="6" class="vacio">Sin datos.</td></tr>'; return; }
     pintarResumen(r.resumen||[]);
     var cs=r.cargas||[];
     if(!cs.length){
-      el('tbodyHist').innerHTML='<tr><td colspan="5" class="vacio">Aún no se registran cargas para esta fecha.</td></tr>';
+      el('tbodyHist').innerHTML='<tr><td colspan="6" class="vacio">Aún no se registran cargas para esta fecha.</td></tr>';
       return;
     }
     el('tbodyHist').innerHTML=cs.map(function(c){
       var hora=String(c.sello||'').split(' ')[1]||'';
       return '<tr><td class="mono">'+hora+'</td><td>'+c.insumo_nombre+'</td><td>'+(c.area||'—')+
-             '</td><td class="mono">'+c.archivo+'</td><td>'+(c.usuario||'—')+'</td></tr>';
+             '</td><td class="mono">'+c.archivo+'</td><td>'+(c.usuario||'—')+'</td>'+
+             '<td>'+(Number(c.dias_atraso||0)>0
+               ? '<span class="chip warn">'+c.dias_atraso+'d atraso</span>'
+               : '<span class="chip ok2">A tiempo</span>')+'</td></tr>';
     }).join('');
   };
   var s=document.createElement('script');
   s.src=API_URL+'?accion=listarCargas&fecha='+encodeURIComponent(f)+'&callback='+cb;
-  s.onerror=function(){ el('tbodyHist').innerHTML='<tr><td colspan="5" class="vacio">No se pudo consultar el historial.</td></tr>'; };
+  s.onerror=function(){ el('tbodyHist').innerHTML='<tr><td colspan="6" class="vacio">No se pudo consultar el historial.</td></tr>'; };
   document.body.appendChild(s);
 }
 
@@ -540,11 +554,26 @@ function pintarResumen(res){
  *  INICIO
  * ═══════════════════════════════════════════════════════════════════ */
 el('fechaRep').value=hoyISO();
+// ventana permitida: hoy y hasta 7 días atrás
+(function(){
+  var f=el('fechaRep');
+  var d=new Date(); d.setDate(d.getDate()-7);
+  f.max=hoyISO();
+  f.min=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+})();
+function avisarFecha(){
+  var v=el('fechaRep').value, hoy=hoyISO(), a=el('fechaAviso');
+  if(!v || v===hoy){ a.textContent=''; a.className='fecha-aviso'; return; }
+  var d=Math.round((new Date(hoy)-new Date(v))/86400000);
+  a.textContent='Carga extemporánea · '+d+' día'+(d===1?'':'s')+' de atraso';
+  a.className='fecha-aviso on';
+}
 el('fechaHoy').textContent=fmtFechaLarga(hoyISO());
-el('fechaRep').addEventListener('change', cargarHistorial);
+el('fechaRep').addEventListener('change', function(){ avisarFecha(); cargarHistorial(); });
+avisarFecha();
 pintarTarjetas();
 if(API_URL.indexOf('REEMPLAZAR')<0) cargarHistorial();
-else el('tbodyHist').innerHTML='<tr><td colspan="5" class="vacio">Configure API_URL en el script tras desplegar el backend.</td></tr>';
+else el('tbodyHist').innerHTML='<tr><td colspan="6" class="vacio">Configure API_URL en el script tras desplegar el backend.</td></tr>';
 </script>
 </body>
 </html>
