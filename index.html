@@ -171,30 +171,57 @@
 
   /* ---------- PANEL DE DETALLE ---------- */
   .detalle {
-    padding: 30px 34px;
+    padding: 40px 44px;
     background: #ececec;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
   .detalle-vacio {
-    margin: auto;
     text-align: center;
     color: #999;
-    max-width: 340px;
+    max-width: 560px;
+    width: 100%;
   }
   .detalle-vacio .ico {
-    font-size: 34px; color: #c4c4c4; margin-bottom: 12px;
+    font-size: 40px; color: #c4c4c4; margin-bottom: 14px;
     font-weight: 300;
   }
-  .detalle-vacio h3 { font-size: 15px; color: #777; font-weight: 600; margin-bottom: 8px; }
-  .detalle-vacio p { font-size: 12.5px; line-height: 1.5; }
+  .detalle-vacio h3 { font-size: 17px; color: #666; font-weight: 600; margin-bottom: 10px; }
+  .detalle-vacio > p { font-size: 13px; line-height: 1.5; margin-bottom: 26px; }
+
+  /* Mini-mapa de áreas en el estado inicial, para llenar el espacio */
+  .vacio-areas {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    text-align: left;
+  }
+  .vacio-chip {
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    border-left: 3px solid #1e5a9e;
+    padding: 11px 13px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .vacio-chip .vc-num {
+    width: 22px; height: 22px; flex-shrink: 0;
+    background: #0C447C; color: #fff; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; border-radius: 2px;
+  }
+  .vacio-chip .vc-txt { font-size: 12px; color: #444; font-weight: 600; line-height: 1.25; }
 
   /* Tarjeta de detalle del dashboard seleccionado */
   .panel {
     background: #fff;
     border: 1px solid #a8a8a8;
     border-radius: 2px;
-    max-width: 640px;
+    width: 100%;
+    max-width: 720px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.06);
     animation: fadeIn .18s ease;
   }
   @keyframes fadeIn {
@@ -204,17 +231,17 @@
   .panel-top {
     background: #0C447C;
     color: #fff;
-    padding: 16px 22px;
+    padding: 20px 26px;
     border-bottom: 3px solid #1e5a9e;
   }
   .panel-eyebrow {
-    font-size: 10px; text-transform: uppercase; letter-spacing: .8px;
-    color: #b9d2ec; font-weight: 600; margin-bottom: 5px;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px;
+    color: #b9d2ec; font-weight: 600; margin-bottom: 6px;
   }
-  .panel-top h2 { font-size: 18px; font-weight: 600; line-height: 1.25; }
-  .panel-body { padding: 20px 22px 22px; }
+  .panel-top h2 { font-size: 21px; font-weight: 600; line-height: 1.25; }
+  .panel-body { padding: 24px 26px 26px; }
   .panel-body .resena {
-    font-size: 13px; color: #444; line-height: 1.6; margin-bottom: 18px;
+    font-size: 14px; color: #444; line-height: 1.65; margin-bottom: 20px;
   }
   .panel-meta {
     display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
@@ -274,9 +301,10 @@
   <div class="detalle" id="detalle">
     <div class="detalle-vacio" id="vacio">
       <div class="ico">&#9776;</div>
-      <h3>Selecciona un tablero</h3>
-      <p>Abre un &aacute;rea funcional del flujo a la izquierda y elige un dashboard.
-         Aqu&iacute; ver&aacute;s de qu&eacute; se trata antes de entrar.</p>
+      <h3>Selecciona un tablero para empezar</h3>
+      <p>El ecosistema se recorre siguiendo el flujo operativo. Abre un &aacute;rea a la izquierda
+         y elige un dashboard; aqu&iacute; ver&aacute;s de qu&eacute; se trata antes de entrar.</p>
+      <div class="vacio-areas" id="vacioAreas"></div>
     </div>
   </div>
 
@@ -421,6 +449,17 @@ AREAS.forEach((area, ai) => {
   box.querySelector(".area-head").addEventListener("click", () => {
     box.classList.toggle("open");
   });
+});
+
+/* ===== MINI-MAPA DE ÁREAS EN EL ESTADO INICIAL ===== */
+const vacioAreas = document.getElementById("vacioAreas");
+AREAS.forEach((area, ai) => {
+  const chip = document.createElement("div");
+  chip.className = "vacio-chip";
+  chip.innerHTML =
+    '<div class="vc-num">'+(ai+1)+'</div>' +
+    '<div class="vc-txt">'+area.nombre+'</div>';
+  vacioAreas.appendChild(chip);
 });
 
 /* ===== SELECCIÓN DE DASHBOARD -> PANEL DE DETALLE ===== */
