@@ -11,70 +11,240 @@
     background: #ececec;
     font-family: "Segoe UI", Tahoma, sans-serif;
     color: #333;
+    min-height: 100vh;
   }
+
+  /* ---------- HEADER ---------- */
   .header {
-    background: #0C447C;
+    position: relative;
     color: #fff;
-    padding: 14px 28px;
+    padding: 18px 28px;
     border-bottom: 3px solid #1e5a9e;
     display: flex;
     align-items: center;
     gap: 16px;
+    overflow: hidden;
+    background: #0C447C;
   }
-  .header .logo {
-    width: 46px;
-    height: 46px;
-    flex-shrink: 0;
+  /* Marca de agua: imagen aérea del CEDIS, muy tenue */
+  .header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("assets/header_cedis.jpg");
+    background-size: cover;
+    background-position: center 35%;
+    opacity: .22;
+    z-index: 0;
   }
-  .header h1 { font-size: 20px; font-weight: 600; letter-spacing: .3px; }
+  /* Overlay azul institucional para asegurar legibilidad y ocultar texto del render */
+  .header::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+      rgba(12,68,124,.94) 0%,
+      rgba(12,68,124,.80) 45%,
+      rgba(12,68,124,.55) 100%);
+    z-index: 1;
+  }
+  .header > * { position: relative; z-index: 2; }
+  .header .logo { width: 46px; height: 46px; flex-shrink: 0; }
+  .header h1 { font-size: 19px; font-weight: 600; letter-spacing: .3px; }
   .header p { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
 
-  .grid {
+  /* ---------- LAYOUT: FLUJO A LA IZQUIERDA, DETALLE A LA DERECHA ---------- */
+  .shell {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 14px;
-    padding: 22px 28px;
+    grid-template-columns: 380px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 130px);
   }
-  .card {
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+    .detalle { border-left: none !important; border-top: 1px solid #a8a8a8; }
+  }
+
+  /* ---------- COLUMNA DE FLUJO ---------- */
+  .flujo {
+    padding: 18px 20px 30px;
+    background: #f4f4f4;
+    border-right: 1px solid #a8a8a8;
+  }
+  .flujo-intro {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 16px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid #d8d8d8;
+    border-left: 3px solid #1e5a9e;
+  }
+
+  /* Cada ÁREA FUNCIONAL es una etapa del flujo */
+  .area {
+    margin-bottom: 8px;
+    border: 1px solid #c4c4c4;
+    background: #fff;
+  }
+  .area-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 13px;
+    cursor: pointer;
+    user-select: none;
+    background: #fff;
+    transition: background-color .12s;
+  }
+  .area-head:hover { background: #eef4fb; }
+  .area-num {
+    width: 24px; height: 24px;
+    flex-shrink: 0;
+    background: #0C447C;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+  }
+  .area-titulos { flex: 1; }
+  .area-nombre { font-size: 13.5px; font-weight: 600; color: #1e5a9e; }
+  .area-sub { font-size: 10.5px; color: #888; margin-top: 1px; }
+  .area-chev {
+    font-size: 11px; color: #999;
+    transition: transform .18s;
+  }
+  .area.open .area-chev { transform: rotate(90deg); }
+
+  /* Descripción acotada del área */
+  .area-desc {
+    display: none;
+    padding: 0 13px 6px 47px;
+    font-size: 11px;
+    color: #666;
+    line-height: 1.45;
+  }
+  .area.open .area-desc { display: block; }
+
+  /* Lista de dashboards dentro del área */
+  .area-lista {
+    display: none;
+    padding: 4px 10px 12px 10px;
+  }
+  .area.open .area-lista { display: block; }
+
+  .dash-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px 8px 37px;
+    cursor: pointer;
+    font-size: 12.5px;
+    color: #333;
+    border-left: 2px solid transparent;
+    transition: background-color .1s, border-color .1s;
+  }
+  .dash-item:hover { background: #eef4fb; }
+  .dash-item.active {
+    background: #e3eefa;
+    border-left-color: #0C447C;
+    font-weight: 600;
+    color: #0C447C;
+  }
+  .dash-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #1e5a9e; flex-shrink: 0;
+  }
+  .dash-item.piloto .dash-dot { background: #c98a1e; }
+
+  /* Conector visual del flujo */
+  .flujo-linea {
+    height: 14px;
+    margin-left: 24px;
+    border-left: 2px dashed #c4c4c4;
+    width: 0;
+  }
+
+  /* ---------- PANEL DE DETALLE ---------- */
+  .detalle {
+    padding: 30px 34px;
+    background: #ececec;
+    display: flex;
+    flex-direction: column;
+  }
+  .detalle-vacio {
+    margin: auto;
+    text-align: center;
+    color: #999;
+    max-width: 340px;
+  }
+  .detalle-vacio .ico {
+    font-size: 34px; color: #c4c4c4; margin-bottom: 12px;
+    font-weight: 300;
+  }
+  .detalle-vacio h3 { font-size: 15px; color: #777; font-weight: 600; margin-bottom: 8px; }
+  .detalle-vacio p { font-size: 12.5px; line-height: 1.5; }
+
+  /* Tarjeta de detalle del dashboard seleccionado */
+  .panel {
     background: #fff;
     border: 1px solid #a8a8a8;
     border-radius: 2px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    text-decoration: none;
-    color: inherit;
-    transition: border-color .12s, box-shadow .12s, background-color .12s;
+    max-width: 640px;
+    animation: fadeIn .18s ease;
   }
-  .card:hover {
-    border-color: #1e5a9e;
-    background: #eef4fb;
-    box-shadow: 0 1px 4px rgba(30,90,158,.25);
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .card .sistema {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: #888;
-    margin-bottom: 6px;
+  .panel-top {
+    background: #0C447C;
+    color: #fff;
+    padding: 16px 22px;
+    border-bottom: 3px solid #1e5a9e;
   }
-  .card h2 { font-size: 15px; font-weight: 600; color: #1e5a9e; margin-bottom: 6px; }
-  .card p  { font-size: 12px; color: #555; line-height: 1.4; flex: 1; }
-  .card .link {
-    font-size: 11px;
-    color: #999;
-    margin-top: 10px;
-    word-break: break-all;
-    border-top: 1px solid #ececec;
-    padding-top: 8px;
+  .panel-eyebrow {
+    font-size: 10px; text-transform: uppercase; letter-spacing: .8px;
+    color: #b9d2ec; font-weight: 600; margin-bottom: 5px;
   }
+  .panel-top h2 { font-size: 18px; font-weight: 600; line-height: 1.25; }
+  .panel-body { padding: 20px 22px 22px; }
+  .panel-body .resena {
+    font-size: 13px; color: #444; line-height: 1.6; margin-bottom: 18px;
+  }
+  .panel-meta {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
+  }
+  .chip {
+    font-size: 10.5px; font-weight: 600;
+    padding: 4px 9px; border-radius: 2px;
+    background: #eef4fb; color: #1e5a9e; border: 1px solid #cfe0f4;
+  }
+  .chip.piloto { background: #fdf3e0; color: #a06d12; border-color: #efd9ac; }
+  .panel-url {
+    font-size: 11px; color: #999; word-break: break-all;
+    padding: 9px 11px; background: #f7f7f7; border: 1px solid #e2e2e2;
+    margin-bottom: 18px; font-family: Consolas, monospace;
+  }
+  .btn-entrar {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #0C447C; color: #fff; text-decoration: none;
+    font-size: 13.5px; font-weight: 600;
+    padding: 11px 22px; border-radius: 2px;
+    border: 1px solid #0a3a6a;
+    transition: background-color .12s;
+  }
+  .btn-entrar:hover { background: #1e5a9e; }
+  .btn-entrar .arrow { font-size: 15px; }
+
   .footer {
-    padding: 16px 28px;
-    font-size: 11px;
-    color: #888;
-    border-top: 1px solid #a8a8a8;
-    background: #fff;
+    padding: 14px 28px;
+    font-size: 11px; color: #888;
+    border-top: 1px solid #a8a8a8; background: #fff;
   }
 </style>
 </head>
@@ -83,86 +253,211 @@
 <div class="header">
   <img class="logo" src="https://torredecontrolcss.github.io/SIGUELO_DINALOG/icons/icon-192.png" alt="CSS Panam&aacute;">
   <div>
-  <h1>SIGUELO: Sistema Integrado de Gestión Unificada y Evaluación Logística &mdash; Portal Central DINALOG</h1>
-  <p>DINALOG / CEDIS Panam&aacute; &middot; Acceso a sistemas y tableros</p>
+    <h1>SIGUELO &mdash; Portal Central DINALOG</h1>
+    <p>Sistema Integrado de Gesti&oacute;n Unificada y Evaluaci&oacute;n Log&iacute;stica &middot; CEDIS Panam&aacute;</p>
   </div>
 </div>
 
-<div class="grid" id="grid"></div>
+<div class="shell">
+
+  <!-- ===== COLUMNA IZQUIERDA: EL FLUJO ===== -->
+  <div class="flujo">
+    <div class="flujo-intro">
+      El ecosistema est&aacute; organizado siguiendo el <strong>flujo operativo de la Direcci&oacute;n de Log&iacute;stica</strong>:
+      desde la cita del proveedor hasta la entrega a la Unidad Ejecutora, con las &aacute;reas de soporte que lo sostienen.
+      Abre un &aacute;rea y elige un tablero.
+    </div>
+    <div id="flujo"></div>
+  </div>
+
+  <!-- ===== COLUMNA DERECHA: EL DETALLE ===== -->
+  <div class="detalle" id="detalle">
+    <div class="detalle-vacio" id="vacio">
+      <div class="ico">&#9776;</div>
+      <h3>Selecciona un tablero</h3>
+      <p>Abre un &aacute;rea funcional del flujo a la izquierda y elige un dashboard.
+         Aqu&iacute; ver&aacute;s de qu&eacute; se trata antes de entrar.</p>
+    </div>
+  </div>
+
+</div>
 
 <div class="footer">
-  Enlaces a GitHub Pages (org: TorredeControlCSS). Cada tarjeta abre una p&aacute;gina en pesta&ntilde;a nueva.
+  Enlaces a GitHub Pages (org: TorredeControlCSS). Cada tablero abre en pesta&ntilde;a nueva.
 </div>
 
 <script>
-const PAGINAS = [
-  { sistema:"Asignaci&oacute;n F8", nombre:"Motor de Asignaci&oacute;n de Inventario",
-    desc:"Asignaci&oacute;n de Requisiciones F8 basado en un Modelo de Inteligencia de Demanda + Prioridad Cl&iacute;nica + Desabastecimiento en UE",
-    url:"https://torredecontrolcss.github.io/ASIGNACION_F8/" },
-  { sistema:"Asignaci&oacute;n F8", nombre:"Confirmaci&oacute;n de Recepci&oacute;n de F8",
-    desc:"M&oacute;dulo de Confirmaci&oacute;n de Formas 8 en Ventanilla del Almac&eacute;n.",
-    url:"https://torredecontrolcss.github.io/ASIGNACION_F8/confirmacion_f8.html" },
-  { sistema:"Asignaci&oacute;n F8", nombre:"Panel de Despacho de F8 a Unidades Ejecutoras",
-    desc:"Panel de despacho por triage, calendario, OTIF, termograf&iacute;a de Atenci&oacute;n por llenado de Unidad Ejecutora. Maneja priorización por Indice IDP (Indice de Prioridad de Despacho), enfocado en renglones desabastecidos y vitales)",
-    url:"https://torredecontrolcss.github.io/ASIGNACION_F8/panel_despacho.html" },
-
-  { sistema:"S&Iacute;GUELO", nombre:"Solicitud de Cita",
-    desc:"Formulario de Solicitud de citas de proveedores para entrega de renglones en el CEDIS Panamá. Permite una visual integrada al proveedor de sus citas confirmadas, pendientes, agendadas y ordenes de compra emitidas",
-    url:"https://torredecontrolcss.github.io/SIGUELO/solicitud_cita.html" },
-  { sistema:"S&Iacute;GUELO", nombre:"Panel de Confirmaci&oacute;n",
-    desc:"Modulo central de Confirmaci&oacute;n de citas de proveedores, analisis por IPR (Indice de Prioridad de Recepción), para optimizar renglones en desabastecimiento.",
-    url:"https://torredecontrolcss.github.io/SIGUELO/panel_confirmacion.html" },
-
-  { sistema:"Reposici&oacute;n UE", nombre:"Tablero de Cobertura y Reposición de Inventario",
-    desc:"An&aacute;lisis Comparativo de Saldos por UE, Tr&aacute;nsitos, Consumos, F8 y Distribuciones",
-    url:"https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html" },
-  { sistema:"Reposici&oacute;n UE", nombre:"Reposici&oacute;n UE",
-    desc:"Calculadora de Reposición de Inventario para las Unidades Ejecutoras.",
-    url:"https://torredecontrolcss.github.io/REPOSICION_UE_CSS/reposicion_ue.html" },
-
-  { sistema:"Seguire", nombre:"M&oacute;dulo de Seguimiento de Solicitudes de Entrega y &Oacute;rdenes de Compra",
-    desc:"Sistema de Seguimiento Inteligente de Requisiciones (Piloto).",
-    url:"https://torredecontrolcss.github.io/seguire/" },
-  { sistema:"Seguire", nombre:"Tr&aacute;nsitos de &Oacute;rdenes de Compra",
-    desc:"M&oacute;dulo de Captura Inteligente de &Oacute;rdenes de Compra y Solicitudes de Entregas Generadas.",
-    url:"https://torredecontrolcss.github.io/seguire/transitos.html" },
-
-  { sistema:"Recursos Humanos", nombre:"An&aacute;lisis de Tiempos",
-    desc:"An&aacute;lisis Completo de tiempos, ausencias, tardanzas, TxT, Alimentaci&oacute;n y Transporte del personal de DINALOG. (Piloto en Prueba).",
-    url:"https://torredecontrolcss.github.io/RH_BIOMETRICO/" },
-
-  { sistema:"Recursos Humanos", nombre:"Mis Tiempos",
-    desc:"Portal de tiempos (Piloto en prueba).",
-    url:"https://torredecontrolcss.github.io/Dashboard_Pedidos-_F8v2/mis_tiempos.html" },
-
-  { sistema:"Mi Farma Digital", nombre:"Mi Farma Digital &mdash; Versi&oacute;n DINALOG",
-    desc:"Piloto de prueba creado por DINALOG. Geolocaliza medicamentos por per&iacute;metro mediante la f&oacute;rmula de Haversine; acota la b&uacute;squeda por per&iacute;metro, provincia y pa&iacute;s. (Propuesta Piloto)",
-    url:"https://torredecontrolcss.github.io/mifarmadigital/" },
-
-  { sistema:"Curvas de Inventario", nombre:"Curvas de Inventario",
-    desc:"An&aacute;lisis hist&oacute;rico de las Curvas de Inventario por Rengl&oacute;n, Evaluaci&oacute;n de Planificadores por criterio ABC XYZ y Reportes de Abastecimiento y Vencimiento Autom&aacute;ticos.",
-    url:"https://torredecontrolcss.github.io/Curvas_de_Inventario/" },
-
-  { sistema:"Pantalla de Turnos", nombre:"Pantalla de Turnos",
-    desc:"Piloto de Prueba para un sistema de atenci&oacute;n por turnos en el almac&eacute;n y ventanillas.",
-    url:"https://torredecontrolcss.github.io/Pantalla_de_Turnos/" }
+/* ===== MODELO DE DATOS: FLUJO -> ÁREAS -> DASHBOARDS ===== */
+const AREAS = [
+  {
+    nombre: "Recepci&oacute;n de Proveedores",
+    sub: "Entrada del flujo &middot; SÍGUELO",
+    desc: "Punto de entrada del abastecimiento: agenda y confirmaci&oacute;n de citas de proveedores para la recepci&oacute;n de rengl&oacute;nes en el CEDIS Panam&aacute;.",
+    dashboards: [
+      { nombre:"Solicitud de Cita", sistema:"S&Iacute;GUELO", piloto:false,
+        resena:"Formulario de solicitud de citas de proveedores para entrega de rengl&oacute;nes en el CEDIS Panam&aacute;. Da al proveedor una visual integrada de sus citas confirmadas, pendientes y agendadas, y de las &oacute;rdenes de compra emitidas.",
+        url:"https://torredecontrolcss.github.io/SIGUELO/solicitud_cita.html" },
+      { nombre:"Panel de Confirmaci&oacute;n", sistema:"S&Iacute;GUELO", piloto:false,
+        resena:"M&oacute;dulo central de confirmaci&oacute;n de citas de proveedores. Prioriza con el &iacute;ndice IPR (&Iacute;ndice de Prioridad de Recepci&oacute;n) para optimizar la entrada de rengl&oacute;nes en desabastecimiento.",
+        url:"https://torredecontrolcss.github.io/SIGUELO/panel_confirmacion.html" }
+    ]
+  },
+  {
+    nombre: "Asignaci&oacute;n y Despacho F8",
+    sub: "N&uacute;cleo operativo &middot; Motor de Asignaci&oacute;n",
+    desc: "Coraz&oacute;n del CEDIS: convierte las requisiciones F8 en asignaciones priorizadas y las despacha a las Unidades Ejecutoras, con trazabilidad de principio a fin.",
+    dashboards: [
+      { nombre:"Motor de Asignaci&oacute;n de Inventario", sistema:"Asignaci&oacute;n F8", piloto:false,
+        resena:"Asigna las requisiciones F8 con un modelo de inteligencia de demanda combinado con prioridad cl&iacute;nica y nivel de desabastecimiento en la UE.",
+        url:"https://torredecontrolcss.github.io/ASIGNACION_F8/" },
+      { nombre:"Confirmaci&oacute;n de Recepci&oacute;n de F8", sistema:"Asignaci&oacute;n F8", piloto:false,
+        resena:"M&oacute;dulo de confirmaci&oacute;n de Formas 8 en la ventanilla del almac&eacute;n.",
+        url:"https://torredecontrolcss.github.io/ASIGNACION_F8/confirmacion_f8.html" },
+      { nombre:"Panel de Despacho a Unidades Ejecutoras", sistema:"Asignaci&oacute;n F8", piloto:false,
+        resena:"Despacho por triage, calendario, OTIF y termograf&iacute;a de atenci&oacute;n por llenado de Unidad Ejecutora. Prioriza con el &iacute;ndice IDP (&Iacute;ndice de Prioridad de Despacho), enfocado en rengl&oacute;nes desabastecidos y vitales.",
+        url:"https://torredecontrolcss.github.io/ASIGNACION_F8/panel_despacho.html" },
+      { nombre:"Tablero Kanban de Despacho F8", sistema:"Asignaci&oacute;n F8", piloto:false,
+        resena:"Tablero Kanban que sigue cada F8 por sus etapas de despacho &mdash; desde recepci&oacute;n hasta entrega en la Unidad Ejecutora &mdash; dando visibilidad en tiempo real del estado y los cuellos de botella del flujo.",
+        url:"https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html" }
+    ]
+  },
+  {
+    nombre: "Reposici&oacute;n y Cobertura de UE",
+    sub: "Planificaci&oacute;n de inventario",
+    desc: "Herramientas para que las Unidades Ejecutoras tengan visibilidad de sus tr&aacute;nsitos y planifiquen sus pedidos con base t&eacute;cnica, no por intuici&oacute;n.",
+    dashboards: [
+      { nombre:"Tablero de Cobertura y Reposici&oacute;n", sistema:"Reposici&oacute;n UE", piloto:false,
+        resena:"An&aacute;lisis comparativo de saldos por UE, tr&aacute;nsitos, consumos, F8 y distribuciones.",
+        url:"https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html" },
+      { nombre:"Calculadora de Reposici&oacute;n UE", sistema:"Reposici&oacute;n UE", piloto:false,
+        resena:"Calculadora de reposici&oacute;n de inventario para las Unidades Ejecutoras: les da visibilidad de los tr&aacute;nsitos de sus pedidos y les permite realizar sus solicitudes apoyadas en una herramienta tecnol&oacute;gica en vez de la estimaci&oacute;n manual.",
+        url:"https://torredecontrolcss.github.io/REPOSICION_UE_CSS/reposicion_ue.html" }
+    ]
+  },
+  {
+    nombre: "Seguimiento de Solicitudes y OC",
+    sub: "Trazabilidad &middot; Seguire",
+    desc: "Rastrea las solicitudes de entrega y las &oacute;rdenes de compra a lo largo de su ciclo, capturando los tr&aacute;nsitos de OC generados.",
+    dashboards: [
+      { nombre:"M&oacute;dulo de Seguimiento", sistema:"Seguire", piloto:true,
+        resena:"Sistema de seguimiento inteligente de requisiciones. Piloto en prueba.",
+        url:"https://torredecontrolcss.github.io/seguire/" },
+      { nombre:"Tr&aacute;nsitos de &Oacute;rdenes de Compra", sistema:"Seguire", piloto:false,
+        resena:"M&oacute;dulo de captura inteligente de &oacute;rdenes de compra y solicitudes de entrega generadas.",
+        url:"https://torredecontrolcss.github.io/seguire/transitos.html" }
+    ]
+  },
+  {
+    nombre: "Desempe&ntilde;o y Recursos Humanos",
+    sub: "Gesti&oacute;n del talento &middot; DINALOG",
+    desc: "Mide c&oacute;mo trabaja la gente: productividad por &aacute;rea, tiempos, ausencias y beneficios del personal de la Direcci&oacute;n de Log&iacute;stica.",
+    dashboards: [
+      { nombre:"Productividad por &Aacute;rea", sistema:"Recursos Humanos", piloto:false,
+        resena:"Mide la productividad de cada &aacute;rea de la Direcci&oacute;n de Log&iacute;stica en t&eacute;rminos de tareas terminadas o completadas frente a horas trabajadas.",
+        url:"https://torredecontrolcss.github.io/SIGUELO_DINALOG/productividad.html" },
+      { nombre:"An&aacute;lisis de Tiempos", sistema:"Recursos Humanos", piloto:true,
+        resena:"An&aacute;lisis completo de tiempos, ausencias, tardanzas, TxT, alimentaci&oacute;n y transporte del personal de DINALOG. Piloto en prueba.",
+        url:"https://torredecontrolcss.github.io/RH_BIOMETRICO/" },
+      { nombre:"Mis Tiempos", sistema:"Recursos Humanos", piloto:true,
+        resena:"Portal personal de tiempos para el colaborador. Piloto en prueba.",
+        url:"https://torredecontrolcss.github.io/Dashboard_Pedidos-_F8v2/mis_tiempos.html" }
+    ]
+  },
+  {
+    nombre: "Inteligencia y Servicios",
+    sub: "Anal&iacute;tica y soporte",
+    desc: "Capa anal&iacute;tica y de servicios transversales: curvas de inventario, geolocalizaci&oacute;n de medicamentos y atenci&oacute;n por turnos.",
+    dashboards: [
+      { nombre:"Curvas de Inventario", sistema:"Curvas de Inventario", piloto:false,
+        resena:"An&aacute;lisis hist&oacute;rico de las curvas de inventario por rengl&oacute;n, evaluaci&oacute;n de planificadores por criterio ABC-XYZ y reportes autom&aacute;ticos de abastecimiento y vencimiento.",
+        url:"https://torredecontrolcss.github.io/Curvas_de_Inventario/" },
+      { nombre:"Mi Farma Digital &mdash; DINALOG", sistema:"Mi Farma Digital", piloto:true,
+        resena:"Geolocaliza medicamentos por per&iacute;metro mediante la f&oacute;rmula de Haversine; acota la b&uacute;squeda por per&iacute;metro, provincia y pa&iacute;s. Propuesta piloto creada por DINALOG.",
+        url:"https://torredecontrolcss.github.io/mifarmadigital/" },
+      { nombre:"Pantalla de Turnos", sistema:"Pantalla de Turnos", piloto:true,
+        resena:"Sistema de atenci&oacute;n por turnos en el almac&eacute;n y ventanillas. Piloto de prueba.",
+        url:"https://torredecontrolcss.github.io/Pantalla_de_Turnos/" }
+    ]
+  }
 ];
 
-const grid = document.getElementById("grid");
+/* ===== RENDER DEL FLUJO ===== */
+const flujoEl = document.getElementById("flujo");
 
-PAGINAS.forEach(p => {
-  const a = document.createElement("a");
-  a.className = "card";
-  a.href = p.url;
-  a.target = "_blank";
-  a.rel = "noopener";
-  a.innerHTML =
-    '<div class="sistema">'+p.sistema+'</div>' +
-    '<h2>'+p.nombre+'</h2>' +
-    '<p>'+p.desc+'</p>' +
-    '<div class="link">'+p.url+'</div>';
-  grid.appendChild(a);
+AREAS.forEach((area, ai) => {
+  const box = document.createElement("div");
+  box.className = "area";
+
+  let listaHtml = "";
+  area.dashboards.forEach((d, di) => {
+    listaHtml +=
+      '<div class="dash-item'+(d.piloto?' piloto':'')+'" data-a="'+ai+'" data-d="'+di+'">' +
+        '<span class="dash-dot"></span>' + d.nombre +
+      '</div>';
+  });
+
+  box.innerHTML =
+    '<div class="area-head">' +
+      '<div class="area-num">'+(ai+1)+'</div>' +
+      '<div class="area-titulos">' +
+        '<div class="area-nombre">'+area.nombre+'</div>' +
+        '<div class="area-sub">'+area.sub+'</div>' +
+      '</div>' +
+      '<div class="area-chev">&#9654;</div>' +
+    '</div>' +
+    '<div class="area-desc">'+area.desc+'</div>' +
+    '<div class="area-lista">'+listaHtml+'</div>';
+
+  flujoEl.appendChild(box);
+
+  // conector entre áreas (menos tras la última)
+  if (ai < AREAS.length - 1) {
+    const linea = document.createElement("div");
+    linea.className = "flujo-linea";
+    flujoEl.appendChild(linea);
+  }
+
+  // toggle del área
+  box.querySelector(".area-head").addEventListener("click", () => {
+    box.classList.toggle("open");
+  });
 });
+
+/* ===== SELECCIÓN DE DASHBOARD -> PANEL DE DETALLE ===== */
+const detalleEl = document.getElementById("detalle");
+
+flujoEl.addEventListener("click", (e) => {
+  const item = e.target.closest(".dash-item");
+  if (!item) return;
+
+  document.querySelectorAll(".dash-item.active").forEach(x => x.classList.remove("active"));
+  item.classList.add("active");
+
+  const a = AREAS[+item.dataset.a];
+  const d = a.dashboards[+item.dataset.d];
+
+  detalleEl.innerHTML =
+    '<div class="panel">' +
+      '<div class="panel-top">' +
+        '<div class="panel-eyebrow">'+a.nombre+'</div>' +
+        '<h2>'+d.nombre+'</h2>' +
+      '</div>' +
+      '<div class="panel-body">' +
+        '<div class="resena">'+d.resena+'</div>' +
+        '<div class="panel-meta">' +
+          '<span class="chip">'+d.sistema+'</span>' +
+          (d.piloto ? '<span class="chip piloto">Piloto en prueba</span>' : '') +
+        '</div>' +
+        '<div class="panel-url">'+d.url+'</div>' +
+        '<a class="btn-entrar" href="'+d.url+'" target="_blank" rel="noopener">' +
+          'Entrar al tablero <span class="arrow">&rarr;</span>' +
+        '</a>' +
+      '</div>' +
+    '</div>';
+});
+
+/* Abrir la primera área por defecto para que se entienda la mecánica */
+document.querySelector(".area").classList.add("open");
 </script>
 
 </body>
