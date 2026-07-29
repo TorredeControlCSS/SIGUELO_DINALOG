@@ -18,7 +18,7 @@
   .header {
     position: relative;
     color: #fff;
-    padding: 18px 28px;
+    padding: 16px 34px;
     border-bottom: 3px solid #1e5a9e;
     display: flex;
     align-items: center;
@@ -26,251 +26,195 @@
     overflow: hidden;
     background: #0C447C;
   }
-  /* Marca de agua: imagen aérea del CEDIS, muy tenue */
   .header::before {
     content: "";
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background-image: url("assets/header_cedis.jpg");
-    background-size: cover;
-    background-position: center 35%;
-    opacity: .22;
-    z-index: 0;
+    background-size: cover; background-position: center 35%;
+    opacity: .20; z-index: 0;
   }
-  /* Overlay azul institucional para asegurar legibilidad y ocultar texto del render */
   .header::after {
     content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg,
-      rgba(12,68,124,.94) 0%,
-      rgba(12,68,124,.80) 45%,
-      rgba(12,68,124,.55) 100%);
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(12,68,124,.95) 0%, rgba(12,68,124,.82) 50%, rgba(12,68,124,.60) 100%);
     z-index: 1;
   }
   .header > * { position: relative; z-index: 2; }
   .header .logo { width: 46px; height: 46px; flex-shrink: 0; }
-  .header h1 { font-size: 19px; font-weight: 600; letter-spacing: .3px; }
+  .header h1 { font-size: 20px; font-weight: 600; letter-spacing: .3px; }
   .header p { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
 
-  /* ---------- LAYOUT: FLUJO A LA IZQUIERDA, DETALLE A LA DERECHA ---------- */
-  .shell {
-    display: grid;
-    grid-template-columns: 380px 1fr;
-    gap: 0;
+  /* ---------- LIENZO PRINCIPAL CON MARCA DE AGUA ---------- */
+  .lienzo {
+    position: relative;
     min-height: calc(100vh - 130px);
+    overflow: hidden;
   }
-  @media (max-width: 860px) {
-    .shell { grid-template-columns: 1fr; }
-    .detalle { border-left: none !important; border-top: 1px solid #a8a8a8; }
+  .lienzo::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: url("assets/fondo_cedis.jpg");
+    background-size: cover;
+    background-position: center;
+    opacity: .16;
+    z-index: 0;
   }
+  .lienzo::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(236,236,236,.55) 0%, rgba(236,236,236,.80) 100%);
+    z-index: 0;
+  }
+  .lienzo > * { position: relative; z-index: 1; }
 
-  /* ---------- COLUMNA DE FLUJO ---------- */
+  .intro {
+    padding: 22px 34px 6px;
+    max-width: 1100px;
+  }
+  .intro h2 { font-size: 16px; color: #0C447C; font-weight: 600; margin-bottom: 6px; }
+  .intro p { font-size: 12.5px; color: #555; line-height: 1.5; }
+
+  /* ---------- FLUJO HORIZONTAL DE PASOS ---------- */
   .flujo {
-    padding: 18px 20px 30px;
-    background: #f4f4f4;
-    border-right: 1px solid #a8a8a8;
-  }
-  .flujo-intro {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 16px;
-    line-height: 1.5;
-    padding: 10px 12px;
-    background: #fff;
-    border: 1px solid #d8d8d8;
-    border-left: 3px solid #1e5a9e;
-  }
-
-  /* Cada ÁREA FUNCIONAL es una etapa del flujo */
-  .area {
-    margin-bottom: 8px;
-    border: 1px solid #c4c4c4;
-    background: #fff;
-  }
-  .area-head {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 11px 13px;
-    cursor: pointer;
-    user-select: none;
-    background: #fff;
-    transition: background-color .12s;
+    align-items: stretch;
+    gap: 0;
+    padding: 18px 34px 8px;
+    overflow-x: auto;
   }
-  .area-head:hover { background: #eef4fb; }
-  .area-num {
-    width: 24px; height: 24px;
-    flex-shrink: 0;
-    background: #0C447C;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
+  .paso {
+    flex: 1 1 0;
+    min-width: 150px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+  }
+  .paso-card {
+    flex: 1;
+    background: rgba(255,255,255,.94);
+    border: 1px solid #b8b8b8;
+    border-top: 3px solid #1e5a9e;
     border-radius: 2px;
-  }
-  .area-titulos { flex: 1; }
-  .area-nombre { font-size: 13.5px; font-weight: 600; color: #1e5a9e; }
-  .area-sub { font-size: 10.5px; color: #888; margin-top: 1px; }
-  .area-chev {
-    font-size: 11px; color: #999;
-    transition: transform .18s;
-  }
-  .area.open .area-chev { transform: rotate(90deg); }
-
-  /* Descripción acotada del área */
-  .area-desc {
-    display: none;
-    padding: 0 13px 6px 47px;
-    font-size: 11px;
-    color: #666;
-    line-height: 1.45;
-  }
-  .area.open .area-desc { display: block; }
-
-  /* Lista de dashboards dentro del área */
-  .area-lista {
-    display: none;
-    padding: 4px 10px 12px 10px;
-  }
-  .area.open .area-lista { display: block; }
-
-  .dash-item {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 8px 10px 8px 37px;
+    padding: 14px 13px;
     cursor: pointer;
-    font-size: 12.5px;
-    color: #333;
-    border-left: 2px solid transparent;
-    transition: background-color .1s, border-color .1s;
-  }
-  .dash-item:hover { background: #eef4fb; }
-  .dash-item.active {
-    background: #e3eefa;
-    border-left-color: #0C447C;
-    font-weight: 600;
-    color: #0C447C;
-  }
-  .dash-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #1e5a9e; flex-shrink: 0;
-  }
-  .dash-item.piloto .dash-dot { background: #c98a1e; }
-
-  /* Conector visual del flujo */
-  .flujo-linea {
-    height: 14px;
-    margin-left: 24px;
-    border-left: 2px dashed #c4c4c4;
-    width: 0;
-  }
-
-  /* ---------- PANEL DE DETALLE ---------- */
-  .detalle {
-    padding: 40px 44px;
-    background: #ececec;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    gap: 7px;
+    transition: background-color .12s, border-color .12s, box-shadow .12s, transform .12s;
   }
-  .detalle-vacio {
-    text-align: center;
-    color: #999;
-    max-width: 560px;
-    width: 100%;
+  .paso-card:hover { background: #fff; box-shadow: 0 2px 10px rgba(30,90,158,.22); transform: translateY(-2px); }
+  .paso-card.active {
+    background: #0C447C;
+    border-color: #0C447C;
+    border-top-color: #f0b429;
   }
-  .detalle-vacio .ico {
-    font-size: 40px; color: #c4c4c4; margin-bottom: 14px;
-    font-weight: 300;
-  }
-  .detalle-vacio h3 { font-size: 17px; color: #666; font-weight: 600; margin-bottom: 10px; }
-  .detalle-vacio > p { font-size: 13px; line-height: 1.5; margin-bottom: 26px; }
+  .paso-card.active .paso-nombre,
+  .paso-card.active .paso-sub,
+  .paso-card.active .paso-count { color: #fff; }
+  .paso-card.active .paso-num { background: #fff; color: #0C447C; }
 
-  /* Mini-mapa de áreas en el estado inicial, para llenar el espacio */
-  .vacio-areas {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    text-align: left;
-  }
-  .vacio-chip {
-    background: #fff;
-    border: 1px solid #d8d8d8;
-    border-left: 3px solid #1e5a9e;
-    padding: 11px 13px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .vacio-chip .vc-num {
-    width: 22px; height: 22px; flex-shrink: 0;
-    background: #0C447C; color: #fff; font-size: 11px; font-weight: 700;
+  .paso-num {
+    width: 28px; height: 28px; flex-shrink: 0;
+    background: #0C447C; color: #fff; font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; border-radius: 2px;
   }
-  .vacio-chip .vc-txt { font-size: 12px; color: #444; font-weight: 600; line-height: 1.25; }
+  .paso-nombre { font-size: 13px; font-weight: 600; color: #1e5a9e; line-height: 1.25; }
+  .paso-sub { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .4px; }
+  .paso-count {
+    font-size: 10.5px; color: #666; margin-top: auto;
+    padding-top: 6px; border-top: 1px solid #e4e4e4;
+  }
 
-  /* Tarjeta de detalle del dashboard seleccionado */
-  .panel {
+  /* Flecha conectora entre pasos */
+  .flecha {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; flex-shrink: 0;
+    color: #1e5a9e; font-size: 18px; font-weight: 700;
+  }
+  @media (max-width: 900px) {
+    .flujo { flex-direction: column; }
+    .paso { min-width: 0; }
+    .flecha { width: auto; height: 22px; transform: rotate(90deg); }
+  }
+
+  /* ---------- PANEL EXPANDIDO A TODO EL ANCHO ---------- */
+  .detalle {
+    padding: 8px 34px 34px;
+  }
+  .detalle-inner {
     background: #fff;
     border: 1px solid #a8a8a8;
     border-radius: 2px;
-    width: 100%;
-    max-width: 720px;
-    box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
     animation: fadeIn .18s ease;
+    overflow: hidden;
   }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+
+  .detalle-top {
+    background: #0C447C; color: #fff;
+    padding: 16px 24px; border-bottom: 3px solid #f0b429;
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
   }
-  .panel-top {
-    background: #0C447C;
-    color: #fff;
-    padding: 20px 26px;
-    border-bottom: 3px solid #1e5a9e;
+  .detalle-top .dt-num {
+    background: #fff; color: #0C447C; font-weight: 700; font-size: 13px;
+    width: 26px; height: 26px; border-radius: 2px;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink:0;
+    align-self: center;
   }
-  .panel-eyebrow {
-    font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px;
-    color: #b9d2ec; font-weight: 600; margin-bottom: 6px;
+  .detalle-top h2 { font-size: 19px; font-weight: 600; }
+  .detalle-top .dt-desc { font-size: 12px; color: #b9d2ec; width: 100%; margin-top: 2px; line-height: 1.4; }
+
+  /* Grid de dashboards del área */
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+    padding: 20px 24px;
   }
-  .panel-top h2 { font-size: 21px; font-weight: 600; line-height: 1.25; }
-  .panel-body { padding: 24px 26px 26px; }
-  .panel-body .resena {
-    font-size: 14px; color: #444; line-height: 1.65; margin-bottom: 20px;
+  .dash-card {
+    border: 1px solid #cdd8e4;
+    border-radius: 2px;
+    padding: 15px 16px;
+    display: flex;
+    flex-direction: column;
+    background: #fbfcfe;
+    transition: border-color .12s, box-shadow .12s, background-color .12s;
   }
-  .panel-meta {
-    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
+  .dash-card:hover { border-color: #1e5a9e; background: #fff; box-shadow: 0 1px 6px rgba(30,90,158,.15); }
+  .dash-card .dc-sys {
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px;
+    color: #888; font-weight: 600; margin-bottom: 5px;
+    display: flex; align-items: center; gap: 6px;
   }
-  .chip {
-    font-size: 10.5px; font-weight: 600;
-    padding: 4px 9px; border-radius: 2px;
-    background: #eef4fb; color: #1e5a9e; border: 1px solid #cfe0f4;
+  .dash-card .dc-dot { width:6px; height:6px; border-radius:50%; background:#1e5a9e; }
+  .dash-card.piloto .dc-dot { background:#c98a1e; }
+  .dash-card h3 { font-size: 14.5px; color: #0C447C; font-weight: 600; margin-bottom: 7px; line-height: 1.25; }
+  .dash-card .dc-resena { font-size: 12px; color: #555; line-height: 1.5; flex: 1; margin-bottom: 12px; }
+  .dash-card .dc-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 12px; }
+  .tag {
+    font-size: 9.5px; font-weight: 600; padding: 3px 7px; border-radius: 2px;
+    background:#eef4fb; color:#1e5a9e; border:1px solid #cfe0f4;
   }
-  .chip.piloto { background: #fdf3e0; color: #a06d12; border-color: #efd9ac; }
-  .panel-url {
-    font-size: 11px; color: #999; word-break: break-all;
-    padding: 9px 11px; background: #f7f7f7; border: 1px solid #e2e2e2;
-    margin-bottom: 18px; font-family: Consolas, monospace;
-  }
+  .tag.piloto { background:#fdf3e0; color:#a06d12; border-color:#efd9ac; }
   .btn-entrar {
-    display: inline-flex; align-items: center; gap: 8px;
+    display: inline-flex; align-items: center; justify-content:center; gap: 7px;
     background: #0C447C; color: #fff; text-decoration: none;
-    font-size: 13.5px; font-weight: 600;
-    padding: 11px 22px; border-radius: 2px;
-    border: 1px solid #0a3a6a;
+    font-size: 12.5px; font-weight: 600;
+    padding: 9px 16px; border-radius: 2px; border: 1px solid #0a3a6a;
     transition: background-color .12s;
   }
   .btn-entrar:hover { background: #1e5a9e; }
-  .btn-entrar .arrow { font-size: 15px; }
+
+  /* Estado inicial */
+  .detalle-vacio {
+    text-align: center; color: #888;
+    padding: 34px 24px;
+  }
+  .detalle-vacio h3 { font-size: 15px; color: #666; font-weight: 600; margin-bottom: 6px; }
+  .detalle-vacio p { font-size: 12.5px; line-height: 1.5; }
 
   .footer {
-    padding: 14px 28px;
-    font-size: 11px; color: #888;
+    padding: 14px 34px; font-size: 11px; color: #888;
     border-top: 1px solid #a8a8a8; background: #fff;
   }
 </style>
@@ -278,33 +222,29 @@
 <body>
 
 <div class="header">
-  <img class="logo" src="https://torredecontrolcss.github.io/SIGUELO_DINALOG/icons/icon-192.png" alt="CSS Panam&aacute;">
+  <img class="logo" src="https://torredecontrolcss.github.io/SIGUELO_DINALOG/icons/icon-192.png" alt="CSS Panama">
   <div>
     <h1>SIGUELO &mdash; Portal Central DINALOG</h1>
     <p>Sistema Integrado de Gesti&oacute;n Unificada y Evaluaci&oacute;n Log&iacute;stica &middot; CEDIS Panam&aacute;</p>
   </div>
 </div>
 
-<div class="shell">
+<div class="lienzo">
 
-  <!-- ===== COLUMNA IZQUIERDA: EL FLUJO ===== -->
-  <div class="flujo">
-    <div class="flujo-intro">
-      El ecosistema est&aacute; organizado siguiendo el <strong>flujo operativo de la Direcci&oacute;n de Log&iacute;stica</strong>:
-      desde la cita del proveedor hasta la entrega a la Unidad Ejecutora, con las &aacute;reas de soporte que lo sostienen.
-      Abre un &aacute;rea y elige un tablero.
-    </div>
-    <div id="flujo"></div>
+  <div class="intro">
+    <h2>Flujo operativo de la Direcci&oacute;n de Log&iacute;stica</h2>
+    <p>Recorre el ecosistema paso a paso, desde la cita del proveedor hasta la entrega en la Unidad Ejecutora.
+       Haz clic en una etapa para ver sus tableros.</p>
   </div>
 
-  <!-- ===== COLUMNA DERECHA: EL DETALLE ===== -->
+  <div class="flujo" id="flujo"></div>
+
   <div class="detalle" id="detalle">
-    <div class="detalle-vacio" id="vacio">
-      <div class="ico">&#9776;</div>
-      <h3>Selecciona un tablero para empezar</h3>
-      <p>El ecosistema se recorre siguiendo el flujo operativo. Abre un &aacute;rea a la izquierda
-         y elige un dashboard; aqu&iacute; ver&aacute;s de qu&eacute; se trata antes de entrar.</p>
-      <div class="vacio-areas" id="vacioAreas"></div>
+    <div class="detalle-inner">
+      <div class="detalle-vacio">
+        <h3>Selecciona una etapa del flujo</h3>
+        <p>Haz clic en cualquiera de los pasos de arriba para desplegar aqu&iacute; sus tableros.</p>
+      </div>
     </div>
   </div>
 
@@ -315,7 +255,6 @@
 </div>
 
 <script>
-/* ===== MODELO DE DATOS: FLUJO -> ÁREAS -> DASHBOARDS ===== */
 const AREAS = [
   {
     nombre: "Recepci&oacute;n de Proveedores",
@@ -409,94 +348,70 @@ const AREAS = [
   }
 ];
 
-/* ===== RENDER DEL FLUJO ===== */
 const flujoEl = document.getElementById("flujo");
+const detalleEl = document.getElementById("detalle");
 
+/* Render de los pasos horizontales con flechas */
 AREAS.forEach((area, ai) => {
-  const box = document.createElement("div");
-  box.className = "area";
+  const paso = document.createElement("div");
+  paso.className = "paso";
+  paso.innerHTML =
+    '<div class="paso-card" data-a="'+ai+'">' +
+      '<div class="paso-num">'+(ai+1)+'</div>' +
+      '<div class="paso-nombre">'+area.nombre+'</div>' +
+      '<div class="paso-sub">'+area.sub+'</div>' +
+      '<div class="paso-count">'+area.dashboards.length+' tablero'+(area.dashboards.length>1?'s':'')+'</div>' +
+    '</div>';
+  flujoEl.appendChild(paso);
 
-  let listaHtml = "";
-  area.dashboards.forEach((d, di) => {
-    listaHtml +=
-      '<div class="dash-item'+(d.piloto?' piloto':'')+'" data-a="'+ai+'" data-d="'+di+'">' +
-        '<span class="dash-dot"></span>' + d.nombre +
+  if (ai < AREAS.length - 1) {
+    const flecha = document.createElement("div");
+    flecha.className = "flecha";
+    flecha.innerHTML = "&#10142;";
+    flujoEl.appendChild(flecha);
+  }
+});
+
+/* Al hacer clic en un paso, expandir sus dashboards a todo el ancho */
+flujoEl.addEventListener("click", (e) => {
+  const card = e.target.closest(".paso-card");
+  if (!card) return;
+  const ai = +card.dataset.a;
+  const area = AREAS[ai];
+
+  document.querySelectorAll(".paso-card.active").forEach(x => x.classList.remove("active"));
+  card.classList.add("active");
+
+  let cards = "";
+  area.dashboards.forEach(d => {
+    cards +=
+      '<div class="dash-card'+(d.piloto?' piloto':'')+'">' +
+        '<div class="dc-sys"><span class="dc-dot"></span>'+d.sistema+'</div>' +
+        '<h3>'+d.nombre+'</h3>' +
+        '<div class="dc-resena">'+d.resena+'</div>' +
+        '<div class="dc-tags">' +
+          '<span class="tag">'+d.sistema+'</span>' +
+          (d.piloto?'<span class="tag piloto">Piloto en prueba</span>':'') +
+        '</div>' +
+        '<a class="btn-entrar" href="'+d.url+'" target="_blank" rel="noopener">Entrar al tablero &rarr;</a>' +
       '</div>';
   });
 
-  box.innerHTML =
-    '<div class="area-head">' +
-      '<div class="area-num">'+(ai+1)+'</div>' +
-      '<div class="area-titulos">' +
-        '<div class="area-nombre">'+area.nombre+'</div>' +
-        '<div class="area-sub">'+area.sub+'</div>' +
-      '</div>' +
-      '<div class="area-chev">&#9654;</div>' +
-    '</div>' +
-    '<div class="area-desc">'+area.desc+'</div>' +
-    '<div class="area-lista">'+listaHtml+'</div>';
-
-  flujoEl.appendChild(box);
-
-  // conector entre áreas (menos tras la última)
-  if (ai < AREAS.length - 1) {
-    const linea = document.createElement("div");
-    linea.className = "flujo-linea";
-    flujoEl.appendChild(linea);
-  }
-
-  // toggle del área
-  box.querySelector(".area-head").addEventListener("click", () => {
-    box.classList.toggle("open");
-  });
-});
-
-/* ===== MINI-MAPA DE ÁREAS EN EL ESTADO INICIAL ===== */
-const vacioAreas = document.getElementById("vacioAreas");
-AREAS.forEach((area, ai) => {
-  const chip = document.createElement("div");
-  chip.className = "vacio-chip";
-  chip.innerHTML =
-    '<div class="vc-num">'+(ai+1)+'</div>' +
-    '<div class="vc-txt">'+area.nombre+'</div>';
-  vacioAreas.appendChild(chip);
-});
-
-/* ===== SELECCIÓN DE DASHBOARD -> PANEL DE DETALLE ===== */
-const detalleEl = document.getElementById("detalle");
-
-flujoEl.addEventListener("click", (e) => {
-  const item = e.target.closest(".dash-item");
-  if (!item) return;
-
-  document.querySelectorAll(".dash-item.active").forEach(x => x.classList.remove("active"));
-  item.classList.add("active");
-
-  const a = AREAS[+item.dataset.a];
-  const d = a.dashboards[+item.dataset.d];
-
   detalleEl.innerHTML =
-    '<div class="panel">' +
-      '<div class="panel-top">' +
-        '<div class="panel-eyebrow">'+a.nombre+'</div>' +
-        '<h2>'+d.nombre+'</h2>' +
+    '<div class="detalle-inner">' +
+      '<div class="detalle-top">' +
+        '<span class="dt-num">'+(ai+1)+'</span>' +
+        '<h2>'+area.nombre+'</h2>' +
+        '<div class="dt-desc">'+area.desc+'</div>' +
       '</div>' +
-      '<div class="panel-body">' +
-        '<div class="resena">'+d.resena+'</div>' +
-        '<div class="panel-meta">' +
-          '<span class="chip">'+d.sistema+'</span>' +
-          (d.piloto ? '<span class="chip piloto">Piloto en prueba</span>' : '') +
-        '</div>' +
-        '<div class="panel-url">'+d.url+'</div>' +
-        '<a class="btn-entrar" href="'+d.url+'" target="_blank" rel="noopener">' +
-          'Entrar al tablero <span class="arrow">&rarr;</span>' +
-        '</a>' +
-      '</div>' +
+      '<div class="dash-grid">'+cards+'</div>' +
     '</div>';
+
+  if (detalleEl.scrollIntoView) detalleEl.scrollIntoView({ behavior:"smooth", block:"nearest" });
 });
 
-/* Abrir la primera área por defecto para que se entienda la mecánica */
-document.querySelector(".area").classList.add("open");
+/* Abrir el primer paso por defecto */
+document.querySelector(".paso-card").click();
 </script>
 
 </body>
