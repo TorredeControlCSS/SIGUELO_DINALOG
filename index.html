@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIGUELO | Portal Central DINALOG</title>
 <link rel="icon" href="https://torredecontrolcss.github.io/SIGUELO_DINALOG/favicon.ico">
+<!-- ===== PWA ===== -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0C447C">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SIGUELO">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<!-- ===== /PWA ===== -->
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -223,6 +232,24 @@
     padding: 14px 34px; font-size: 11px; color: #888;
     border-top: 1px solid #a8a8a8; background: #fff;
   }
+/* ===== Tutorial guiado (tour) ===== */
+#tourOverlay{position:fixed;inset:0;z-index:1000;}
+#tourBackdrop{position:absolute;inset:0;background:rgba(15,25,40,.55);}
+.tour-spot{position:absolute;border:3px solid #0C447C;border-radius:4px;
+  box-shadow:0 0 0 3px rgba(255,255,255,.6),0 0 0 9999px rgba(15,25,40,.55);
+  transition:all .25s ease;pointer-events:none;z-index:1001;}
+#tourBox{position:absolute;z-index:1002;background:#fff;border:1px solid #a8a8a8;
+  border-radius:4px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:14px 16px;
+  width:min(320px,90vw);box-sizing:border-box;}
+#tourTitulo{font-size:14px;font-weight:700;color:#1E5A9E;margin-bottom:6px;font-family:Cambria,Georgia,serif;}
+#tourTexto{font-size:12.5px;line-height:1.5;color:#333;font-family:Calibri,Segoe UI,sans-serif;}
+#tourNav{display:flex;align-items:center;gap:8px;margin-top:12px;}
+#tourPaso{font-size:11px;color:#6b7280;}
+#tourNav button{font-size:12px;padding:6px 12px;border:1px solid #a8a8a8;border-radius:3px;background:#ececec;cursor:pointer;font-family:Calibri,Segoe UI,sans-serif;}
+#tourNav button.btn-plano{background:#fff;}
+#tourNext{background:#0C447C !important;color:#fff;font-weight:700;border-color:#0C447C !important;padding:7px 14px !important;}
+#btnTutorial{margin-top:12px;background:#0C447C;color:#fff;font-weight:700;border:1px solid #0C447C;
+  border-radius:3px;padding:8px 16px;cursor:pointer;font-family:Calibri,Segoe UI,sans-serif;font-size:13px;}
 </style>
 </head>
 <body>
@@ -241,6 +268,7 @@
     <h2>Flujo operativo de la Direcci&oacute;n de Log&iacute;stica</h2>
     <p>Recorre el ecosistema paso a paso, desde la cita del proveedor hasta la entrega en la Unidad Ejecutora.
        Haz clic en una etapa para ver sus tableros.</p>
+    <button id="btnTutorial" type="button">&#9654; Ver tutorial guiado</button>
   </div>
 
   <div class="flujo" id="flujo"></div>
@@ -418,6 +446,119 @@ flujoEl.addEventListener("click", (e) => {
 
 /* Abrir el primer paso por defecto */
 document.querySelector(".paso-card").click();
+</script>
+
+<!-- ===== Overlay del tutorial guiado ===== -->
+<div id="tourOverlay" style="display:none;">
+  <div id="tourBackdrop"></div>
+  <div id="tourBox">
+    <div id="tourTitulo"></div>
+    <div id="tourTexto"></div>
+    <div id="tourNav">
+      <span id="tourPaso"></span>
+      <span style="flex:1"></span>
+      <button id="tourSkip" class="btn-plano" type="button">Saltar</button>
+      <button id="tourPrev" class="btn-plano" type="button">&#9666; Atr&aacute;s</button>
+      <button id="tourNext" type="button">Siguiente &#9656;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Lógica del tutorial guiado ===== -->
+<script>
+(function(){
+  function elx(s){ return document.querySelector(s); }
+
+  var TOUR_STEPS = [
+    { sel:'.intro',   tit:'1. Bienvenido a SIGUELO', txt:'Este portal reune todos los tableros de la Direccion de Logistica, organizados segun el flujo operativo real, desde la cita del proveedor hasta la entrega en la Unidad Ejecutora.' },
+    { sel:'#flujo',   tit:'2. El flujo operativo',   txt:'Cada tarjeta es una etapa del proceso. Estan en orden: siga el numero para recorrer el ciclo completo de la logistica.' },
+    { sel:'.paso-card', tit:'3. Elija una etapa',    txt:'Al hacer clic en una etapa, se resalta y despliega sus tableros justo abajo. El tour ya abrio la primera para mostrarselo.', prep:'abrir' },
+    { sel:'#detalle', tit:'4. Los tableros de la etapa', txt:'Aqui aparecen los tableros de la etapa elegida, cada uno con su reseña, el sistema que lo alimenta y su estado (algunos en piloto de prueba).', prep:'abrir' },
+    { sel:'.btn-entrar', tit:'5. Entrar al tablero', txt:'Este boton abre el tablero en una pestaña nueva, sin perder el portal. Desde alli trabaja normalmente.', prep:'abrir' }
+  ];
+  var TOUR_I = 0;
+
+  function tourAbrirEtapaDemo(){
+    var activa = document.querySelector('.paso-card.active');
+    if (!activa){
+      var primera = document.querySelector('.paso-card');
+      if (primera) primera.click();
+    }
+  }
+
+  function iniciarTour(){
+    TOUR_I = 0;
+    elx('#tourOverlay').style.display='block';
+    setTimeout(mostrarPasoTour, 350);
+  }
+  function cerrarTour(){
+    elx('#tourOverlay').style.display='none';
+    var sp=document.querySelector('.tour-spot'); if(sp) sp.remove();
+    try{ localStorage.setItem('siguelo_tour_visto','1'); }catch(e){}
+  }
+  function mostrarPasoTour(){
+    var step = TOUR_STEPS[TOUR_I];
+    if(!step){ cerrarTour(); return; }
+    if (step.prep==='abrir') tourAbrirEtapaDemo();
+    setTimeout(function(){ posicionarTour(step); }, step.prep? 250 : 0);
+  }
+  function posicionarTour(step){
+    var target = document.querySelector(step.sel);
+    var box = elx('#tourBox');
+    var sp = document.querySelector('.tour-spot');
+    if(!sp){ sp=document.createElement('div'); sp.className='tour-spot'; elx('#tourOverlay').appendChild(sp); }
+    if (target){
+      box.style.transform='';
+      target.scrollIntoView({block:'center', behavior:'smooth'});
+      setTimeout(function(){
+        var r = target.getBoundingClientRect();
+        sp.style.top=(r.top-6)+'px'; sp.style.left=(r.left-6)+'px';
+        sp.style.width=(r.width+12)+'px'; sp.style.height=(r.height+12)+'px';
+        sp.style.display='block';
+        var bh=box.offsetHeight||160, bw=box.offsetWidth||320;
+        var top = r.bottom+14; if (top+bh > window.innerHeight-10) top = Math.max(10, r.top-bh-14);
+        var left = Math.min(Math.max(10, r.left), window.innerWidth-bw-10);
+        box.style.top=top+'px'; box.style.left=left+'px';
+      }, 300);
+    } else {
+      sp.style.display='none';
+      box.style.top='50%'; box.style.left='50%'; box.style.transform='translate(-50%,-50%)';
+    }
+    elx('#tourTitulo').textContent = step.tit;
+    elx('#tourTexto').textContent = step.txt;
+    elx('#tourPaso').textContent = 'Paso '+(TOUR_I+1)+' de '+TOUR_STEPS.length;
+    elx('#tourPrev').style.visibility = TOUR_I===0 ? 'hidden' : 'visible';
+    elx('#tourNext').textContent = TOUR_I===TOUR_STEPS.length-1 ? 'Terminar' : 'Siguiente \u25B8';
+  }
+
+  var b=elx('#btnTutorial'); if(b) b.addEventListener('click', iniciarTour);
+  var n=elx('#tourNext'); if(n) n.addEventListener('click', function(){
+    if(TOUR_I>=TOUR_STEPS.length-1){ cerrarTour(); return; }
+    TOUR_I++; mostrarPasoTour();
+  });
+  var p=elx('#tourPrev'); if(p) p.addEventListener('click', function(){ if(TOUR_I>0){ TOUR_I--; mostrarPasoTour(); } });
+  var s=elx('#tourSkip'); if(s) s.addEventListener('click', cerrarTour);
+  window.addEventListener('resize', function(){
+    if (elx('#tourOverlay').style.display==='block') posicionarTour(TOUR_STEPS[TOUR_I]);
+  });
+
+  // Auto-arranque solo en la primera visita
+  var visto = false;
+  try{ visto = localStorage.getItem('siguelo_tour_visto')==='1'; }catch(e){}
+  if(!visto){
+    window.addEventListener('load', function(){ setTimeout(iniciarTour, 900); });
+  }
+})();
+</script>
+
+<!-- ===== Registro del Service Worker (PWA) ===== -->
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js")
+      .catch(function (err) { console.warn("SW no registrado:", err); });
+  });
+}
 </script>
 
 </body>
