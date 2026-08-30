@@ -75,6 +75,10 @@
   .btn.ok:disabled{opacity:1;}
   .btn.err{background:var(--rojo);border-color:var(--rojo);opacity:1;cursor:pointer;}
   .btn.err:hover{background:#a83232;}
+  .btn.rep{background:#a06a00;border-color:#a06a00;opacity:1;}
+  .btn.rep:hover{background:#8a5b00;}
+  .dropzone.hecho{border-color:#b5d4a8;background:#f2f8ef;}
+  .dropzone.hecho .ico,.dropzone.hecho .t{color:var(--verde);}
 
   .msg{font-size:12px;padding:7px 9px;border-radius:3px;display:none;line-height:1.4;}
   .msg.info{background:#e7f1fb;color:var(--azul);border:1px solid #b8d4ee;display:block;}
@@ -279,6 +283,54 @@ var ETIQ_SUB = {
 };
 
 var ARCHIVOS = {};   // clave insumo → {base64, nombre, mime}
+var YA_CARGADO = {}; // clave insumo → true si ya se registró una carga en la fecha
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  SENSIBILIDAD POR REPORTE
+ *  Define qué significa volver a cargar un reporte que ya se cargó hoy.
+ *  El nivel no cambia lo que hace el backend: cambia lo que el usuario
+ *  entiende antes de hacerlo.
+ *
+ *    A  actualización esperada  · sin confirmación
+ *    B  refresca el día         · una confirmación
+ *    C  ventana histórica       · una confirmación + aviso de costo
+ *    D  serie de la curva       · una confirmación + aviso de que no corrige
+ *    E  pasivo                  · sin confirmación
+ * ═══════════════════════════════════════════════════════════════════ */
+var NIVEL = {
+  'salmi::SOLICITUDES':'A',
+  'salmi::SALDOENLINEA':'B', 'salmi::DISTRIBUCION':'B',
+  'salmi::RES_MED':'B','salmi::RES_MQ':'B','salmi::RES_FRIO':'B','salmi::RES_ODO':'B',
+  'salmi::NETO_MED':'B','salmi::NETO_MQ':'B','salmi::NETO_FRIO':'B','salmi::NETO_ODO':'B',
+  'salmi::TRAZ_MED':'C','salmi::TRAZ_MQ':'C','salmi::TRAZ_FRIO':'C','salmi::TRAZ_ODO':'C',
+  'salmi::VALORIZADO':'D',
+  'mb51':'B', 'mb52':'B', 'biometrico':'B',
+  'recepcion':'E', 'transporte':'E'
+};
+
+var NIVEL_CFG = {
+  A: { confirma:false, btn:'Cargar actualización', tono:'info',
+       aviso:'Este reporte se actualiza varias veces al día. La nueva carga refresca la ventana; '
+           + 'los documentos ya registrados no se duplican.' },
+  B: { confirma:true,  btn:'Reemplazar la foto del día', tono:'warn',
+       aviso:'Ya hay una carga de este reporte en la fecha seleccionada. La nueva sustituye a la anterior '
+           + 'como foto vigente del día. Presione otra vez para confirmar.' },
+  C: { confirma:true,  btn:'Reprocesar la ventana', tono:'warn',
+       aviso:'Este reporte trae un rango de varios meses. Volver a cargarlo reescribe toda esa ventana: '
+           + 'es seguro, pero es la operación más pesada del sistema. Hágalo solo si el archivo anterior '
+           + 'venía incompleto. Presione otra vez para confirmar.' },
+  D: { confirma:true,  btn:'Cargar corte de inventario', tono:'err',
+       aviso:'<b>Este corte ya fue cargado y procesado.</b> La curva de inventario solo admite cortes '
+           + 'posteriores al último registrado, así que <b>volver a subir la misma fecha no corrige el dato</b>: '
+           + 'el archivo se guarda pero el cálculo lo ignora. Si el corte anterior venía mal, avise a Torre de '
+           + 'Control para depurar la serie. Presione otra vez si aun así desea archivarlo.' },
+  E: { confirma:false, btn:'Cargar archivo', tono:'info',
+       aviso:'Este archivo se almacena para consulta. No alimenta ningún tablero por ahora.' }
+};
+
+function nivelDe(id){ return NIVEL_CFG[ NIVEL[id] || 'B' ]; }
+
+var CONFIRMA  = {};  // clave insumo → true si el usuario ya armó el reemplazo
 
 /* ═══════════════════════════════════════════════════════════════════
  *  UTILIDADES
@@ -366,7 +418,17 @@ function enlazarCarga(ins, sub){
   fi.addEventListener('change', function(e){
     if(e.target.files[0]) tomarArchivo(ins, sub, e.target.files[0]);
   });
-  bt.addEventListener('click', function(){ subir(ins, sub); });
+  bt.addEventListener('click', function(){
+    var nv = nivelDe(id);
+    if (YA_CARGADO[id] && nv.confirma && !CONFIRMA[id]) {
+      CONFIRMA[id] = true;
+      bt.className = 'btn rep';
+      bt.textContent = nv.btn;
+      mostrar(id, nv.tono, nv.aviso);
+      return;
+    }
+    subir(ins, sub);
+  });
 }
 
 function tomarArchivo(ins, sub, file){
@@ -381,7 +443,10 @@ function tomarArchivo(ins, sub, file){
     el('dzt_'+id).textContent = file.name;
     el('dz_'+id).classList.add('listo');
     var _b = el('btn_'+id);
-    _b.disabled = false; _b.className = 'btn'; _b.textContent = 'Cargar archivo';
+    _b.disabled = false;
+    CONFIRMA[id] = false;
+    _b.className = 'btn';
+    _b.textContent = YA_CARGADO[id] ? nivelDe(id).btn : 'Cargar archivo';
     el('dzt_'+id).title = file.name;
     mostrar(id, 'info', 'Archivo listo (' + Math.round(file.size/1024) + ' KB). Presione «Cargar archivo».');
   };
@@ -466,6 +531,9 @@ function enviarArchivo(ins, sub, arch, pin){
         el('dzt_'+id).textContent='Seleccionar archivo';
         el('dzt_'+id).title='';
         el('dz_'+id).classList.remove('listo');
+        YA_CARGADO[id]=true; CONFIRMA[id]=false;
+        el('dz_'+id).classList.add('hecho');
+        el('dzt_'+id).textContent='Ya cargado hoy · toque para reemplazar';
         bt.disabled=true; bt.className='btn ok'; bt.textContent='✓ Cargado';
         cargarHistorial();
       } else {
@@ -607,6 +675,7 @@ function pintarResumen(res){
     else if(r.estado==='PARCIAL'){ b.className='badge parc'; b.textContent='PARCIAL'; }
     else { b.className='badge '+(ins&&ins.semanal?'sem':'pend');
            b.textContent=(ins&&ins.semanal)?'SEMANAL':'PENDIENTE'; }
+    if(!r.subreportes) marcarCargado(r.insumo, r.estado==='RECIBIDO');
     // contador y chips de subreportes
     if(r.subreportes){
       var c=el('cnt_'+r.insumo);
@@ -614,9 +683,27 @@ function pintarResumen(res){
       r.subreportes.forEach(function(s){
         var ch=el('chip_'+r.insumo+'::'+s.nombre);
         if(ch){ ch.className='sub-chip'+(s.recibido?' ok':''); ch.textContent=s.recibido?'Recibido':'Pendiente'; }
+        marcarCargado(r.insumo+'::'+s.nombre, !!s.recibido);
       });
     }
   });
+}
+
+/* Refleja en la casilla si el reporte ya tiene una carga en la fecha. */
+function marcarCargado(id, hecho){
+  YA_CARGADO[id] = !!hecho;
+  var dz=el('dz_'+id), dzt=el('dzt_'+id), bt=el('btn_'+id);
+  if(!dz||!dzt||!bt) return;
+  if(ARCHIVOS[id]) return;              // hay un archivo elegido sin enviar: no tocar
+  if(hecho){
+    dz.classList.add('hecho');
+    dzt.textContent='Ya cargado hoy · toque para reemplazar';
+    if(bt.className.indexOf('ok')<0){ bt.disabled=true; bt.className='btn'; bt.textContent=nivelDe(id).btn; }
+  } else {
+    dz.classList.remove('hecho');
+    if(dzt.textContent.indexOf('Ya cargado')===0) dzt.textContent='Seleccionar archivo';
+    if(bt.className.indexOf('ok')<0){ bt.disabled=true; bt.className='btn'; bt.textContent='Cargar archivo'; }
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
