@@ -236,40 +236,37 @@ var API_URL = 'https://script.google.com/macros/s/AKfycbxSG68fpUjwzFlG8P0ZAx5uTI
 
 /* Catálogo de insumos — refleja la tabla del memorando */
 var INSUMOS = [
-  { k:'recepcion',  n:1, nombre:'Entradas diarias de recepción',
+  { k:'recepcion',  n:1, nombre:'RECEPCIÓN · Entradas diarias',
     fuente:'Reporte de Excel', resp:'Jefatura de Recepción / Dirección de Abasto',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
-  { k:'salmi',      n:2, nombre:'Reportes WMS SALMI',
+  { k:'salmi',      n:2, nombre:'ALMACÉN Y TORRE DE CONTROL · Reportes WMS SALMI',
     fuente:'WMS SALMI', resp:'Jefatura de Almacén',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
-    subreportes:['DISTRIBUCION','TRAZABILIDAD','RESERVAS','INVENTARIO'] },
-  { k:'mb51',       n:3, nombre:'Reporte MB51 - KARDEX',
+    ayuda:'Trazabilidad, Reservas e Inventario Neto se descargan por área. Cargue cada archivo en su casilla.',
+    subreportes:['SALDOENLINEA','SOLICITUDES','DISTRIBUCION','TRAZ_MED','TRAZ_MQ','TRAZ_FRIO','TRAZ_ODO','RES_MED','RES_MQ','RES_FRIO','RES_ODO','NETO_MED','NETO_MQ','NETO_FRIO','NETO_ODO','VALORIZADO'] },
+  { k:'mb51',       n:3, nombre:'KARDEX · Reporte MB51',
     fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
-  { k:'mb52',       n:4, nombre:'Reporte MB52',
+  { k:'mb52',       n:4, nombre:'KARDEX · Reporte MB52',
     fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
-  { k:'biometrico', n:5, nombre:'Reporte del reloj biométrico - RECURSOS HUMANOS',
+  { k:'biometrico', n:5, nombre:'RECURSOS HUMANOS · Reporte del reloj biométrico',
     fuente:'Sistema biométrico', resp:'Recursos Humanos',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv,.pdf' },
-  { k:'asistencia', n:6, nombre:'Listas de asistencia escaneadas',
-    fuente:'Lista manuscrita escaneada', resp:'Administración',
-    per:'Diaria, al cierre de turno', acepta:'.pdf,.jpg,.jpeg,.png',
-    subreportes:['MQ','MEDICAMENTOS','LABORATORIO','TRANSPORTE','ADMINISTRACION'],
-    ayuda:'Escaneo o fotografía de las listas firmadas, una por área.' },
-  { k:'transitos',  n:7, nombre:'Solicitudes enviadas del día',
-    fuente:'Tablero Tránsitos de Órdenes de Compra', resp:'Equipo de Planificación',
-    per:'Diaria, al cierre de turno', acepta:'.pdf,.jpg,.jpeg,.png,.xlsx,.xls,.csv',
-    ayuda:'Captura de las solicitudes de entrega o compra enviadas únicamente en el día.' },
-  { k:'transporte', n:8, nombre:'Cronograma de despachos y entregas',
+  { k:'transporte', n:6, nombre:'TRANSPORTE · Cronograma de despachos y entregas',
     fuente:'Reporte de Excel', resp:'Jefatura de Transporte',
     per:'Semanal', acepta:'.xlsx,.xls,.csv,.pdf', semanal:true }
 ];
 
 var ETIQ_SUB = {
-  DISTRIBUCION:'Distribución', TRAZABILIDAD:'Trazabilidad', RESERVAS:'Reservas', INVENTARIO:'Inventario',
-  MQ:'MQ', MEDICAMENTOS:'Medicamentos', LABORATORIO:'Laboratorio',
-  TRANSPORTE:'Transporte', ADMINISTRACION:'Administración'
+  SALDOENLINEA:'Saldos en Línea', SOLICITUDES:'Periodo de Solicitudes', DISTRIBUCION:'Distribución',
+  TRAZ_MED:'Trazabilidad · Medicamentos', TRAZ_MQ:'Trazabilidad · MQ',
+  TRAZ_FRIO:'Trazabilidad · Cuarto Frío',  TRAZ_ODO:'Trazabilidad · Odontología',
+  RES_MED:'Reservas · Medicamentos',       RES_MQ:'Reservas · MQ',
+  RES_FRIO:'Reservas · Cuarto Frío',       RES_ODO:'Reservas · Odontología',
+  NETO_MED:'Inv. Neto · Medicamentos',     NETO_MQ:'Inv. Neto · MQ',
+  NETO_FRIO:'Inv. Neto · Cuarto Frío',     NETO_ODO:'Inv. Neto · Odontología',
+  VALORIZADO:'Inventario Valorizado'
 };
 
 var ARCHIVOS = {};   // clave insumo → {base64, nombre, mime}
