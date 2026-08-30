@@ -332,6 +332,18 @@ function nivelDe(id){ return NIVEL_CFG[ NIVEL[id] || 'B' ]; }
 
 var CONFIRMA  = {};  // clave insumo → true si el usuario ya armó el reemplazo
 
+/* PIN validado en memoria. Evita reingresarlo en cada archivo de una misma
+ * tanda (Trazabilidad y Reservas son 4 archivos cada una). Se olvida a los
+ * 15 minutos de inactividad, al cambiar la fecha del reporte, y al recargar. */
+var PIN_SESION = { pin:null, vence:0 };
+var PIN_VIGENCIA_MS = 15 * 60 * 1000;
+function pinVigente(){
+  if (PIN_SESION.pin && Date.now() < PIN_SESION.vence) return PIN_SESION.pin;
+  PIN_SESION.pin = null; return null;
+}
+function pinGuardar(p){ PIN_SESION.pin = p; PIN_SESION.vence = Date.now() + PIN_VIGENCIA_MS; }
+function pinOlvidar(){ PIN_SESION.pin = null; PIN_SESION.vence = 0; }
+
 /* ═══════════════════════════════════════════════════════════════════
  *  UTILIDADES
  * ═══════════════════════════════════════════════════════════════════ */
@@ -464,6 +476,8 @@ function mostrar(k, tipo, texto){
  *  SUBIDA AL BACKEND
  * ═══════════════════════════════════════════════════════════════════ */
 function subir(ins, sub){
+  var _p = pinVigente();
+  if (_p) { PIN_SESION.vence = Date.now() + PIN_VIGENCIA_MS; enviarArchivo(ins, sub, ARCHIVOS[idFila(ins,sub)], _p); return; }
   var id=idFila(ins,sub);
   var arch=ARCHIVOS[id];
   if(!arch){ mostrar(id,'err','Seleccione primero un archivo.'); return; }
@@ -594,6 +608,7 @@ function verificarPin(){
     PIN_OCUPADO=false;
     if(r && r.ok){
       pinMensaje('Autorizado: '+(r.persona?r.persona.nombre:''), true);
+      pinGuardar(pin);   // queda vigente 15 min para la tanda
       setTimeout(function(){ cerrarPin(); if(cb) cb(pin); }, 550);
     } else {
       PIN_BUF=''; pinPintar();
@@ -747,7 +762,25 @@ function avisarFecha(){
   a.className='fecha-aviso on';
 }
 el('fechaHoy').textContent=fmtFechaLarga(hoyISO());
-el('fechaRep').addEventListener('change', function(){ avisarFecha(); cargarHistorial(); });
+el('fechaRep').addEventListener('change', function(){
+  pinOlvidar();
+  /* Las tarjetas mostraban el resultado de la carga anterior aunque se
+     cambiara de fecha, dando a entender que ese archivo pertenecia a la
+     fecha nueva. Se limpian y se repintan desde el historial de la fecha. */
+  INSUMOS.forEach(function(ins){
+    var ids = ins.subreportes ? ins.subreportes.map(function(s){ return idFila(ins,s); })
+                              : [idFila(ins,null)];
+    ids.forEach(function(id){
+      ARCHIVOS[id] = null; CONFIRMA[id] = false; YA_CARGADO[id] = false;
+      var m = el('msg_'+id); if (m) { m.style.display='none'; m.innerHTML=''; }
+      var dz = el('dz_'+id), dzt = el('dzt_'+id), bt = el('btn_'+id);
+      if (dz)  { dz.classList.remove('listo'); dz.classList.remove('hecho'); }
+      if (dzt) { dzt.textContent = 'Seleccionar archivo'; dzt.title = ''; }
+      if (bt)  { bt.disabled = true; bt.className = 'btn'; bt.textContent = 'Cargar archivo'; }
+    });
+  });
+  avisarFecha(); cargarHistorial();
+});
 el('btnRefrescarHist').addEventListener('click', function(){
   el('tbodyHist').innerHTML='<tr><td colspan="6" class="vacio">Consultando…</td></tr>';
   cargarHistorial();
