@@ -57,7 +57,9 @@
             cursor:pointer;transition:.15s;}
   .dropzone:hover,.dropzone.drag{background:rgba(255,210,40,0.32);border-color:#a9851a;}
   .dropzone .ico{font-size:24px;color:#8a6a00;line-height:1;}
-  .dropzone .t{font-weight:600;color:#6b5400;font-size:13px;}
+  .dropzone .t{font-weight:600;color:#6b5400;font-size:13px;
+               overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+  .dz-txt{min-width:0;flex:1;}
   .dropzone .s{font-size:11px;color:#8a7320;margin-top:1px;}
   .dropzone.listo{border-color:var(--verde);background:var(--verde-bg);}
   .dropzone.listo .ico,.dropzone.listo .t{color:var(--verde);}
@@ -69,6 +71,10 @@
        font-size:13px;cursor:pointer;font-family:inherit;width:100%;}
   .btn:hover{background:var(--azul2);}
   .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn.ok{background:var(--verde);border-color:var(--verde);opacity:1;cursor:default;}
+  .btn.ok:disabled{opacity:1;}
+  .btn.err{background:var(--rojo);border-color:var(--rojo);opacity:1;cursor:pointer;}
+  .btn.err:hover{background:#a83232;}
 
   .msg{font-size:12px;padding:7px 9px;border-radius:3px;display:none;line-height:1.4;}
   .msg.info{background:#e7f1fb;color:var(--azul);border:1px solid #b8d4ee;display:block;}
@@ -79,6 +85,9 @@
   @keyframes spin{to{transform:rotate(360deg);}}
 
   .hist{margin-top:22px;background:#fff;border:1px solid var(--linea);border-radius:4px;}
+  .btn-refresh{float:right;padding:3px 10px;border:1px solid var(--azul);background:#fff;color:var(--azul);
+               border-radius:3px;font-size:12px;cursor:pointer;font-family:inherit;}
+  .btn-refresh:hover{background:var(--azul);color:#fff;}
   .hist-h{background:#f4f8fc;border-bottom:1px solid var(--linea);padding:10px 14px;
           font-weight:700;color:var(--azul);font-size:14px;}
   table{border-collapse:collapse;width:100%;font-size:12.5px;}
@@ -196,7 +205,7 @@
   <div class="grid" id="grid"></div>
 
   <div class="hist">
-    <div class="hist-h">Cargas registradas en la fecha seleccionada</div>
+    <div class="hist-h">Cargas registradas en la fecha seleccionada<button class="btn-refresh" id="btnRefrescarHist" type="button">Actualizar</button></div>
     <div style="overflow-x:auto;">
       <table>
         <thead><tr>
@@ -302,7 +311,7 @@ function bloqueCarga(ins, sub){
      (sub ? '<div class="carga-t"><span class="sub-chip" id="chip_'+id+'">Pendiente</span>'+etiqueta+'</div>' : '')+
      '<div class="dropzone" id="dz_'+id+'">'+
        '<div class="ico">&#8681;</div>'+
-       '<div><div class="t" id="dzt_'+id+'">Seleccionar archivo</div>'+
+       '<div class="dz-txt"><div class="t" id="dzt_'+id+'">Seleccionar archivo</div>'+
        '<div class="s">o arrástrelo aquí · '+ins.acepta.replace(/\./g,'').toUpperCase().replace(/,/g,' ')+'</div></div>'+
      '</div>'+
      '<input type="file" id="file_'+id+'" accept="'+ins.acepta+'" style="display:none">'+
@@ -371,7 +380,9 @@ function tomarArchivo(ins, sub, file){
     };
     el('dzt_'+id).textContent = file.name;
     el('dz_'+id).classList.add('listo');
-    el('btn_'+id).disabled = false;
+    var _b = el('btn_'+id);
+    _b.disabled = false; _b.className = 'btn'; _b.textContent = 'Cargar archivo';
+    el('dzt_'+id).title = file.name;
     mostrar(id, 'info', 'Archivo listo (' + Math.round(file.size/1024) + ' KB). Presione «Cargar archivo».');
   };
   lector.onerror=function(){ mostrar(id,'err','No se pudo leer el archivo.'); };
@@ -396,6 +407,7 @@ function subir(ins, sub){
 
 function enviarArchivo(ins, sub, arch, pin){
   var id=idFila(ins,sub);
+  var kb=Math.round((arch.base64||'').length*0.75/1024);
   var payload={
     accion:'subirInsumo',
     insumo:ins.k,
@@ -407,30 +419,70 @@ function enviarArchivo(ins, sub, arch, pin){
     pin: pin
   };
 
-  el('btn_'+id).disabled=true;
-  mostrar(id,'info','<span class="spinner"></span>Enviando archivo…');
+  var bt=el('btn_'+id);
+  bt.disabled=true; bt.className='btn'; bt.textContent='Enviando…';
 
-  fetch(API_URL, { method:'POST', body:JSON.stringify(payload) })
+  var t0=Date.now(), avisos=[], ctrl=null, vencido=false;
+  function seg(){ return Math.round((Date.now()-t0)/1000); }
+  function paso(txt,tipo){ mostrar(id, tipo||'info', '<span class="spinner"></span>'+txt); }
+
+  paso('Enviando '+kb+' KB… no cierre esta página.');
+  avisos.push(setTimeout(function(){
+    paso('Sigue enviando ('+seg()+' s). Los archivos grandes tardan; mantenga la página abierta.');
+  }, 15000));
+  avisos.push(setTimeout(function(){
+    paso('La conexión está lenta ('+seg()+' s). Continúa intentando; no recargue.','warn');
+  }, 45000));
+
+  function limpiar(){ avisos.forEach(clearTimeout); avisos=[]; }
+
+  try { ctrl = new AbortController(); } catch(e) { ctrl = null; }
+  var opts = { method:'POST', body:JSON.stringify(payload) };
+  if (ctrl) opts.signal = ctrl.signal;
+
+  var corte = setTimeout(function(){
+    vencido=true;
+    if (ctrl) { try { ctrl.abort(); } catch(e){} }
+  }, 120000);
+
+  function fallo(txt){
+    limpiar(); clearTimeout(corte);
+    mostrar(id,'err',txt);
+    bt.disabled=false; bt.className='btn err'; bt.textContent='Reintentar';
+  }
+
+  fetch(API_URL, opts)
     .then(function(r){ return r.json(); })
     .then(function(r){
+      limpiar(); clearTimeout(corte);
       if(r && r.ok){
         var tipo = r.extemporaneo ? 'warn' : 'ok';
         var txt = 'Archivo almacenado: <span class="mono">'+r.archivo+'</span>'
           + (r.cargado_por?('<br>Registrado a nombre de <b>'+r.cargado_por+'</b>'):'');
         if(r.extemporaneo) txt += '<br><b>Carga extemporánea:</b> '+r.dias_atraso+' día'+(r.dias_atraso===1?'':'s')+' de atraso.';
+        txt += '<br>Enviado en '+seg()+' s.';
         mostrar(id,tipo,txt);
         ARCHIVOS[id]=null;
         el('dzt_'+id).textContent='Seleccionar archivo';
+        el('dzt_'+id).title='';
         el('dz_'+id).classList.remove('listo');
+        bt.disabled=true; bt.className='btn ok'; bt.textContent='✓ Cargado';
         cargarHistorial();
       } else {
-        mostrar(id,'err','Error: '+((r&&r.error)||'respuesta no válida'));
-        el('btn_'+id).disabled=false;
+        fallo('Rechazado: '+((r&&r.error)||'respuesta no válida'));
       }
     })
     .catch(function(err){
-      mostrar(id,'err','No se pudo conectar con el servidor. Verifique su conexión e intente de nuevo.');
-      el('btn_'+id).disabled=false;
+      if (vencido) {
+        cargarHistorial();
+        fallo('Se agotó el tiempo de espera (2 minutos). <b>El archivo puede haberse guardado igual.</b><br>'
+            + 'Baje a «Cargas registradas», presione <b>Actualizar</b> y busque este insumo:<br>'
+            + '· Si aparece, la carga sí llegó. No reintente.<br>'
+            + '· Si no aparece, presione Reintentar. El archivo sigue seleccionado.');
+      } else {
+        fallo('No se pudo conectar con el servidor. Verifique su conexión y presione <b>Reintentar</b>.<br>'
+            + 'El archivo sigue seleccionado; no hace falta volver a elegirlo ni reingresar el PIN.');
+      }
     });
 }
 
@@ -609,6 +661,10 @@ function avisarFecha(){
 }
 el('fechaHoy').textContent=fmtFechaLarga(hoyISO());
 el('fechaRep').addEventListener('change', function(){ avisarFecha(); cargarHistorial(); });
+el('btnRefrescarHist').addEventListener('click', function(){
+  el('tbodyHist').innerHTML='<tr><td colspan="6" class="vacio">Consultando…</td></tr>';
+  cargarHistorial();
+});
 avisarFecha();
 pintarTarjetas();
 if(API_URL.indexOf('REEMPLAZAR')<0) cargarHistorial();
