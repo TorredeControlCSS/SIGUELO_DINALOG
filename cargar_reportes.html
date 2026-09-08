@@ -899,15 +899,21 @@ function lanzarSaldos_(){
     }, function(){ salSt_('calc','sin conexión','#a3331f'); pend.calc=false; fin(); });
   } else { salSt_('calc','sin URL','#a3331f'); pend.calc=false; }
 
-  // CITAS (síncrono)
+  // CITAS: tarda ~100 s (importa + recalcula SENAL_UE). No esperamos la
+  // respuesta directa (el navegador la cortaría); lanzamos y CONSULTAMOS estado.
   if(CITAS_URL.indexOf('http')===0){
     salSt_('citas','procesando…','#1e5a9e');
-    jsonpG_(CITAS_URL+'?action=ingestar_saldos_citas&callback=?', function(r){
-      if(r&&r.estado==='listo'){ salSt_('citas','✓ '+(r.filas!=null?r.filas+' filas':'listo'),'#2e7d32'); }
-      else if(r&&r.estado==='corriendo'){ salSt_('citas','en curso','#1e5a9e'); }
-      else { salSt_('citas','error','#a3331f'); }
-      pend.citas=false; fin();
-    }, function(){ salSt_('citas','sin conexión','#a3331f'); pend.citas=false; fin(); });
+    // lanzar (no importa si la respuesta llega o se corta; el backend sigue)
+    jsonpG_(CITAS_URL+'?action=ingestar_saldos_citas&callback=?', function(){}, function(){});
+    // consultar estado cada 5 s
+    SAL_POLL.citas=setInterval(function(){
+      jsonpG_(CITAS_URL+'?action=ingesta_estado_saldos_citas&callback=?', function(e2){
+        if(!e2) return;
+        if(e2.estado==='corriendo'){ salSt_('citas','procesando…','#1e5a9e'); }
+        else if(e2.estado==='listo'){ clearInterval(SAL_POLL.citas); salSt_('citas','✓ '+(e2.filas!=null?e2.filas+' filas':'listo'),'#2e7d32'); pend.citas=false; fin(); }
+        else if(e2.estado==='error'){ clearInterval(SAL_POLL.citas); salSt_('citas','error','#a3331f'); pend.citas=false; fin(); }
+      }, function(){});
+    },5000);
   } else { salSt_('citas','sin URL','#a3331f'); pend.citas=false; }
 
   // MOTOR (fire-and-poll, insumo 'saldos')
@@ -926,10 +932,22 @@ function lanzarSaldos_(){
   }, function(){ salSt_('motor','sin conexión','#a3331f'); pend.motor=false; fin(); });
 }
 function jsonpG_(url,ok,fail){
+  // Intenta fetch primero (sigue el redirect 302 a googleusercontent que
+  // rompía el <script> JSONP). Si fetch falla por CORS, cae a JSONP clásico.
+  var plain=url.replace(/[?&]callback=\?/,'');
+  var quedo=false;
+  fetch(plain,{method:'GET',redirect:'follow'})
+    .then(function(r){return r.text();})
+    .then(function(t){ if(quedo)return; var d; try{d=JSON.parse(t);}catch(e){d=null;}
+      if(d){quedo=true;ok(d);} else jsonpFallback_(url,ok,fail,function(){quedo=true;}); })
+    .catch(function(){ if(!quedo) jsonpFallback_(url,ok,fail,function(){quedo=true;}); });
+}
+function jsonpFallback_(url,ok,fail,mark){
   var cbn='gcb_'+Math.random().toString(36).slice(2);
-  url=url.replace('callback=?','callback='+cbn);
+  url=url.indexOf('callback=?')>=0 ? url.replace('callback=?','callback='+cbn)
+                                   : url+(url.indexOf('?')>=0?'&':'?')+'callback='+cbn;
   var sc=document.createElement('script'),done=false;
-  window[cbn]=function(d){done=true;cl();try{ok(d);}catch(e){}};
+  window[cbn]=function(d){done=true;cl();if(mark)mark();try{ok(d);}catch(e){}};
   function cl(){try{delete window[cbn];}catch(e){}if(sc&&sc.parentNode)sc.parentNode.removeChild(sc);}
   sc.onerror=function(){if(done)return;cl();if(fail)fail();};
   setTimeout(function(){if(done)return;cl();if(fail)fail();},25000);
