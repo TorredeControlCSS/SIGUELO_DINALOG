@@ -858,15 +858,22 @@ function lanzarProceso_(k,titulo){
   var b=el('pcbt_'+k); if(!b||PROC_POLL[k]) return;
   b.disabled=true; b.className='pc-bt'; b.textContent='Procesando';
   pcSet_(k,'run','info','Lanzando…',true);
+  var t0=Date.now();
+  // Empezar a consultar el estado YA, sin esperar la respuesta de lanzar:
+  // la ingesta corre sincrona en el servidor (hasta 6 min) y el <script> de
+  // 'ingestar' puede expirar en el navegador aunque el proceso siga vivo.
+  pcSet_(k,'run','info','Procesando…',true);
+  PROC_POLL[k]=setInterval(function(){ pollProc_(k,titulo,t0); },4000);
+  setTimeout(function(){ pollProc_(k,titulo,t0); },3000);
+
   jsonpMotor_(MOTOR_URL+'?file=ingestar&insumo='+encodeURIComponent(k)+'&callback=?',
     function(r){
-      if(!r||r.ok===false){ finProc_(k,'err','No se pudo lanzar: '+((r&&r.error)||'sin respuesta')); return; }
-      pcSet_(k,'run','info','Procesando…',true);
-      var t0=Date.now();
-      PROC_POLL[k]=setInterval(function(){ pollProc_(k,titulo,t0); },4000);
-      setTimeout(function(){ pollProc_(k,titulo,t0); },2500);
+      // Si responde directo con resultado, cerrar de una vez.
+      if(r && r.estado==='listo'){ var f=(r.filas!=null)?(r.filas+' filas'):'completado'; finProc_(k,'ok','✓ '+f+(r.seg!=null?(' · '+r.seg+' s'):'')); }
+      else if(r && r.estado==='error'){ finProc_(k,'err','Error: '+(r.error||'desconocido')); }
+      // cualquier otro caso: el polling sigue y lo resolverá.
     },
-    function(){ finProc_(k,'err','Sin conexión con el Motor.'); });
+    function(){ /* el <script> expiró: NO es error; el polling sigue vigilando */ });
 }
 function pollProc_(k,titulo,t0){
   jsonpMotor_(MOTOR_URL+'?file=ingesta_estado&insumo='+encodeURIComponent(k)+'&callback=?',
