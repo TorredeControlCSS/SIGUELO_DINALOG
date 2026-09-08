@@ -175,7 +175,7 @@
   .procbox{border:1px solid #cfe0f0;background:#f7fbff;border-radius:6px;padding:14px 16px;margin:12px 0 6px;}
   .procbox-h{font-weight:700;color:var(--azul);font-size:14px;margin-bottom:2px;}
   .procbox-s{font-size:12px;color:#6b7a88;margin-bottom:12px;line-height:1.4;}
-  .procgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+  .procgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
   @media(max-width:820px){.procgrid{grid-template-columns:repeat(2,1fr);}}
   .proccard{background:#fff;border:1px solid #dbe6f0;border-radius:6px;padding:10px;
             display:flex;flex-direction:column;gap:8px;min-height:118px;}
@@ -844,24 +844,21 @@ function barraProcesos_(){
     '<div class="procbox-h">Actualizar dashboards del Motor</div>'+
     '<div class="procbox-s">Cargue primero los archivos abajo; luego actualice cada proceso. '+
       'El proceso puede tardar unos minutos — la barra indica que está trabajando.</div>'+
-    '<div class="procgrid">'+cards+'</div>'+
-    barraSaldos_()+
+    '<div class="procgrid">'+cards+cardSaldos_()+'</div>'+
   '</div>';
 }
 
-/* Tarjeta especial de Saldos: un botón, TRES backends, avance por backend. */
-function barraSaldos_(){
-  return '<div style="margin-top:12px;border-top:1px solid #dbe6f0;padding-top:12px;">'+
-    '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'+
-      '<button class="pc-bt" id="salbt" style="width:200px;">Actualizar Saldos en Línea</button>'+
-      '<div class="pc-bar" id="salbar" style="flex:0 0 160px;"><i></i></div>'+
-      '<div style="font-size:12px;color:#6b7a88;">Actualiza Calculadora, CITAS y Motor.</div>'+
+/* Saldos como una tarjeta más de la grilla. Un botón, tres backends adentro. */
+function cardSaldos_(){
+  return '<div class="proccard" id="pccard_saldos">'+
+    '<div class="pc-nm">Saldos en Línea</div>'+
+    '<div class="pc-bar" id="salbar"><i></i></div>'+
+    '<div class="pc-st" id="salst" style="min-height:52px;">'+
+      '<div id="salst_calc">Calc: —</div>'+
+      '<div id="salst_citas">CITAS: —</div>'+
+      '<div id="salst_motor">Motor: —</div>'+
     '</div>'+
-    '<div style="display:flex;gap:18px;margin-top:8px;font-size:12px;">'+
-      '<span id="salst_calc">Calculadora: —</span>'+
-      '<span id="salst_citas">CITAS: —</span>'+
-      '<span id="salst_motor">Motor: —</span>'+
-    '</div>'+
+    '<button class="pc-bt" id="salbt">Actualizar</button>'+
   '</div>';
 }
 function enlazarProcesos_(){
@@ -874,13 +871,17 @@ function enlazarProcesos_(){
 
 /* ── Saldos en Línea: un clic, tres backends en paralelo ── */
 var SAL_POLL={};
-function salSt_(w,txt,col){ var m=el('salst_'+w); if(m){ m.textContent=({calc:'Calculadora: ',citas:'CITAS: ',motor:'Motor: '}[w])+txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; } }
+function salSt_(w,txt,col){ var m=el('salst_'+w); if(m){ m.textContent=({calc:'Calc: ',citas:'CITAS: ',motor:'Motor: '}[w])+txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; m.style.fontSize='11px'; m.style.lineHeight='1.5'; } }
 function salBar_(on){ var b=el('salbar'); if(b) b.className='pc-bar'+(on?' on':''); }
 function lanzarSaldos_(){
   var sb=el('salbt'); if(!sb) return;
-  sb.disabled=true; sb.textContent='Procesando'; salBar_(true);
+  sb.disabled=true; sb.textContent='Procesando'; sb.className='pc-bt'; var _c=el('pccard_saldos'); if(_c) _c.className='proccard run'; salBar_(true);
   var pend={calc:true,citas:true,motor:true};
-  function fin(){ if(!pend.calc&&!pend.citas&&!pend.motor){ sb.disabled=false; sb.textContent='Actualizar Saldos en Línea'; salBar_(false); } }
+  function fin(){ if(!pend.calc&&!pend.citas&&!pend.motor){ sb.disabled=false; salBar_(false);
+      var card=el('pccard_saldos'), hayErr=(''+el('salst_calc').textContent+el('salst_citas').textContent+el('salst_motor').textContent).indexOf('error')>=0;
+      if(card) card.className='proccard '+(hayErr?'err':'ok');
+      sb.className='pc-bt '+(hayErr?'err':'ok'); sb.textContent=hayErr?'Reintentar':'✓ Listo';
+    } }
 
   // CALCULADORA (cadena larga, fire-and-poll)
   if(CALC_URL.indexOf('http')===0){
