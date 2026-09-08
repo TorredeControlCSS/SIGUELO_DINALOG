@@ -883,19 +883,24 @@ function lanzarSaldos_(){
       sb.className='pc-bt '+(hayErr?'err':'ok'); sb.textContent=hayErr?'Reintentar':'✓ Listo';
     } }
 
-  // CALCULADORA (cadena larga, fire-and-poll)
+  // CALCULADORA: SOLO saldos + serie de tiempo (no F8/Distribucion).
+  // consolidarSeriesSaldos es reanudable; el endpoint continua solo al consultar.
   if(CALC_URL.indexOf('http')===0){
     salSt_('calc','lanzando…','#1e5a9e');
     jsonpG_(CALC_URL+'?accion=ingestar_saldos&callback=?', function(r){
       if(!r||r.ok===false){ salSt_('calc','error','#a3331f'); pend.calc=false; fin(); return; }
+      // reflejar el primer resultado
+      if(r.estado==='listo'){ salSt_('calc','✓ serie publicada','#2e7d32'); pend.calc=false; fin(); return; }
+      if(r.estado==='error'){ salSt_('calc','error: '+(r.error||''),'#a3331f'); pend.calc=false; fin(); return; }
+      salSt_('calc','serie: procesando…','#1e5a9e');
       SAL_POLL.calc=setInterval(function(){
         jsonpG_(CALC_URL+'?accion=ingesta_estado_saldos&callback=?', function(e2){
           if(!e2) return;
-          if(e2.estado==='corriendo'){ salSt_('calc','paso '+((e2.paso||0)+1)+'/'+(e2.total||10),'#1e5a9e'); }
-          else if(e2.estado==='listo'){ clearInterval(SAL_POLL.calc); salSt_('calc','✓ listo','#2e7d32'); pend.calc=false; fin(); }
-          else if(e2.estado==='error'){ clearInterval(SAL_POLL.calc); salSt_('calc','error','#a3331f'); pend.calc=false; fin(); }
+          if(e2.estado==='corriendo'){ salSt_('calc','serie: '+(e2.faltan?('faltan '+e2.faltan+' fechas'):'procesando…'),'#1e5a9e'); }
+          else if(e2.estado==='listo'){ clearInterval(SAL_POLL.calc); salSt_('calc','✓ serie publicada','#2e7d32'); pend.calc=false; fin(); }
+          else if(e2.estado==='error'){ clearInterval(SAL_POLL.calc); salSt_('calc','error: '+(e2.error||''),'#a3331f'); pend.calc=false; fin(); }
         }, function(){});
-      },4000);
+      },6000);
     }, function(){ salSt_('calc','sin conexión','#a3331f'); pend.calc=false; fin(); });
   } else { salSt_('calc','sin URL','#a3331f'); pend.calc=false; }
 
