@@ -901,7 +901,24 @@ function lanzarSaldos_(){
           else if(e2.estado==='error'){ clearInterval(SAL_POLL.calc); salSt_('calc','error: '+(e2.error||''),'#a3331f'); pend.calc=false; fin(); }
         }, function(){});
       },6000);
-    }, function(){ salSt_('calc','sin conexión','#a3331f'); pend.calc=false; fin(); });
+    }, function(){
+      // La llamada de LANZAR fallo en el navegador, pero el backend pudo haber
+      // arrancado igual. En vez de mentir con 'sin conexion', consultamos el
+      // estado real: si esta corriendo o listo, lo reflejamos; solo si el estado
+      // tampoco responde tras varios intentos decimos que no hay conexion.
+      salSt_('calc','verificando…','#1e5a9e');
+      var intentos=0;
+      SAL_POLL.calc=setInterval(function(){
+        intentos++;
+        jsonpG_(CALC_URL+'?accion=ingesta_estado_saldos&callback=?', function(e2){
+          if(!e2) return;
+          if(e2.estado==='corriendo'){ salSt_('calc','serie: '+(e2.faltan?('faltan '+e2.faltan+' fechas'):'procesando…'),'#1e5a9e'); }
+          else if(e2.estado==='listo'){ clearInterval(SAL_POLL.calc); salSt_('calc','✓ serie publicada','#2e7d32'); pend.calc=false; fin(); }
+          else if(e2.estado==='error'){ clearInterval(SAL_POLL.calc); salSt_('calc','error: '+(e2.error||''),'#a3331f'); pend.calc=false; fin(); }
+          else if(e2.estado==='sin_datos' && intentos>=8){ clearInterval(SAL_POLL.calc); salSt_('calc','sin conexión','#a3331f'); pend.calc=false; fin(); }
+        }, function(){ if(intentos>=8){ clearInterval(SAL_POLL.calc); salSt_('calc','sin conexión','#a3331f'); pend.calc=false; fin(); } });
+      },6000);
+    });
   } else { salSt_('calc','sin URL','#a3331f'); pend.calc=false; }
 
   // CITAS: tarda ~100 s (importa + recalcula SENAL_UE). No esperamos la
@@ -937,17 +954,31 @@ function lanzarSaldos_(){
   }, function(){ salSt_('motor','sin conexión','#a3331f'); pend.motor=false; fin(); });
 }
 function jsonpG_(url,ok,fail){
-  // JSONP puro (<script>): es lo unico que funciona cross-origin contra los
-  // WebApps de Google. fetch se bloquea por CORS y se queda colgado sin llamar
-  // al callback -> 'lanzando…' eterno. El <script> NO esta sujeto a CORS y
-  // sigue el redirect 302 solo. Mismo metodo que jsonpMotor_ (que si funciono).
+  // JSONP puro. Correccion (08-sep): el callback NUNCA se borra antes de que el
+  // <script> lo ejecute (causaba 'gcb_ is not defined' y falsos 'sin conexion').
+  // El callback queda como no-op tras usarse, y el <script> se limpia con retraso.
   var cbn='gcb_'+Math.random().toString(36).slice(2);
   url=url.replace('callback=?','callback='+cbn);
   var sc=document.createElement('script'),done=false;
-  window[cbn]=function(d){done=true;cl();try{ok(d);}catch(e){}};
-  function cl(){try{delete window[cbn];}catch(e){}if(sc&&sc.parentNode)sc.parentNode.removeChild(sc);}
-  sc.onerror=function(){if(done)return;cl();if(fail)fail();};
-  setTimeout(function(){if(done)return;cl();if(fail)fail();},30000);
+  window[cbn]=function(d){
+    if(done) return; done=true;
+    try{ ok(d); }catch(e){}
+    // limpiar DESPUES, sin condicion de carrera
+    setTimeout(function(){ try{ window[cbn]=function(){}; }catch(e){}
+      if(sc&&sc.parentNode) sc.parentNode.removeChild(sc); }, 100);
+  };
+  sc.onerror=function(){
+    if(done) return; done=true;
+    // NO marcar 'sin conexion' de inmediato: el backend puede seguir vivo y el
+    // polling de estado lo confirmara. Solo limpiar y avisar al llamador.
+    setTimeout(function(){ try{ window[cbn]=function(){}; }catch(e){}
+      if(sc&&sc.parentNode) sc.parentNode.removeChild(sc); }, 100);
+    if(fail) fail();
+  };
+  setTimeout(function(){ if(done) return; done=true;
+    try{ window[cbn]=function(){}; }catch(e){}
+    if(sc&&sc.parentNode) sc.parentNode.removeChild(sc);
+    if(fail) fail(); }, 30000);
   sc.src=url;document.body.appendChild(sc);
 }
 function pcSet_(k,cls,tipo,txt,barOn){
