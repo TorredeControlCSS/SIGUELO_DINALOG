@@ -932,25 +932,17 @@ function lanzarSaldos_(){
   }, function(){ salSt_('motor','sin conexión','#a3331f'); pend.motor=false; fin(); });
 }
 function jsonpG_(url,ok,fail){
-  // Intenta fetch primero (sigue el redirect 302 a googleusercontent que
-  // rompía el <script> JSONP). Si fetch falla por CORS, cae a JSONP clásico.
-  var plain=url.replace(/[?&]callback=\?/,'');
-  var quedo=false;
-  fetch(plain,{method:'GET',redirect:'follow'})
-    .then(function(r){return r.text();})
-    .then(function(t){ if(quedo)return; var d; try{d=JSON.parse(t);}catch(e){d=null;}
-      if(d){quedo=true;ok(d);} else jsonpFallback_(url,ok,fail,function(){quedo=true;}); })
-    .catch(function(){ if(!quedo) jsonpFallback_(url,ok,fail,function(){quedo=true;}); });
-}
-function jsonpFallback_(url,ok,fail,mark){
+  // JSONP puro (<script>): es lo unico que funciona cross-origin contra los
+  // WebApps de Google. fetch se bloquea por CORS y se queda colgado sin llamar
+  // al callback -> 'lanzando…' eterno. El <script> NO esta sujeto a CORS y
+  // sigue el redirect 302 solo. Mismo metodo que jsonpMotor_ (que si funciono).
   var cbn='gcb_'+Math.random().toString(36).slice(2);
-  url=url.indexOf('callback=?')>=0 ? url.replace('callback=?','callback='+cbn)
-                                   : url+(url.indexOf('?')>=0?'&':'?')+'callback='+cbn;
+  url=url.replace('callback=?','callback='+cbn);
   var sc=document.createElement('script'),done=false;
-  window[cbn]=function(d){done=true;cl();if(mark)mark();try{ok(d);}catch(e){}};
+  window[cbn]=function(d){done=true;cl();try{ok(d);}catch(e){}};
   function cl(){try{delete window[cbn];}catch(e){}if(sc&&sc.parentNode)sc.parentNode.removeChild(sc);}
   sc.onerror=function(){if(done)return;cl();if(fail)fail();};
-  setTimeout(function(){if(done)return;cl();if(fail)fail();},25000);
+  setTimeout(function(){if(done)return;cl();if(fail)fail();},30000);
   sc.src=url;document.body.appendChild(sc);
 }
 function pcSet_(k,cls,tipo,txt,barOn){
