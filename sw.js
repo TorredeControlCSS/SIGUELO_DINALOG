@@ -9,7 +9,7 @@
    otros repos GitHub Pages y deben cargar siempre en vivo.
    ============================================================ */
 
-const CACHE = "siguelo-portal-v8";   // <-- sube este número al publicar cambios
+const CACHE = "siguelo-portal-v9";   // <-- sube este número al publicar cambios
 
 const SHELL = [
   "./index.html",
