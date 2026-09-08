@@ -175,7 +175,7 @@
   .procbox{border:1px solid #cfe0f0;background:#f7fbff;border-radius:6px;padding:14px 16px;margin:12px 0 6px;}
   .procbox-h{font-weight:700;color:var(--azul);font-size:14px;margin-bottom:2px;}
   .procbox-s{font-size:12px;color:#6b7a88;margin-bottom:12px;line-height:1.4;}
-  .procgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+  .procgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
   @media(max-width:820px){.procgrid{grid-template-columns:repeat(2,1fr);}}
   .proccard{background:#fff;border:1px solid #dbe6f0;border-radius:6px;padding:10px;
             display:flex;flex-direction:column;gap:8px;min-height:118px;}
@@ -275,6 +275,10 @@
 // ⚠️ Pegar aquí la URL del WebApp de INGESTA_INSUMOS.gs tras desplegarlo
 var API_URL = 'https://script.google.com/macros/s/AKfycbxSG68fpUjwzFlG8P0ZAx5uTIelUs5pHt-tOt3lNm6SnVhlUBRkjwkgCaXWgPV2kDB0/exec';
 var MOTOR_URL = 'https://script.google.com/macros/s/AKfycbyVHDQ8IuVHibz259AiEvZ-jUfVC7fxvSSqC-wfaiiq1_13C9_TK4dVtPK0SMW4sZoJ/exec';
+/* ↓↓↓ PEGA AQUÍ las URLs /exec de cada proyecto (Implementar → Gestionar implementaciones).
+       El botón de Saldos dispara los TRES. Si dejas una vacía, ese backend se marca 'sin URL'. */
+var CALC_URL  = 'https://script.google.com/macros/s/AKfycbzxfCoO5-U008jeE-b99hWwLWFZTZuoxBjR5g225UarppxtptndjB1be_BALEARttlL-w/exec';
+var CITAS_URL = 'https://script.google.com/macros/s/AKfycbwVw0ACNMhdN6d-JsI1lyP2iKHBVgWXI5nK3rA6blEhF3l8t2Wuwk2TpRmaanB186Dk/exec';
 
 /* Catálogo de insumos — refleja la tabla del memorando */
 var INSUMOS = [
@@ -823,8 +827,7 @@ var PROCESOS = [
   { k:'distribucion', t:'Distribución' },
   { k:'reservas',     t:'Reservas' },
   { k:'inv_neto',     t:'Inventario Neto' },
-  { k:'trazabilidad', t:'Trazabilidad' },
-  { k:'saldos',       t:'Saldos en Línea' }
+  { k:'trazabilidad', t:'Trazabilidad' }
 ];
 var PROC_POLL = {};
 
@@ -842,6 +845,23 @@ function barraProcesos_(){
     '<div class="procbox-s">Cargue primero los archivos abajo; luego actualice cada proceso. '+
       'El proceso puede tardar unos minutos — la barra indica que está trabajando.</div>'+
     '<div class="procgrid">'+cards+'</div>'+
+    barraSaldos_()+
+  '</div>';
+}
+
+/* Tarjeta especial de Saldos: un botón, TRES backends, avance por backend. */
+function barraSaldos_(){
+  return '<div style="margin-top:12px;border-top:1px solid #dbe6f0;padding-top:12px;">'+
+    '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'+
+      '<button class="pc-bt" id="salbt" style="width:200px;">Actualizar Saldos en Línea</button>'+
+      '<div class="pc-bar" id="salbar" style="flex:0 0 160px;"><i></i></div>'+
+      '<div style="font-size:12px;color:#6b7a88;">Actualiza Calculadora, CITAS y Motor.</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:18px;margin-top:8px;font-size:12px;">'+
+      '<span id="salst_calc">Calculadora: —</span>'+
+      '<span id="salst_citas">CITAS: —</span>'+
+      '<span id="salst_motor">Motor: —</span>'+
+    '</div>'+
   '</div>';
 }
 function enlazarProcesos_(){
@@ -849,6 +869,70 @@ function enlazarProcesos_(){
     var b=el('pcbt_'+pr.k);
     if(b) b.onclick=function(){ lanzarProceso_(pr.k, pr.t); };
   });
+  var sb=el('salbt'); if(sb) sb.onclick=lanzarSaldos_;
+}
+
+/* ── Saldos en Línea: un clic, tres backends en paralelo ── */
+var SAL_POLL={};
+function salSt_(w,txt,col){ var m=el('salst_'+w); if(m){ m.textContent=({calc:'Calculadora: ',citas:'CITAS: ',motor:'Motor: '}[w])+txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; } }
+function salBar_(on){ var b=el('salbar'); if(b) b.className='pc-bar'+(on?' on':''); }
+function lanzarSaldos_(){
+  var sb=el('salbt'); if(!sb) return;
+  sb.disabled=true; sb.textContent='Procesando'; salBar_(true);
+  var pend={calc:true,citas:true,motor:true};
+  function fin(){ if(!pend.calc&&!pend.citas&&!pend.motor){ sb.disabled=false; sb.textContent='Actualizar Saldos en Línea'; salBar_(false); } }
+
+  // CALCULADORA (cadena larga, fire-and-poll)
+  if(CALC_URL.indexOf('http')===0){
+    salSt_('calc','lanzando…','#1e5a9e');
+    jsonpG_(CALC_URL+'?accion=ingestar_saldos&callback=?', function(r){
+      if(!r||r.ok===false){ salSt_('calc','error','#a3331f'); pend.calc=false; fin(); return; }
+      SAL_POLL.calc=setInterval(function(){
+        jsonpG_(CALC_URL+'?accion=ingesta_estado_saldos&callback=?', function(e2){
+          if(!e2) return;
+          if(e2.estado==='corriendo'){ salSt_('calc','paso '+((e2.paso||0)+1)+'/'+(e2.total||10),'#1e5a9e'); }
+          else if(e2.estado==='listo'){ clearInterval(SAL_POLL.calc); salSt_('calc','✓ listo','#2e7d32'); pend.calc=false; fin(); }
+          else if(e2.estado==='error'){ clearInterval(SAL_POLL.calc); salSt_('calc','error','#a3331f'); pend.calc=false; fin(); }
+        }, function(){});
+      },4000);
+    }, function(){ salSt_('calc','sin conexión','#a3331f'); pend.calc=false; fin(); });
+  } else { salSt_('calc','sin URL','#a3331f'); pend.calc=false; }
+
+  // CITAS (síncrono)
+  if(CITAS_URL.indexOf('http')===0){
+    salSt_('citas','procesando…','#1e5a9e');
+    jsonpG_(CITAS_URL+'?action=ingestar_saldos_citas&callback=?', function(r){
+      if(r&&r.estado==='listo'){ salSt_('citas','✓ '+(r.filas!=null?r.filas+' filas':'listo'),'#2e7d32'); }
+      else if(r&&r.estado==='corriendo'){ salSt_('citas','en curso','#1e5a9e'); }
+      else { salSt_('citas','error','#a3331f'); }
+      pend.citas=false; fin();
+    }, function(){ salSt_('citas','sin conexión','#a3331f'); pend.citas=false; fin(); });
+  } else { salSt_('citas','sin URL','#a3331f'); pend.citas=false; }
+
+  // MOTOR (fire-and-poll, insumo 'saldos')
+  salSt_('motor','procesando…','#1e5a9e');
+  jsonpG_(MOTOR_URL+'?file=ingestar&insumo=saldos&callback=?', function(r){
+    if(r&&r.estado==='listo'){ salSt_('motor','✓ '+(r.filas!=null?r.filas+' filas':'listo'),'#2e7d32'); pend.motor=false; fin(); }
+    else {
+      SAL_POLL.motor=setInterval(function(){
+        jsonpG_(MOTOR_URL+'?file=ingesta_estado&insumo=saldos&callback=?', function(e2){
+          if(!e2) return;
+          if(e2.estado==='listo'){ clearInterval(SAL_POLL.motor); salSt_('motor','✓ '+(e2.filas!=null?e2.filas+' filas':'listo'),'#2e7d32'); pend.motor=false; fin(); }
+          else if(e2.estado==='error'){ clearInterval(SAL_POLL.motor); salSt_('motor','error','#a3331f'); pend.motor=false; fin(); }
+        }, function(){});
+      },4000);
+    }
+  }, function(){ salSt_('motor','sin conexión','#a3331f'); pend.motor=false; fin(); });
+}
+function jsonpG_(url,ok,fail){
+  var cbn='gcb_'+Math.random().toString(36).slice(2);
+  url=url.replace('callback=?','callback='+cbn);
+  var sc=document.createElement('script'),done=false;
+  window[cbn]=function(d){done=true;cl();try{ok(d);}catch(e){}};
+  function cl(){try{delete window[cbn];}catch(e){}if(sc&&sc.parentNode)sc.parentNode.removeChild(sc);}
+  sc.onerror=function(){if(done)return;cl();if(fail)fail();};
+  setTimeout(function(){if(done)return;cl();if(fail)fail();},25000);
+  sc.src=url;document.body.appendChild(sc);
 }
 function pcSet_(k,cls,tipo,txt,barOn){
   var card=el('pccard_'+k); if(card) card.className='proccard '+(cls||'');
