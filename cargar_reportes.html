@@ -951,7 +951,31 @@ function lanzarSaldos_(){
         }, function(){});
       },4000);
     }
-  }, function(){ salSt_('motor','sin conexión','#a3331f'); pend.motor=false; fin(); });
+  }, function(){
+    /* 10-sep · H1: el lanzar tarda ~25 s (el Motor procesa 43k filas) y el
+       <script> JSONP expira antes, aunque el backend TERMINA BIEN. Antes se
+       marcaba 'sin conexion' y el usuario creia que habia fallado — volviendo
+       al copiar-y-pegar manual. Ahora se consulta el ESTADO REAL: si esta
+       corriendo o listo, se refleja; solo tras 10 intentos sin respuesta se
+       declara sin conexion. Mismo criterio que la ruta de Calculadora. */
+    salSt_('motor','verificando…','#1e5a9e');
+    var intM=0;
+    SAL_POLL.motor=setInterval(function(){
+      intM++;
+      jsonpG_(MOTOR_URL+'?file=ingesta_estado&insumo=saldos&callback=?', function(e2){
+        if(!e2) return;
+        if(e2.estado==='corriendo'){ salSt_('motor','procesando…','#1e5a9e'); }
+        else if(e2.estado==='listo'){ clearInterval(SAL_POLL.motor);
+          salSt_('motor','✓ '+(e2.filas!=null?e2.filas+' filas':'listo'),'#2e7d32');
+          pend.motor=false; fin(); }
+        else if(e2.estado==='error'){ clearInterval(SAL_POLL.motor);
+          salSt_('motor','error: '+(e2.error||''),'#a3331f'); pend.motor=false; fin(); }
+        else if(e2.estado==='sin_datos' && intM>=10){ clearInterval(SAL_POLL.motor);
+          salSt_('motor','sin conexión','#a3331f'); pend.motor=false; fin(); }
+      }, function(){ if(intM>=10){ clearInterval(SAL_POLL.motor);
+          salSt_('motor','sin conexión','#a3331f'); pend.motor=false; fin(); } });
+    },4000);
+  });
 }
 function jsonpG_(url,ok,fail){
   // JSONP puro. Correccion (08-sep): el callback NUNCA se borra antes de que el
