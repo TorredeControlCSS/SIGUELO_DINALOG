@@ -437,7 +437,8 @@ function pintarTarjetas(){
         '<div class="meta"><b>Fuente:</b> '+ins.fuente+' &nbsp;·&nbsp; '+
           '<b>Responsable:</b> '+ins.resp+' &nbsp;·&nbsp; '+
           '<b>Periodicidad:</b> '+ins.per+'</div>'+
-        ayuda + (ins.k==='salmi' ? barraProcesos_() : '') + cuerpo +
+        ayuda + (ins.k==='salmi' ? barraProcesos_() : '')
+              + (ins.k==='recepcion' ? barraEntradas_() : '') + cuerpo +
       '</div>'+
     '</div>');
   }).join('');
@@ -844,7 +845,7 @@ function barraProcesos_(){
     '<div class="procbox-h">Actualizar dashboards del Motor</div>'+
     '<div class="procbox-s">Cargue primero los archivos abajo; luego actualice cada proceso. '+
       'El proceso puede tardar unos minutos — la barra indica que está trabajando.</div>'+
-    '<div class="procgrid">'+cards+cardSaldos_()+cardEntradas_()+'</div>'+
+    '<div class="procgrid">'+cards+cardSaldos_()+'</div>'+
   '</div>';
 }
 
@@ -864,6 +865,18 @@ function cardSaldos_(){
 /* Entradas de Mercancía: un botón, un backend (SÍGUELO). La publicación real
    corre en diferido del lado del servidor, así que aquí se lanza y se consulta
    el estado, igual que el Motor y Saldos. */
+/* Entradas de Mercancía: la misma estructura de "Actualizar dashboards" del
+   Motor, pero dentro de la sección 1 · RECEPCIÓN, que es a donde pertenece:
+   este insumo tiene su propio backend (SÍGUELO) y su propio tablero. */
+function barraEntradas_(){
+  return '<div class="procbox">'+
+    '<div class="procbox-h">Actualizar tablero de Entradas</div>'+
+    '<div class="procbox-s">Cargue primero el archivo abajo; luego actualice. '+
+      'Al cargar desde este panel se actualiza solo — el botón queda como respaldo. '+
+      'El proceso tarda cerca de un minuto.</div>'+
+    '<div class="procgrid">'+cardEntradas_()+'</div>'+
+  '</div>';
+}
 function cardEntradas_(){
   return '<div class="proccard" id="pccard_entradas">'+
     '<div class="pc-nm">Entradas de Mercancía</div>'+
