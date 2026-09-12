@@ -844,7 +844,7 @@ function barraProcesos_(){
     '<div class="procbox-h">Actualizar dashboards del Motor</div>'+
     '<div class="procbox-s">Cargue primero los archivos abajo; luego actualice cada proceso. '+
       'El proceso puede tardar unos minutos — la barra indica que está trabajando.</div>'+
-    '<div class="procgrid">'+cards+cardSaldos_()+'</div>'+
+    '<div class="procgrid">'+cards+cardSaldos_()+cardEntradas_()+'</div>'+
   '</div>';
 }
 
@@ -861,12 +861,64 @@ function cardSaldos_(){
     '<button class="pc-bt" id="salbt">Actualizar</button>'+
   '</div>';
 }
+/* Entradas de Mercancía: un botón, un backend (SÍGUELO). La publicación real
+   corre en diferido del lado del servidor, así que aquí se lanza y se consulta
+   el estado, igual que el Motor y Saldos. */
+function cardEntradas_(){
+  return '<div class="proccard" id="pccard_entradas">'+
+    '<div class="pc-nm">Entradas de Mercancía</div>'+
+    '<div class="pc-bar" id="entbar"><i></i></div>'+
+    '<div class="pc-st" id="entst">Sin ejecutar.</div>'+
+    '<button class="pc-bt" id="entbt">Actualizar</button>'+
+  '</div>';
+}
 function enlazarProcesos_(){
   PROCESOS.forEach(function(pr){
     var b=el('pcbt_'+pr.k);
     if(b) b.onclick=function(){ lanzarProceso_(pr.k, pr.t); };
   });
   var sb=el('salbt'); if(sb) sb.onclick=lanzarSaldos_;
+  var eb=el('entbt'); if(eb) eb.onclick=lanzarEntradas_;
+}
+
+/* ── Entradas de Mercancía: lanza y consulta ── */
+var ENT_POLL=null;
+function entSt_(txt,col){ var m=el('entst'); if(m){ m.textContent=txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; m.style.fontSize='11px'; m.style.lineHeight='1.5'; } }
+function entBar_(on){ var b=el('entbar'); if(b) b.className='pc-bar'+(on?' on':''); }
+function entFin_(ok,txt){
+  if(ENT_POLL){ clearInterval(ENT_POLL); ENT_POLL=null; }
+  entBar_(false);
+  var bt=el('entbt'), card=el('pccard_entradas');
+  entSt_(txt, ok?'#2e7d32':'#a3331f');
+  if(card) card.className='proccard '+(ok?'ok':'err');
+  if(bt){ bt.disabled=false; bt.className='pc-bt '+(ok?'ok':'err'); bt.textContent=ok?'✓ Listo':'Reintentar'; }
+}
+function lanzarEntradas_(){
+  var bt=el('entbt'); if(!bt) return;
+  if(CITAS_URL.indexOf('http')!==0){ entSt_('sin URL','#a3331f'); return; }
+  bt.disabled=true; bt.textContent='Procesando'; bt.className='pc-bt';
+  var card=el('pccard_entradas'); if(card) card.className='proccard run';
+  entBar_(true); entSt_('lanzando…','#1e5a9e');
+  if(ENT_POLL){ clearInterval(ENT_POLL); ENT_POLL=null; }
+
+  /* La ingesta completa tarda cerca de un minuto y corre en un disparador del
+     lado del servidor, así que la respuesta del lanzamiento no se espera:
+     arranca y de ahí en adelante manda el estado. */
+  jsonpG_(CITAS_URL+'?action=publicarEntradas&callback=?', function(){}, function(){});
+
+  var intentos=0;
+  ENT_POLL=setInterval(function(){
+    intentos++;
+    jsonpG_(CITAS_URL+'?action=estadoEntradas&callback=?', function(e2){
+      if(!e2) return;
+      if(e2.estado==='corriendo'){ entSt_('procesando…','#1e5a9e'); }
+      else if(e2.estado==='listo'){
+        entFin_(true,'✓ '+(e2.filas!=null?e2.filas+' líneas':'publicado')+(e2.corte?' · corte '+e2.corte:'')); }
+      else if(e2.estado==='abortado'){ entFin_(false,'abortado: archivo con menos datos'); }
+      else if(e2.estado==='error'){ entFin_(false,'error: '+String(e2.error||'').slice(0,60)); }
+      else if(e2.estado==='sin_ejecutar' && intentos>=10){ entFin_(false,'sin conexión'); }
+    }, function(){ if(intentos>=10) entFin_(false,'sin conexión'); });
+  },6000);
 }
 
 /* ── Saldos en Línea: un clic, tres backends en paralelo ── */
