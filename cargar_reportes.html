@@ -892,9 +892,16 @@ el('fechaRep').value=hoyISO();
   };
 })();
 // ventana permitida: hoy y hasta 7 días atrás
+/* Ventana de carga retroactiva. DEBE COINCIDIR con ING_CFG.DIAS_ATRAS del
+   bróker, que es quien realmente rechaza: aquí solo se acota el calendario.
+   Estaba escrito a mano dentro de la función y por eso cambiar el bróker no
+   movía el selector. Si se sube para ponerse al día con un atraso, bajarlo
+   otra vez a 7 al terminar — con la ventana abierta el sistema deja de
+   detectar cargas extemporáneas, que es una de las cosas que mide. */
+var DIAS_ATRAS = 15;
 (function(){
   var f=el('fechaRep');
-  var d=new Date(); d.setDate(d.getDate()-7);
+  var d=new Date(); d.setDate(d.getDate()-DIAS_ATRAS);
   f.max=hoyISO();
   f.min=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 })();
