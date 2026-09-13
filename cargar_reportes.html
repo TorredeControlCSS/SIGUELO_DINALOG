@@ -900,7 +900,10 @@ function enlazarProcesos_(){
    sello 'generado'. Se toma el sello ANTES de lanzar y se compara después: así
    la tarjeta no puede decir que falló algo que sí se publicó, ni al revés. */
 var ENT_POLL=null, ENT_GEN0=null;
-var ENT_JSON='./entradas_recepcion.json';
+/* El panel de carga vive en el repo SIGUELO_DINALOG y el JSON en SIGUELO, así
+   que la ruta tiene que ser absoluta: una relativa daba 404 y hacía parecer
+   fallida una publicación que sí había ocurrido. */
+var ENT_JSON='https://torredecontrolcss.github.io/SIGUELO/entradas_recepcion.json';
 function entSt_(txt,col){ var m=el('entst'); if(m){ m.textContent=txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; m.style.fontSize='11px'; m.style.lineHeight='1.5'; } }
 function entBar_(on){ var b=el('entbar'); if(b) b.className='pc-bar'+(on?' on':''); }
 function entFin_(ok,txt){
