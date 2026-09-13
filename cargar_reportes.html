@@ -199,6 +199,7 @@
   .pc-st.err{color:var(--rojo);font-weight:600;}
   .pc-st.info{color:var(--azul2);}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -452,6 +453,84 @@ function pintarTarjetas(){
   enlazarProcesos_();
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+ *  H6 · VALIDACIÓN DE TÍTULO AL SOLTAR
+ *  El 02-sep se cargó Reservas en la casilla de Inventario Neto. El bróker
+ *  lo nombró INVNETO_MED obedientemente y el Motor falló días después, sin
+ *  que nadie pudiera rastrear por qué. La única forma de atajarlo es aquí:
+ *  el archivo trae su propio título en la fila 1, y el navegador puede
+ *  leerlo antes de subir nada.
+ *
+ *  Avisa, no bloquea. Si SALMI cambia un título mañana, la carga no se
+ *  puede paralizar por eso — se advierte y quien carga decide.
+ *  Huellas verificadas contra archivos reales (traspaso 10-sep).
+ * ═══════════════════════════════════════════════════════════════════ */
+var HUELLAS = {
+  'salmi::SALDOENLINEA': 'SALDOS EN LINEA',
+  'salmi::SOLICITUDES':  'PERIODO DE SOLICITUDES',
+  'salmi::DISTRIBUCION': 'PERIODO DE DISTRIBUCION',
+  'salmi::RES_MED':  'CANTIDADES RESERVADAS',
+  'salmi::RES_MQ':   'CANTIDADES RESERVADAS',
+  'salmi::RES_FRIO': 'CANTIDADES RESERVADAS',
+  'salmi::RES_ODO':  'CANTIDADES RESERVADAS',
+  'salmi::NETO_MED':  'INVENTARIO FISICO - DISPONIBLE',
+  'salmi::NETO_MQ':   'INVENTARIO FISICO - DISPONIBLE',
+  'salmi::NETO_FRIO': 'INVENTARIO FISICO - DISPONIBLE',
+  'salmi::NETO_ODO':  'INVENTARIO FISICO - DISPONIBLE',
+  'salmi::TRAZ_MED':  'REQUISICIONES',
+  'salmi::TRAZ_MQ':   'REQUISICIONES',
+  'salmi::TRAZ_FRIO': 'REQUISICIONES',
+  'salmi::TRAZ_ODO':  'REQUISICIONES'
+};
+/* Cómo se llama cada huella cuando hay que nombrarla en el aviso. */
+var HUELLA_NOMBRE = {
+  'SALDOS EN LINEA':'Saldos en Línea',
+  'PERIODO DE SOLICITUDES':'Periodo de Solicitudes',
+  'PERIODO DE DISTRIBUCION':'Distribución',
+  'CANTIDADES RESERVADAS':'Reservas',
+  'INVENTARIO FISICO - DISPONIBLE':'Inventario Neto',
+  'REQUISICIONES':'Trazabilidad'
+};
+var HUELLA_MAL = {};   // id de casilla → true si el título no coincidió
+
+function nrmTit_(s){
+  return String(s===null||s===undefined?'':s)
+    .toUpperCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+/* Devuelve el texto de las primeras filas del archivo, normalizado.
+   Se leen 8 filas y no solo la 1 porque algunos exports traen membrete
+   antes del título; parsear más sería lento con archivos de 40k filas. */
+function leerTitulo_(file, listo){
+  if(typeof XLSX==='undefined'){ listo(null); return; }
+  if(!/\.(xlsx|xls|csv)$/i.test(file.name||'')){ listo(null); return; }
+  var fr=new FileReader();
+  fr.onload=function(){
+    try{
+      var wb=XLSX.read(new Uint8Array(fr.result),{type:'array',sheetRows:8});
+      var hoja=wb.Sheets[wb.SheetNames[0]];
+      var filas=XLSX.utils.sheet_to_json(hoja,{header:1,blankrows:false});
+      var txt=filas.slice(0,8).map(function(f){ return (f||[]).join(' '); }).join(' | ');
+      listo(nrmTit_(txt));
+    }catch(e){ listo(null); }
+  };
+  fr.onerror=function(){ listo(null); };
+  fr.readAsArrayBuffer(file.slice(0, 4*1024*1024));  // basta la cabecera del libro
+}
+/* Compara lo leído contra la huella esperada de la casilla. */
+function revisarTitulo_(id, texto){
+  var esperada=HUELLAS[id];
+  if(!esperada || texto===null) return null;            // casilla sin huella verificada
+  if(texto.indexOf(nrmTit_(esperada))>=0) return { ok:true };
+  var otra=null;
+  for(var h in HUELLA_NOMBRE){
+    if(h!==esperada && texto.indexOf(nrmTit_(h))>=0){ otra=h; break; }
+  }
+  return { ok:false, otra:otra, esperada:esperada };
+}
+
 function enlazarCarga(ins, sub){
   var id=idFila(ins,sub);
   var dz=el('dz_'+id), fi=el('file_'+id), bt=el('btn_'+id);
@@ -496,6 +575,30 @@ function tomarArchivo(ins, sub, file){
     _b.textContent = YA_CARGADO[id] ? nivelDe(id).btn : 'Cargar archivo';
     el('dzt_'+id).title = file.name;
     mostrar(id, 'info', 'Archivo listo (' + Math.round(file.size/1024) + ' KB). Presione «Cargar archivo».');
+
+    // H6 · el título del archivo decide si está en la casilla correcta
+    HUELLA_MAL[id] = false;
+    leerTitulo_(file, function(txt){
+      if(!ARCHIVOS[id] || ARCHIVOS[id].nombre!==file.name) return;   // ya cambió de archivo
+      var r = revisarTitulo_(id, txt);
+      if(!r) return;                                                  // sin huella que comparar
+      if(r.ok){
+        mostrar(id, 'ok', 'Archivo listo (' + Math.round(file.size/1024) + ' KB) · título verificado: <b>'+
+          (HUELLA_NOMBRE[r.esperada]||r.esperada)+'</b>. Presione «Cargar archivo».');
+        return;
+      }
+      HUELLA_MAL[id] = true;
+      var quees = r.otra
+        ? 'Este archivo parece ser <b>'+HUELLA_NOMBRE[r.otra]+'</b> ('+r.otra+')'
+        : 'Este archivo no trae el título esperado';
+      mostrar(id, 'err',
+        '⚠ '+quees+', pero esta casilla es <b>'+(ETIQ_SUB[sub]||ins.nombre)+'</b>.<br>'+
+        'Se esperaba «'+r.esperada+'» en las primeras filas.<br>'+
+        'Si está seguro, presione <b>Subir de todos modos</b>.');
+      var b2 = el('btn_'+id);
+      b2.className = 'btn rep';
+      b2.textContent = 'Subir de todos modos';
+    });
   };
   lector.onerror=function(){ mostrar(id,'err','No se pudo leer el archivo.'); };
   lector.readAsDataURL(file);
