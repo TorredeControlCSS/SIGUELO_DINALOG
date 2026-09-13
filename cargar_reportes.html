@@ -444,7 +444,7 @@ function pintarTarjetas(){
         '<div class="meta"><b>Fuente:</b> '+ins.fuente+' &nbsp;·&nbsp; '+
           '<b>Responsable:</b> '+ins.resp+' &nbsp;·&nbsp; '+
           '<b>Periodicidad:</b> '+ins.per+'</div>'+
-        ayuda + (ins.k==='salmi' ? barraProcesos_() : '')
+        ayuda + (ins.k==='salmi' ? (barraProcesos_()+barraCurvas_()) : '')
               + (ins.k==='recepcion' ? barraEntradas_() : '') + cuerpo +
       '</div>'+
     '</div>');
@@ -1012,6 +1012,7 @@ function enlazarProcesos_(){
   });
   var sb=el('salbt'); if(sb) sb.onclick=lanzarSaldos_;
   var eb=el('entbt'); if(eb) eb.onclick=lanzarEntradas_;
+  var cb=el('curbt'); if(cb) cb.onclick=lanzarCurvas_;
 }
 
 /* ── Entradas de Mercancía: lanza y VERIFICA contra el JSON publicado ──
@@ -1077,6 +1078,79 @@ function lanzarEntradas_(){
   }
 }
 function fmtMil_(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+
+/* ── Curva de Inventario (Inventario Valorizado) ──
+   Su backend es otro proyecto y otra cuenta (Inventario_Consolidado,
+   pedregaljuandiaz@), así que tiene su propia URL. La cadena que dispara es
+   larga —trabajado, consolidate, SeriesIndex y publicación del JSON— por eso
+   corre en diferido y aquí se verifica contra el sello del JSON publicado,
+   igual que Entradas. */
+var CURVAS_URL='https://script.google.com/macros/s/AKfycbwnK1uyq6Q5XdQ6eWzTNaoaVeJi_IAzT7d6T1rVkDIYE1JM6jBmvXqN19B6iRe20H4YPQ/exec';
+var CURVAS_JSON='https://torredecontrolcss.github.io/Curvas_de_Inventario/curvas_inventario.json';
+var CUR_POLL=null, CUR_GEN0=null;
+
+function barraCurvas_(){
+  return '<div class="procbox">'+
+    '<div class="procbox-h">Actualizar curva de inventario</div>'+
+    '<div class="procbox-s">Cargue primero el archivo abajo; luego actualice. '+
+      'Reconstruye el archivo trabajado, consolida y publica la curva. Tarda varios minutos.</div>'+
+    '<div class="procgrid">'+cardCurvas_()+'</div>'+
+  '</div>';
+}
+function cardCurvas_(){
+  return '<div class="proccard" id="pccard_curvas">'+
+    '<div class="pc-nm">Curva de Inventario</div>'+
+    '<div class="pc-hj"><b>INVENTARIO_CONSOLIDADO</b> · Data · DataVenc<br>DataLotes · SeriesIndex<br>curvas_inventario.json</div>'+
+    '<div class="pc-bar" id="curbar"><i></i></div>'+
+    '<div class="pc-st" id="curst">Sin ejecutar.</div>'+
+    '<button class="pc-bt" id="curbt">Actualizar</button>'+
+  '</div>';
+}
+function curSt_(txt,col){ var m=el('curst'); if(m){ m.textContent=txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; m.style.fontSize='11px'; m.style.lineHeight='1.5'; } }
+function curFin_(ok,txt){
+  if(CUR_POLL){ clearInterval(CUR_POLL); CUR_POLL=null; }
+  var b=el('curbar'); if(b) b.className='pc-bar';
+  var bt=el('curbt'), card=el('pccard_curvas');
+  curSt_(txt, ok?'#2e7d32':'#a3331f');
+  if(card) card.className='proccard '+(ok?'ok':'err');
+  if(bt){ bt.disabled=false; bt.className='pc-bt '+(ok?'ok':'err'); bt.textContent=ok?'✓ Listo':'Reintentar'; }
+}
+/* Del JSON solo se leen los primeros 400 caracteres: pesa ~2 MB y bajarlo
+   entero cada 8 segundos para mirar una fecha sería absurdo. */
+function curLeerSello_(ok,fail){
+  fetch(CURVAS_JSON+'?t='+Date.now(),{cache:'no-store'})
+    .then(function(r){ return r.ok ? r.text() : Promise.reject(r.status); })
+    .then(function(t){ var m=t.slice(0,400).match(/"generado"\s*:\s*"([^"]+)"/); ok(m?m[1]:null); })
+    .catch(function(){ if(fail) fail(); });
+}
+function lanzarCurvas_(){
+  var bt=el('curbt'); if(!bt) return;
+  bt.disabled=true; bt.textContent='Procesando'; bt.className='pc-bt';
+  var card=el('pccard_curvas'); if(card) card.className='proccard run';
+  var bb=el('curbar'); if(bb) bb.className='pc-bar on';
+  curSt_('leyendo curva actual…','#1e5a9e');
+  if(CUR_POLL){ clearInterval(CUR_POLL); CUR_POLL=null; }
+
+  curLeerSello_(function(g){ CUR_GEN0=g; arrancarCur_(); },
+                function(){ CUR_GEN0=null; arrancarCur_(); });
+
+  function arrancarCur_(){
+    curSt_('lanzando…','#1e5a9e');
+    jsonpG_(CURVAS_URL+'?action=publicarCurvas&callback=?', function(){}, function(){});
+    var t=0;
+    CUR_POLL=setInterval(function(){
+      t+=8;
+      curLeerSello_(function(g){
+        if(g && g!==CUR_GEN0){ curFin_(true,'✓ curva publicada · '+String(g).slice(11)); return; }
+        curSt_('procesando… '+t+' s','#1e5a9e');
+        if(t>=600) curFin_(false,'no se confirmó en 10 min — revise el registro');
+      }, function(){
+        curSt_('procesando… '+t+' s','#1e5a9e');
+        if(t>=600) curFin_(false,'no se pudo leer la curva publicada');
+      });
+    },8000);
+  }
+}
 
 /* ── Saldos en Línea: un clic, tres backends en paralelo ── */
 var SAL_POLL={};
