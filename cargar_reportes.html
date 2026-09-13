@@ -894,8 +894,13 @@ function enlazarProcesos_(){
   var eb=el('entbt'); if(eb) eb.onclick=lanzarEntradas_;
 }
 
-/* ── Entradas de Mercancía: lanza y consulta ── */
-var ENT_POLL=null;
+/* ── Entradas de Mercancía: lanza y VERIFICA contra el JSON publicado ──
+   El estado que reporta el backend sirve para ir contando, pero el único hecho
+   que confirma la publicación es que entradas_recepcion.json haya cambiado su
+   sello 'generado'. Se toma el sello ANTES de lanzar y se compara después: así
+   la tarjeta no puede decir que falló algo que sí se publicó, ni al revés. */
+var ENT_POLL=null, ENT_GEN0=null;
+var ENT_JSON='./entradas_recepcion.json';
 function entSt_(txt,col){ var m=el('entst'); if(m){ m.textContent=txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; m.style.fontSize='11px'; m.style.lineHeight='1.5'; } }
 function entBar_(on){ var b=el('entbar'); if(b) b.className='pc-bar'+(on?' on':''); }
 function entFin_(ok,txt){
@@ -906,33 +911,49 @@ function entFin_(ok,txt){
   if(card) card.className='proccard '+(ok?'ok':'err');
   if(bt){ bt.disabled=false; bt.className='pc-bt '+(ok?'ok':'err'); bt.textContent=ok?'✓ Listo':'Reintentar'; }
 }
+/* Lee el JSON publicado saltando la caché del service worker. */
+function entLeerJson_(ok,fail){
+  fetch(ENT_JSON+'?t='+Date.now(),{cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function(j){ ok(j&&j._meta ? j._meta : null); })
+    .catch(function(){ if(fail) fail(); });
+}
 function lanzarEntradas_(){
   var bt=el('entbt'); if(!bt) return;
   if(CITAS_URL.indexOf('http')!==0){ entSt_('sin URL','#a3331f'); return; }
   bt.disabled=true; bt.textContent='Procesando'; bt.className='pc-bt';
   var card=el('pccard_entradas'); if(card) card.className='proccard run';
-  entBar_(true); entSt_('lanzando…','#1e5a9e');
+  entBar_(true); entSt_('leyendo tablero actual…','#1e5a9e');
   if(ENT_POLL){ clearInterval(ENT_POLL); ENT_POLL=null; }
 
-  /* La ingesta completa tarda cerca de un minuto y corre en un disparador del
-     lado del servidor, así que la respuesta del lanzamiento no se espera:
-     arranca y de ahí en adelante manda el estado. */
-  jsonpG_(CITAS_URL+'?action=publicarEntradas&callback=?', function(){}, function(){});
+  entLeerJson_(function(m0){ ENT_GEN0 = m0 ? m0.generado : null; arrancar_(); },
+               function(){ ENT_GEN0 = null; arrancar_(); });
 
-  var intentos=0;
-  ENT_POLL=setInterval(function(){
-    intentos++;
-    jsonpG_(CITAS_URL+'?action=estadoEntradas&callback=?', function(e2){
-      if(!e2) return;
-      if(e2.estado==='corriendo'){ entSt_('procesando…','#1e5a9e'); }
-      else if(e2.estado==='listo'){
-        entFin_(true,'✓ '+(e2.filas!=null?e2.filas+' líneas':'publicado')+(e2.corte?' · corte '+e2.corte:'')); }
-      else if(e2.estado==='abortado'){ entFin_(false,'abortado: archivo con menos datos'); }
-      else if(e2.estado==='error'){ entFin_(false,'error: '+String(e2.error||'').slice(0,60)); }
-      else if(e2.estado==='sin_ejecutar' && intentos>=10){ entFin_(false,'sin conexión'); }
-    }, function(){ if(intentos>=10) entFin_(false,'sin conexión'); });
-  },6000);
+  function arrancar_(){
+    entSt_('lanzando…','#1e5a9e');
+    /* La ingesta corre en un disparador del lado del servidor y tarda cerca de
+       un minuto; la respuesta del lanzamiento no se espera. */
+    jsonpG_(CITAS_URL+'?action=publicarEntradas&callback=?', function(){}, function(){});
+
+    var t=0;
+    ENT_POLL=setInterval(function(){
+      t+=6;
+      entLeerJson_(function(m){
+        if(m && m.generado && m.generado!==ENT_GEN0){
+          entFin_(true,'✓ '+(m.filasReales!=null?fmtMil_(m.filasReales)+' líneas':'publicado')+
+                       (m.corte?' · corte '+m.corte:'')+' · '+String(m.generado).slice(11));
+          return;
+        }
+        entSt_(t<50?'esperando al servidor… '+t+' s':'procesando… '+t+' s','#1e5a9e');
+        if(t>=240) entFin_(false,'no se confirmó en 4 min — revise el registro de SÍGUELO');
+      }, function(){
+        entSt_('procesando… '+t+' s','#1e5a9e');
+        if(t>=240) entFin_(false,'no se pudo leer el tablero publicado');
+      });
+    },6000);
+  }
 }
+function fmtMil_(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
 
 /* ── Saldos en Línea: un clic, tres backends en paralelo ── */
 var SAL_POLL={};
