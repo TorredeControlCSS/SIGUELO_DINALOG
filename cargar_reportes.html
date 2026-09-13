@@ -183,8 +183,14 @@
   .proccard.err{border-color:var(--rojo);background:var(--rojo-bg);}
   .proccard.run{border-color:var(--azul2);}
   .pc-nm{font-weight:700;font-size:12.5px;color:#22303c;line-height:1.25;min-height:32px;}
+  /* Qué hojas toca cada proceso. Va arriba del estado y empuja el botón al
+     borde inferior, para que los seis botones queden a la misma altura
+     aunque el texto de cada caja sea de largo distinto. */
+  .pc-hj{font-size:10.5px;color:#7c8a97;line-height:1.4;min-height:46px;}
+  .pc-hj b{color:#5c6b78;font-weight:600;}
   .pc-bt{padding:7px 8px;border:1px solid var(--azul);background:var(--azul);color:#fff;
-         border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;}
+         border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;
+         margin-top:auto;}
   .pc-bt:hover{background:var(--azul2);}
   .pc-bt:disabled{opacity:.55;cursor:not-allowed;}
   .pc-bt.ok{background:var(--verde);border-color:var(--verde);cursor:default;}
@@ -925,13 +931,21 @@ el('btnRefrescarHist').addEventListener('click', function(){
 });
 avisarFecha();
 
-/* ── Actualizar dashboards del Motor (grilla, lanza-y-consulta) ── */
+/* ── Actualizar dashboards del Motor (grilla, lanza-y-consulta) ──
+   Cada tarjeta declara a qué libro y hoja va a parar el archivo. No es
+   adorno: hasta ahora había que abrir el bróker para saber qué tocaba cada
+   botón, y ese desconocimiento es lo que dejó pasar cargas cruzadas. */
 var PROCESOS = [
-  { k:'f8',           t:'Formas 8 / Solicitudes' },
-  { k:'distribucion', t:'Distribución' },
-  { k:'reservas',     t:'Reservas' },
-  { k:'inv_neto',     t:'Inventario Neto' },
-  { k:'trazabilidad', t:'Trazabilidad' }
+  { k:'f8',           t:'Formas 8 / Solicitudes',
+    h:['<b>ASIGNACIONES_F8</b> · REQUISICIONES_F8','<b>CALCULADORA</b> · REQUISICIONES_F8'] },
+  { k:'distribucion', t:'Distribución',
+    h:['<b>ASIGNACIONES_F8</b> · DIST_SALMI','<b>CALCULADORA</b> · DISTRIBUCIONES'] },
+  { k:'reservas',     t:'Reservas',
+    h:['<b>ASIGNACIONES_F8</b> · RESERVAS','4 áreas en una hoja'] },
+  { k:'inv_neto',     t:'Inventario Neto',
+    h:['<b>ASIGNACIONES_F8</b> · INVENTARIO_NETO','4 áreas en una hoja'] },
+  { k:'trazabilidad', t:'Trazabilidad',
+    h:['<b>ASIGNACIONES_F8</b> · WMS_TRAZABILIDAD','4 áreas en una hoja'] }
 ];
 var PROC_POLL = {};
 
@@ -939,6 +953,7 @@ function barraProcesos_(){
   var cards = PROCESOS.map(function(pr){
     return '<div class="proccard" id="pccard_'+pr.k+'">'+
       '<div class="pc-nm">'+pr.t+'</div>'+
+      '<div class="pc-hj">'+(pr.h||[]).join('<br>')+'</div>'+
       '<div class="pc-bar" id="pcbar_'+pr.k+'"><i></i></div>'+
       '<div class="pc-st" id="pcst_'+pr.k+'">Sin ejecutar.</div>'+
       '<button class="pc-bt" id="pcbt_'+pr.k+'">Actualizar</button>'+
@@ -956,8 +971,9 @@ function barraProcesos_(){
 function cardSaldos_(){
   return '<div class="proccard" id="pccard_saldos">'+
     '<div class="pc-nm">Saldos en Línea</div>'+
+    '<div class="pc-hj"><b>CALCULADORA</b> · serie histórica<br><b>CITAS</b> · SALDOS_EN_LINEA<br><b>ASIGNACIONES_F8</b> · saldos</div>'+
     '<div class="pc-bar" id="salbar"><i></i></div>'+
-    '<div class="pc-st" id="salst" style="min-height:52px;">'+
+    '<div class="pc-st" id="salst">'+
       '<div id="salst_calc">Calc: —</div>'+
       '<div id="salst_citas">CITAS: —</div>'+
       '<div id="salst_motor">Motor: —</div>'+
@@ -983,6 +999,7 @@ function barraEntradas_(){
 function cardEntradas_(){
   return '<div class="proccard" id="pccard_entradas">'+
     '<div class="pc-nm">Entradas de Mercancía</div>'+
+    '<div class="pc-hj"><b>SÍGUELO</b> · entradas_recepcion.json<br>Tablero de Entradas de Mercancía</div>'+
     '<div class="pc-bar" id="entbar"><i></i></div>'+
     '<div class="pc-st" id="entst">Sin ejecutar.</div>'+
     '<button class="pc-bt" id="entbt">Actualizar</button>'+
