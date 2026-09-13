@@ -175,7 +175,8 @@
   .procbox{border:1px solid #cfe0f0;background:#f7fbff;border-radius:6px;padding:14px 16px;margin:12px 0 6px;}
   .procbox-h{font-weight:700;color:var(--azul);font-size:14px;margin-bottom:2px;}
   .procbox-s{font-size:12px;color:#6b7a88;margin-bottom:12px;line-height:1.4;}
-  .procgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+  .procgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;}
+  @media(max-width:1400px){.procgrid{grid-template-columns:repeat(4,minmax(0,1fr));}}
   @media(max-width:820px){.procgrid{grid-template-columns:repeat(2,1fr);}}
   .proccard{background:#fff;border:1px solid #dbe6f0;border-radius:6px;padding:10px;
             display:flex;flex-direction:column;gap:8px;min-height:118px;}
@@ -444,7 +445,7 @@ function pintarTarjetas(){
         '<div class="meta"><b>Fuente:</b> '+ins.fuente+' &nbsp;·&nbsp; '+
           '<b>Responsable:</b> '+ins.resp+' &nbsp;·&nbsp; '+
           '<b>Periodicidad:</b> '+ins.per+'</div>'+
-        ayuda + (ins.k==='salmi' ? (barraProcesos_()+barraCurvas_()) : '')
+        ayuda + (ins.k==='salmi' ? barraProcesos_() : '')
               + (ins.k==='recepcion' ? barraEntradas_() : '') + cuerpo +
       '</div>'+
     '</div>');
@@ -970,7 +971,7 @@ function barraProcesos_(){
     '<div class="procbox-h">Actualizar dashboards del Motor</div>'+
     '<div class="procbox-s">Cargue primero los archivos abajo; luego actualice cada proceso. '+
       'El proceso puede tardar unos minutos — la barra indica que está trabajando.</div>'+
-    '<div class="procgrid">'+cards+cardSaldos_()+'</div>'+
+    '<div class="procgrid">'+cards+cardSaldos_()+cardCurvas_()+'</div>'+
   '</div>';
 }
 
@@ -1096,14 +1097,6 @@ var CURVAS_URL='https://script.google.com/macros/s/AKfycbwnK1uyq6Q5XdQ6eWzTNaoaV
 var CURVAS_JSON='https://torredecontrolcss.github.io/Curvas_de_Inventario/curvas_inventario.json';
 var CUR_POLL=null, CUR_GEN0=null;
 
-function barraCurvas_(){
-  return '<div class="procbox">'+
-    '<div class="procbox-h">Actualizar curva de inventario</div>'+
-    '<div class="procbox-s">Cargue primero el archivo abajo; luego actualice. '+
-      'Reconstruye el archivo trabajado, consolida y publica la curva. Tarda varios minutos.</div>'+
-    '<div class="procgrid">'+cardCurvas_()+'</div>'+
-  '</div>';
-}
 function cardCurvas_(){
   return '<div class="proccard" id="pccard_curvas">'+
     '<div class="pc-nm">Curva de Inventario</div>'+
