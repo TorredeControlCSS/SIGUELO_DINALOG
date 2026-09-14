@@ -305,9 +305,10 @@ var INSUMOS = [
   { k:'kardex',     n:3, nombre:'KARDEX · Reportes SAP-SAFIRO',
     fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
-    ayuda:'MB51 es el kardex de movimientos del día; MB52 es el inventario por lote. '
-        + 'Cargue cada uno en su casilla. El MB51 se acumula día a día, el MB52 sustituye la foto anterior.',
-    subreportes:['MB51','MB52'] },
+    ayuda:'MB51 es el kardex de movimientos del día; MB52 el inventario por lote; MM60 el maestro de precios. '
+        + 'Cargue cada uno en su casilla. El MB51 se acumula día a día, el MB52 sustituye la foto anterior, '
+        + 'y el MM60 es mensual: solo lo necesita el cierre contable.',
+    subreportes:['MB51','MB52','MM60'] },
   { k:'biometrico', n:4, nombre:'RECURSOS HUMANOS · Reporte del reloj biométrico',
     fuente:'Sistema biométrico', resp:'Recursos Humanos',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv,.pdf' },
@@ -325,7 +326,8 @@ var ETIQ_SUB = {
   NETO_MED:'Inv. Neto · Medicamentos',     NETO_MQ:'Inv. Neto · MQ',
   NETO_FRIO:'Inv. Neto · Cuarto Frío',     NETO_ODO:'Inv. Neto · Odontología',
   VALORIZADO:'Inventario Valorizado',
-  MB51:'MB51 · Movimientos del Kardex',    MB52:'MB52 · Inventario por lote'
+  MB51:'MB51 · Movimientos del Kardex',    MB52:'MB52 · Inventario por lote',
+  MM60:'MM60 · Maestro de precios (mensual)'
 };
 
 var ARCHIVOS = {};   // clave insumo → {base64, nombre, mime}
@@ -451,7 +453,8 @@ function pintarTarjetas(){
           '<b>Responsable:</b> '+ins.resp+' &nbsp;·&nbsp; '+
           '<b>Periodicidad:</b> '+ins.per+'</div>'+
         ayuda + (ins.k==='salmi' ? barraProcesos_() : '')
-              + (ins.k==='recepcion' ? barraEntradas_() : '') + cuerpo +
+              + (ins.k==='recepcion' ? barraEntradas_() : '')
+              + (ins.k==='kardex' ? barraKardex_() : '') + cuerpo +
       '</div>'+
     '</div>');
   }).join('');
@@ -498,7 +501,8 @@ var HUELLAS = {
      dos reportes, asi que confundir las casillas se detecta siempre.
      Verificado contra los 3 esquemas del MB51 (22, 21 y 18 columnas) y el MB52. */
   'kardex::MB51': 'CLASE DE MOVIMIENTO',
-  'kardex::MB52': 'LIBRE UTILIZACION'
+  'kardex::MB52': 'LIBRE UTILIZACION',
+  'kardex::MM60': 'CANTIDAD BASE'
 };
 /* Cómo se llama cada huella cuando hay que nombrarla en el aviso. */
 var HUELLA_NOMBRE = {
@@ -509,7 +513,8 @@ var HUELLA_NOMBRE = {
   'INVENTARIO FISICO - DISPONIBLE':'Inventario Neto',
   'REQUISICIONES':'Trazabilidad',
   'CLASE DE MOVIMIENTO':'Kardex MB51 (movimientos)',
-  'LIBRE UTILIZACION':'Kardex MB52 (inventario por lote)'
+  'LIBRE UTILIZACION':'Kardex MB52 (inventario por lote)',
+  'CANTIDAD BASE':'Kardex MM60 (maestro de precios)'
 };
 var HUELLA_MAL = {};   // id de casilla → true si el título no coincidió
 
@@ -1033,6 +1038,7 @@ function enlazarProcesos_(){
   });
   var sb=el('salbt'); if(sb) sb.onclick=lanzarSaldos_;
   var eb=el('entbt'); if(eb) eb.onclick=lanzarEntradas_;
+  var kb=el('kdxbt'); if(kb) kb.onclick=lanzarKardex_;
   var cb=el('curbt'); if(cb) cb.onclick=lanzarCurvas_;
 }
 
@@ -1099,6 +1105,77 @@ function lanzarEntradas_(){
   }
 }
 function fmtMil_(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+
+/* ── Kardex SAP (MB51 / MB52 / MM60) ──
+   Su backend es KARDEX_SAP.gs y vive en el mismo proyecto de CITAS, asi que
+   comparte CITAS_URL. La confirmacion NO consulta el estado del proceso sino
+   el sello 'generado' del indice.json publicado: se verifica el resultado, no
+   la intencion. Si el proceso corrio pero no publico, el boton no dice listo. */
+var KDX_JSON='https://torredecontrolcss.github.io/SIGUELO/kardex/indice.json';
+var KDX_POLL=null, KDX_GEN0=null;
+
+function barraKardex_(){
+  return '<div class="procbox">'+
+    '<div class="procbox-h">Actualizar tablero de Kardex</div>'+
+    '<div class="procbox-s">Cargue primero los archivos abajo; luego actualice. '+
+      'El proceso lee lo que aún no se haya procesado y tarda cerca de un minuto.</div>'+
+    '<div class="procgrid">'+cardKardex_()+'</div>'+
+  '</div>';
+}
+function cardKardex_(){
+  return '<div class="proccard" id="pccard_kardex">'+
+    '<div class="pc-nm">Tablero de Kardex</div>'+
+    '<div class="pc-hj"><b>SIGUELO</b> · kardex/indice.json<br>un archivo por mes<br>inventario.json</div>'+
+    '<div class="pc-bar" id="kdxbar"><i></i></div>'+
+    '<div class="pc-st" id="kdxst">Sin ejecutar.</div>'+
+    '<button class="pc-bt" id="kdxbt">Actualizar</button>'+
+  '</div>';
+}
+function kdxSt_(t,c){ var e=el('kdxst'); if(e){ e.textContent=t; e.style.color=c||'#6b7a88'; } }
+function kdxBar_(on){ var b=el('kdxbar'); if(b) b.className='pc-bar'+(on?' run':''); }
+function kdxFin_(ok,msj){
+  if(KDX_POLL){ clearInterval(KDX_POLL); KDX_POLL=null; }
+  kdxBar_(false);
+  var card=el('pccard_kardex'); if(card) card.className='proccard '+(ok?'ok':'err');
+  kdxSt_(msj, ok?'#1b7a34':'#a3331f');
+  var bt=el('kdxbt'); if(bt){ bt.disabled=false; bt.textContent='Actualizar'; }
+}
+function kdxLeerJson_(ok,fail){
+  fetch(KDX_JSON+'?t='+Date.now(),{cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function(j){ ok(j&&j._meta ? j._meta : null); })
+    .catch(function(){ if(fail) fail(); });
+}
+function lanzarKardex_(){
+  var bt=el('kdxbt'); if(!bt) return;
+  if(CITAS_URL.indexOf('http')!==0){ kdxSt_('sin URL','#a3331f'); return; }
+  bt.disabled=true; bt.textContent='Procesando';
+  var card=el('pccard_kardex'); if(card) card.className='proccard run';
+  kdxBar_(true); kdxSt_('leyendo tablero actual…','#1e5a9e');
+  if(KDX_POLL){ clearInterval(KDX_POLL); KDX_POLL=null; }
+  kdxLeerJson_(function(m0){ KDX_GEN0 = m0 ? m0.generado : null; arrancarKdx_(); },
+               function(){ KDX_GEN0 = null; arrancarKdx_(); });
+  function arrancarKdx_(){
+    kdxSt_('lanzando…','#1e5a9e');
+    jsonpG_(CITAS_URL+'?action=publicarKardex&callback=?', function(){}, function(){});
+    var t=0;
+    KDX_POLL=setInterval(function(){
+      t+=6;
+      kdxLeerJson_(function(m){
+        if(m && m.generado && m.generado!==KDX_GEN0){
+          kdxFin_(true,'✓ '+fmtMil_(m.filas||0)+' líneas · '+((m.dias||[]).length)+' días'+
+                       (m.hasta?' · corte '+m.hasta:'')+' · '+String(m.generado).slice(11));
+          return;
+        }
+        kdxSt_(t<50?'esperando al servidor… '+t+' s':'procesando… '+t+' s','#1e5a9e');
+        if(t>=300) kdxFin_(false,'no se confirmó en 5 min — revise el registro de SÍGUELO');
+      }, function(){
+        kdxSt_('procesando… '+t+' s','#1e5a9e');
+        if(t>=300) kdxFin_(false,'no se pudo leer el tablero publicado');
+      });
+    },6000);
+  }
+}
 
 /* ── Curva de Inventario (Inventario Valorizado) ──
    Su backend es otro proyecto y otra cuenta (Inventario_Consolidado,
