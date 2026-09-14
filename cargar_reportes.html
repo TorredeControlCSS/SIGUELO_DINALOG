@@ -1334,16 +1334,27 @@ function lanzarCurvas_(){
   function arrancarCur_(){
     curSt_('lanzando…','#1e5a9e');
     jsonpG_(CURVAS_URL+'?action=publicarCurvas&callback=?', function(){}, function(){});
-    var t=0;
+    var t=0, etapa='';
+    /* La cadena corre en TRES ejecuciones para no chocar con los 6 minutos de
+       Apps Script, así que el reloj total sube. 20 min de tope, y se pregunta
+       el paso: sin eso, esperar 12 minutos frente a un contador mudo se siente
+       idéntico a un proceso colgado. La confirmación sigue siendo el sello del
+       JSON, no lo que diga el estado. */
+    var TOPE=1200;
     CUR_POLL=setInterval(function(){
       t+=8;
+      // progreso: informativo, nunca decide
+      jsonpG_(CURVAS_URL+'?action=estadoCurvas&callback=?', function(e2){
+        if(e2 && e2.paso!=null && e2.de) etapa=' · paso '+e2.paso+'/'+e2.de+(e2.detalle?' ('+e2.detalle+')':'');
+        if(e2 && e2.estado==='error') etapa=' · falló en el paso '+(e2.paso||'?');
+      }, function(){});
       curLeerSello_(function(g){
         if(g && g!==CUR_GEN0){ curFin_(true,'✓ curva publicada · '+String(g).slice(11)); return; }
-        curSt_('procesando… '+t+' s','#1e5a9e');
-        if(t>=600) curFin_(false,'no se confirmó en 10 min — revise el registro');
+        curSt_('procesando… '+t+' s'+etapa,'#1e5a9e');
+        if(t>=TOPE) curFin_(false,'no se confirmó en 20 min'+etapa);
       }, function(){
-        curSt_('procesando… '+t+' s','#1e5a9e');
-        if(t>=600) curFin_(false,'no se pudo leer la curva publicada');
+        curSt_('procesando… '+t+' s'+etapa,'#1e5a9e');
+        if(t>=TOPE) curFin_(false,'no se pudo leer la curva publicada');
       });
     },8000);
   }
