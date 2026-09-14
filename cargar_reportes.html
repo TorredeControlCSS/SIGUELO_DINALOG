@@ -1202,24 +1202,33 @@ function sembrarKanban_(){
   }, function(){ KDX_TS0=null; arrancarSiembra_(); });
 
   function arrancarSiembra_(){
-    jsonpG_(MOTOR_URL+'?file=ingestar&insumo=kanban_mb51&callback=?', function(){}, function(){});
-    var t=0;
+    /* La respuesta del lanzamiento SI se lee. Antes se pasaba function(){} y el
+       panel no se enteraba de que el Motor contestaba "ya se esta procesando":
+       relanzaba a ciegas y el segundo intento moria contra el candado del
+       primero. Si ya hay una corrida en curso no se lanza otra, solo se espera. */
+    var relanzar = true;
+    jsonpG_(MOTOR_URL+'?file=ingestar&insumo=kanban_mb51&callback=?', function(r0){
+      if(r0 && r0.estado==='corriendo') relanzar=false;
+    }, function(){});
+    var t=0, yaCorria=false;
     if(KDX_POLL2){ clearInterval(KDX_POLL2); KDX_POLL2=null; }
     KDX_POLL2=setInterval(function(){
       t+=6;
+      var espera=function(){
+        kdxSt_(KDX_P1+' · '+(yaCorria?'esperando al sembrado en curso… ':'sembrando Kanban… ')+t+' s','#1e5a9e');
+        /* con una corrida ajena en curso se espera mas: el sembrado escribe
+           28,000 filas y puede tardar dos minutos */
+        if(t>=(yaCorria?420:300)) kdxFinSiembra_(false,'el Kanban no confirmó en '+Math.round((yaCorria?420:300)/60)+' min');
+      };
       jsonpG_(MOTOR_URL+'?file=ingesta_estado&insumo=kanban_mb51&callback=?', function(e2){
-        if(!e2 || !e2.ts || e2.ts===KDX_TS0){
-          kdxSt_(KDX_P1+' · sembrando Kanban… '+t+' s','#1e5a9e');
-          if(t>=300) kdxFinSiembra_(false,'el Kanban no confirmó en 5 min');
-          return;
-        }
-        if(e2.estado==='error'){ kdxFinSiembra_(false,'el Kanban falló: '+String(e2.error||'').slice(0,90)); return; }
+        if(e2 && e2.estado==='corriendo'){ yaCorria=true; espera(); return; }
+        if(!e2 || !e2.ts || e2.ts===KDX_TS0){ espera(); return; }
+        if(e2.estado==='error'){ kdxFinSiembra_(false,'el Kanban falló: '+String(e2.error||'').slice(0,110)); return; }
         if(e2.estado==='listo'){
           kdxFinSiembra_(true,'✓ Kanban: '+fmtMil_(e2.filas||0)+' líneas en MB51_ENTRADA');
           return;
         }
-        kdxSt_(KDX_P1+' · sembrando Kanban… '+t+' s','#1e5a9e');
-        if(t>=300) kdxFinSiembra_(false,'el Kanban no confirmó en 5 min');
+        espera();
       }, function(){
         kdxSt_(KDX_P1+' · sembrando Kanban… '+t+' s','#1e5a9e');
         if(t>=300) kdxFinSiembra_(false,'no se pudo consultar el Motor');
