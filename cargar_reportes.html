@@ -752,6 +752,9 @@ function pedirPin(ins, sub, cb){
 function cerrarPin(){
   el('pinOverlay').classList.remove('on');
   PIN_BUF=''; PIN_CB=null; PIN_INS=null;
+  PIN_OCUPADO=false;              // sin esto el teclado quedaba mudo al reabrir
+  if(PIN_TMR){ clearTimeout(PIN_TMR); PIN_TMR=null; }
+  if(PIN_AVISO){ clearTimeout(PIN_AVISO); PIN_AVISO=null; }
 }
 function pinTecla(v){
   if(PIN_OCUPADO) return;
@@ -761,13 +764,36 @@ function pinTecla(v){
   PIN_BUF+=v; pinPintar();
   if(PIN_BUF.length===4) verificarPin();
 }
+/* 14-sep · El PIN era el UNICO JSONP del panel sin temporizador: se armaba el
+   <script> a mano con solo onerror. Cuando Apps Script arranca en frio la
+   peticion tarda 20-30 s y a veces no resuelve ni falla; PIN_OCUPADO quedaba
+   en true para siempre y el teclado dejaba de responder. Ahora hay tope de
+   35 s, guarda contra la respuesta tardia, aviso al usuario a los 6 s, y el
+   <script> se retira en vez de acumularse en el DOM. */
+var PIN_TMR=null, PIN_AVISO=null;
 function verificarPin(){
   PIN_OCUPADO=true;
   pinMensaje('Verificando…');
-  var pin=PIN_BUF, ins=PIN_INS, cb=PIN_CB;
+  var pin=PIN_BUF, ins=PIN_INS, cb=PIN_CB, listo=false, s=null;
   var cbn='cbPin_'+Math.random().toString(36).slice(2);
+  function soltar_(){
+    if(PIN_TMR){ clearTimeout(PIN_TMR); PIN_TMR=null; }
+    if(PIN_AVISO){ clearTimeout(PIN_AVISO); PIN_AVISO=null; }
+    setTimeout(function(){ try{ window[cbn]=function(){}; }catch(e){}
+      if(s&&s.parentNode) s.parentNode.removeChild(s); }, 100);
+  }
+  PIN_AVISO=setTimeout(function(){
+    if(!listo) pinMensaje('El servidor está despertando; puede tardar hasta medio minuto…');
+  }, 6000);
+  PIN_TMR=setTimeout(function(){
+    if(listo) return; listo=true;
+    PIN_OCUPADO=false; PIN_BUF=''; pinPintar();
+    pinMensaje('El servidor no respondió en 35 s. Vuelva a intentarlo: la segunda vez suele ser inmediata.');
+    soltar_();
+  }, 35000);
   window[cbn]=function(r){
-    delete window[cbn];
+    if(listo) return; listo=true;      // descarta la respuesta tardia
+    soltar_();
     PIN_OCUPADO=false;
     if(r && r.ok){
       pinMensaje('Autorizado: '+(r.persona?r.persona.nombre:''), true);
@@ -778,11 +804,15 @@ function verificarPin(){
       pinMensaje((r&&r.error)||'PIN no válido.');
     }
   };
-  var s=document.createElement('script');
+  s=document.createElement('script');
   s.src=API_URL+'?accion=validarPin&pin='+encodeURIComponent(pin)
        +'&insumo='+encodeURIComponent(ins.k)+'&callback='+cbn;
-  s.onerror=function(){ PIN_OCUPADO=false; PIN_BUF=''; pinPintar();
-                        pinMensaje('No se pudo verificar. Revise su conexión.'); };
+  s.onerror=function(){
+    if(listo) return; listo=true;
+    soltar_();
+    PIN_OCUPADO=false; PIN_BUF=''; pinPintar();
+    pinMensaje('No se pudo verificar. Revise su conexión.');
+  };
   document.body.appendChild(s);
 }
 // teclado en pantalla
@@ -1105,6 +1135,15 @@ function lanzarEntradas_(){
   }
 }
 function fmtMil_(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+
+/* Precalentado. El arranque en frio de Apps Script cuesta 20-30 s y lo pagaba
+   la primera persona que tecleaba su PIN. Se dispara al abrir el panel, sin
+   bloquear nada y sin importar si falla: para cuando alguien vaya a cargar, el
+   contenedor ya esta levantado. */
+(function precalentar_(){
+  try{ jsonpG_(API_URL+'?accion=listarCargas&fecha='+encodeURIComponent(hoyISO())+
+               '&callback=?', function(){}, function(){}); }catch(e){}
+})();
 
 /* ── Kardex SAP (MB51 / MB52 / MM60) ──
    Su backend es KARDEX_SAP.gs y vive en el mismo proyecto de CITAS, asi que
