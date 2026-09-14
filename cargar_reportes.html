@@ -302,16 +302,16 @@ var INSUMOS = [
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
     ayuda:'Trazabilidad, Reservas e Inventario Neto se descargan por área. Cargue cada archivo en su casilla.',
     subreportes:['SALDOENLINEA','SOLICITUDES','DISTRIBUCION','TRAZ_MED','TRAZ_MQ','TRAZ_FRIO','TRAZ_ODO','RES_MED','RES_MQ','RES_FRIO','RES_ODO','NETO_MED','NETO_MQ','NETO_FRIO','NETO_ODO','VALORIZADO'] },
-  { k:'mb51',       n:3, nombre:'KARDEX · Reporte MB51',
+  { k:'kardex',     n:3, nombre:'KARDEX · Reportes SAP-SAFIRO',
     fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
-    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
-  { k:'mb52',       n:4, nombre:'KARDEX · Reporte MB52',
-    fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
-    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
-  { k:'biometrico', n:5, nombre:'RECURSOS HUMANOS · Reporte del reloj biométrico',
+    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
+    ayuda:'MB51 es el kardex de movimientos del día; MB52 es el inventario por lote. '
+        + 'Cargue cada uno en su casilla. El MB51 se acumula día a día, el MB52 sustituye la foto anterior.',
+    subreportes:['MB51','MB52'] },
+  { k:'biometrico', n:4, nombre:'RECURSOS HUMANOS · Reporte del reloj biométrico',
     fuente:'Sistema biométrico', resp:'Recursos Humanos',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv,.pdf' },
-  { k:'transporte', n:6, nombre:'TRANSPORTE · Cronograma de despachos y entregas',
+  { k:'transporte', n:5, nombre:'TRANSPORTE · Cronograma de despachos y entregas',
     fuente:'Reporte de Excel', resp:'Jefatura de Transporte',
     per:'Semanal', acepta:'.xlsx,.xls,.csv,.pdf', semanal:true }
 ];
@@ -324,7 +324,8 @@ var ETIQ_SUB = {
   RES_FRIO:'Reservas · Cuarto Frío',       RES_ODO:'Reservas · Odontología',
   NETO_MED:'Inv. Neto · Medicamentos',     NETO_MQ:'Inv. Neto · MQ',
   NETO_FRIO:'Inv. Neto · Cuarto Frío',     NETO_ODO:'Inv. Neto · Odontología',
-  VALORIZADO:'Inventario Valorizado'
+  VALORIZADO:'Inventario Valorizado',
+  MB51:'MB51 · Movimientos del Kardex',    MB52:'MB52 · Inventario por lote'
 };
 
 var ARCHIVOS = {};   // clave insumo → {base64, nombre, mime}
@@ -491,7 +492,13 @@ var HUELLAS = {
   'salmi::TRAZ_MED':  'REQUISICIONES',
   'salmi::TRAZ_MQ':   'REQUISICIONES',
   'salmi::TRAZ_FRIO': 'REQUISICIONES',
-  'salmi::TRAZ_ODO':  'REQUISICIONES'
+  'salmi::TRAZ_ODO':  'REQUISICIONES',
+  /* Los exports de SAP-SAFIRO no traen fila de titulo: la fila 1 ya es la
+     cabecera. La firma se toma de una columna que solo existe en uno de los
+     dos reportes, asi que confundir las casillas se detecta siempre.
+     Verificado contra los 3 esquemas del MB51 (22, 21 y 18 columnas) y el MB52. */
+  'kardex::MB51': 'CLASE DE MOVIMIENTO',
+  'kardex::MB52': 'LIBRE UTILIZACION'
 };
 /* Cómo se llama cada huella cuando hay que nombrarla en el aviso. */
 var HUELLA_NOMBRE = {
@@ -500,7 +507,9 @@ var HUELLA_NOMBRE = {
   'PERIODO DE DISTRIBUCION':'Distribución',
   'CANTIDADES RESERVADAS':'Reservas',
   'INVENTARIO FISICO - DISPONIBLE':'Inventario Neto',
-  'REQUISICIONES':'Trazabilidad'
+  'REQUISICIONES':'Trazabilidad',
+  'CLASE DE MOVIMIENTO':'Kardex MB51 (movimientos)',
+  'LIBRE UTILIZACION':'Kardex MB52 (inventario por lote)'
 };
 var HUELLA_MAL = {};   // id de casilla → true si el título no coincidió
 
