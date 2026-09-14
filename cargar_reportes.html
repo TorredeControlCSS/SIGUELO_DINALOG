@@ -1254,8 +1254,13 @@ function lanzarKardex_(){
       kdxLeerJson_(function(m){
         if(m && m.generado && m.generado!==KDX_GEN0){
           if(KDX_POLL){ clearInterval(KDX_POLL); KDX_POLL=null; }
+          /* Se reporta tambien la foto del MB52: si alguien sube solo el
+             inventario, el conteo de lineas no se mueve y sin esto parecia que
+             el boton no habia hecho nada. */
           KDX_P1='✓ Kardex: '+fmtMil_(m.filas||0)+' líneas · '+((m.dias||[]).length)+' días'+
-                 (m.hasta?' · corte '+m.hasta:'');
+                 (m.hasta?' · corte '+m.hasta:'')+
+                 (m.mb52&&m.mb52.fecha ? ' · inventario al '+m.mb52.fecha+
+                   ' ('+fmtMil_(m.mb52.filas||0)+' lotes)' : ' · sin inventario MB52');
           kdxSt_(KDX_P1+' · sembrando Kanban…','#1e5a9e');
           sembrarKanban_();          /* etapa 2: otra ejecucion, otros 6 minutos */
           return;
