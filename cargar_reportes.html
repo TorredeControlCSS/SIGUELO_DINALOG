@@ -1155,16 +1155,18 @@ var KDX_POLL=null, KDX_GEN0=null;
 
 function barraKardex_(){
   return '<div class="procbox">'+
-    '<div class="procbox-h">Actualizar tablero de Kardex</div>'+
+    '<div class="procbox-h">Actualizar Kardex y Kanban</div>'+
     '<div class="procbox-s">Cargue primero los archivos abajo; luego actualice. '+
-      'El proceso lee lo que aún no se haya procesado y tarda cerca de un minuto.</div>'+
+      'Son dos pasos encadenados: primero se publica el tablero de Kardex y después se '+
+      'siembra la facturación en el Kanban. Cada paso confirma por separado y tarda cerca '+
+      'de un minuto.</div>'+
     '<div class="procgrid">'+cardKardex_()+'</div>'+
   '</div>';
 }
 function cardKardex_(){
   return '<div class="proccard" id="pccard_kardex">'+
-    '<div class="pc-nm">Tablero de Kardex</div>'+
-    '<div class="pc-hj"><b>SIGUELO</b> · kardex/indice.json<br>un archivo por mes<br>inventario.json</div>'+
+    '<div class="pc-nm">Kardex y Kanban</div>'+
+    '<div class="pc-hj"><b>SIGUELO</b> · kardex/*.json<br><b>ASIGNACIONES_F8</b> · MB51_ENTRADA<br>→ SEGUIMIENTO_PEDIDOS</div>'+
     '<div class="pc-bar" id="kdxbar"><i></i></div>'+
     '<div class="pc-st" id="kdxst">Sin ejecutar.</div>'+
     '<button class="pc-bt" id="kdxbt">Actualizar</button>'+
@@ -1185,6 +1187,53 @@ function kdxLeerJson_(ok,fail){
     .then(function(j){ ok(j&&j._meta ? j._meta : null); })
     .catch(function(){ if(fail) fail(); });
 }
+/* ETAPA 2 · MB51_ENTRADA y el sembrado del Kanban.
+   Corre en el proyecto del MOTOR, en una ejecucion aparte de la que publico el
+   JSON en CITAS: cada una tiene sus propios 6 minutos y no se suman. Se
+   confirma contra el sello 'ts' del estado, no contra un OK del lanzamiento,
+   asi que un fallo del segundo paso no puede quedar oculto detras del exito
+   del primero. */
+var KDX_P1='', KDX_POLL2=null, KDX_TS0=null;
+
+function sembrarKanban_(){
+  if(MOTOR_URL.indexOf('http')!==0){ kdxFin_(false, KDX_P1+' · pero falta MOTOR_URL para el Kanban'); return; }
+  jsonpG_(MOTOR_URL+'?file=ingesta_estado&insumo=kanban_mb51&callback=?', function(e0){
+    KDX_TS0 = (e0 && e0.ts) ? e0.ts : null; arrancarSiembra_();
+  }, function(){ KDX_TS0=null; arrancarSiembra_(); });
+
+  function arrancarSiembra_(){
+    jsonpG_(MOTOR_URL+'?file=ingestar&insumo=kanban_mb51&callback=?', function(){}, function(){});
+    var t=0;
+    if(KDX_POLL2){ clearInterval(KDX_POLL2); KDX_POLL2=null; }
+    KDX_POLL2=setInterval(function(){
+      t+=6;
+      jsonpG_(MOTOR_URL+'?file=ingesta_estado&insumo=kanban_mb51&callback=?', function(e2){
+        if(!e2 || !e2.ts || e2.ts===KDX_TS0){
+          kdxSt_(KDX_P1+' · sembrando Kanban… '+t+' s','#1e5a9e');
+          if(t>=300) kdxFinSiembra_(false,'el Kanban no confirmó en 5 min');
+          return;
+        }
+        if(e2.estado==='error'){ kdxFinSiembra_(false,'el Kanban falló: '+String(e2.error||'').slice(0,90)); return; }
+        if(e2.estado==='listo'){
+          kdxFinSiembra_(true,'✓ Kanban: '+fmtMil_(e2.filas||0)+' líneas en MB51_ENTRADA');
+          return;
+        }
+        kdxSt_(KDX_P1+' · sembrando Kanban… '+t+' s','#1e5a9e');
+        if(t>=300) kdxFinSiembra_(false,'el Kanban no confirmó en 5 min');
+      }, function(){
+        kdxSt_(KDX_P1+' · sembrando Kanban… '+t+' s','#1e5a9e');
+        if(t>=300) kdxFinSiembra_(false,'no se pudo consultar el Motor');
+      });
+    },6000);
+  }
+}
+function kdxFinSiembra_(ok,msj){
+  if(KDX_POLL2){ clearInterval(KDX_POLL2); KDX_POLL2=null; }
+  /* El Kardex ya quedó publicado; si falla el Kanban se dice, sin borrar el
+     éxito del primer paso. */
+  kdxFin_(ok, KDX_P1+' · '+msj);
+}
+
 function lanzarKardex_(){
   var bt=el('kdxbt'); if(!bt) return;
   if(CITAS_URL.indexOf('http')!==0){ kdxSt_('sin URL','#a3331f'); return; }
@@ -1192,6 +1241,8 @@ function lanzarKardex_(){
   var card=el('pccard_kardex'); if(card) card.className='proccard run';
   kdxBar_(true); kdxSt_('leyendo tablero actual…','#1e5a9e');
   if(KDX_POLL){ clearInterval(KDX_POLL); KDX_POLL=null; }
+  if(KDX_POLL2){ clearInterval(KDX_POLL2); KDX_POLL2=null; }
+  KDX_P1='';
   kdxLeerJson_(function(m0){ KDX_GEN0 = m0 ? m0.generado : null; arrancarKdx_(); },
                function(){ KDX_GEN0 = null; arrancarKdx_(); });
   function arrancarKdx_(){
@@ -1202,8 +1253,11 @@ function lanzarKardex_(){
       t+=6;
       kdxLeerJson_(function(m){
         if(m && m.generado && m.generado!==KDX_GEN0){
-          kdxFin_(true,'✓ '+fmtMil_(m.filas||0)+' líneas · '+((m.dias||[]).length)+' días'+
-                       (m.hasta?' · corte '+m.hasta:'')+' · '+String(m.generado).slice(11));
+          if(KDX_POLL){ clearInterval(KDX_POLL); KDX_POLL=null; }
+          KDX_P1='✓ Kardex: '+fmtMil_(m.filas||0)+' líneas · '+((m.dias||[]).length)+' días'+
+                 (m.hasta?' · corte '+m.hasta:'');
+          kdxSt_(KDX_P1+' · sembrando Kanban…','#1e5a9e');
+          sembrarKanban_();          /* etapa 2: otra ejecucion, otros 6 minutos */
           return;
         }
         kdxSt_(t<50?'esperando al servidor… '+t+' s':'procesando… '+t+' s','#1e5a9e');
