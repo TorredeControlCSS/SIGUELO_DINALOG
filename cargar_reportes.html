@@ -1157,9 +1157,9 @@ function barraKardex_(){
   return '<div class="procbox">'+
     '<div class="procbox-h">Actualizar Kardex y Kanban</div>'+
     '<div class="procbox-s">Cargue primero los archivos abajo; luego actualice. '+
-      'Son dos pasos encadenados: primero se publica el tablero de Kardex y después se '+
-      'siembra la facturación en el Kanban. Cada paso confirma por separado y tarda cerca '+
-      'de un minuto.</div>'+
+      'Son tres pasos encadenados: se publica el tablero de Kardex, se llena MB51_ENTRADA y '+
+      'se siembra la facturación en el Kanban. Cada paso corre en su propia ejecución y '+
+      'confirma por separado, así que el proceso tarda unos tres minutos.</div>'+
     '<div class="procgrid">'+cardKardex_()+'</div>'+
   '</div>';
 }
@@ -1225,7 +1225,14 @@ function sembrarKanban_(){
         if(!e2 || !e2.ts || e2.ts===KDX_TS0){ espera(); return; }
         if(e2.estado==='error'){ kdxFinSiembra_(false,'el Kanban falló: '+String(e2.error||'').slice(0,110)); return; }
         if(e2.estado==='listo'){
-          kdxFinSiembra_(true,'✓ Kanban: '+fmtMil_(e2.filas||0)+' líneas en MB51_ENTRADA');
+          /* MB51_ENTRADA quedo llena; el sembrado del Kanban va en OTRA
+             ejecucion. Los dos juntos no caben en 6 minutos: el 15-sep,
+             despues de escribir 29,497 filas, kanbanLeerMB51 murio con
+             "Se agoto el tiempo de espera del servicio Hoja de calculo". */
+          KDX_P2=' · ✓ MB51_ENTRADA: '+fmtMil_(e2.filas||0)+' líneas';
+          kdxSt_(KDX_P1+KDX_P2+' · sembrando el Kanban…','#1e5a9e');
+          if(KDX_POLL2){ clearInterval(KDX_POLL2); KDX_POLL2=null; }
+          sembrarSeguimiento_();
           return;
         }
         espera();
@@ -1236,6 +1243,50 @@ function sembrarKanban_(){
     },6000);
   }
 }
+/* ETAPA 3 · el sembrado en SEGUIMIENTO_PEDIDOS, en su propia ejecucion.
+   Confirma por el sello ts como las anteriores, y la cifra que reporta es
+   cuantos pedidos quedaron con fecha de facturacion: un numero verificable
+   contra la hoja, no un "listo" del servidor. */
+var KDX_P2='', KDX_POLL3=null, KDX_TS3=null;
+
+function sembrarSeguimiento_(){
+  jsonpG_(MOTOR_URL+'?file=ingesta_estado&insumo=kanban_seed&callback=?', function(e0){
+    KDX_TS3 = (e0 && e0.ts) ? e0.ts : null; arrancarSeg_();
+  }, function(){ KDX_TS3=null; arrancarSeg_(); });
+
+  function arrancarSeg_(){
+    var relanzar=true;
+    jsonpG_(MOTOR_URL+'?file=ingestar&insumo=kanban_seed&callback=?', function(r0){
+      if(r0 && r0.estado==='corriendo') relanzar=false;
+    }, function(){});
+    var t=0, yaCorria=false;
+    if(KDX_POLL3){ clearInterval(KDX_POLL3); KDX_POLL3=null; }
+    KDX_POLL3=setInterval(function(){
+      t+=6;
+      var espera=function(){
+        kdxSt_(KDX_P1+KDX_P2+' · '+(yaCorria?'esperando al sembrado en curso… ':'sembrando el Kanban… ')+t+' s','#1e5a9e');
+        if(t>=(yaCorria?420:360)) kdxFinSeg_(false,'el Kanban no confirmó a tiempo');
+      };
+      jsonpG_(MOTOR_URL+'?file=ingesta_estado&insumo=kanban_seed&callback=?', function(e3){
+        if(e3 && e3.estado==='corriendo'){ yaCorria=true; espera(); return; }
+        if(!e3 || !e3.ts || e3.ts===KDX_TS3){ espera(); return; }
+        if(e3.estado==='error'){ kdxFinSeg_(false,'el Kanban falló: '+String(e3.error||'').slice(0,110)); return; }
+        if(e3.estado==='listo'){
+          kdxFinSeg_(true,'✓ Kanban: '+fmtMil_(e3.filas||0)+' pedidos con facturación');
+          return;
+        }
+        espera();
+      }, function(){ espera(); });
+    },6000);
+  }
+}
+function kdxFinSeg_(ok,msj){
+  if(KDX_POLL3){ clearInterval(KDX_POLL3); KDX_POLL3=null; }
+  /* Las dos primeras etapas ya terminaron: si falla la tercera se dice, sin
+     borrar lo que si quedo hecho. */
+  kdxFin_(ok, KDX_P1+KDX_P2+' · '+msj);
+}
+
 function kdxFinSiembra_(ok,msj){
   if(KDX_POLL2){ clearInterval(KDX_POLL2); KDX_POLL2=null; }
   /* El Kardex ya quedó publicado; si falla el Kanban se dice, sin borrar el
@@ -1251,7 +1302,8 @@ function lanzarKardex_(){
   kdxBar_(true); kdxSt_('leyendo tablero actual…','#1e5a9e');
   if(KDX_POLL){ clearInterval(KDX_POLL); KDX_POLL=null; }
   if(KDX_POLL2){ clearInterval(KDX_POLL2); KDX_POLL2=null; }
-  KDX_P1='';
+  if(KDX_POLL3){ clearInterval(KDX_POLL3); KDX_POLL3=null; }
+  KDX_P1=''; KDX_P2='';
   kdxLeerJson_(function(m0){ KDX_GEN0 = m0 ? m0.generado : null; arrancarKdx_(); },
                function(){ KDX_GEN0 = null; arrancarKdx_(); });
   function arrancarKdx_(){
@@ -1334,27 +1386,16 @@ function lanzarCurvas_(){
   function arrancarCur_(){
     curSt_('lanzando…','#1e5a9e');
     jsonpG_(CURVAS_URL+'?action=publicarCurvas&callback=?', function(){}, function(){});
-    var t=0, etapa='';
-    /* La cadena corre en TRES ejecuciones para no chocar con los 6 minutos de
-       Apps Script, así que el reloj total sube. 20 min de tope, y se pregunta
-       el paso: sin eso, esperar 12 minutos frente a un contador mudo se siente
-       idéntico a un proceso colgado. La confirmación sigue siendo el sello del
-       JSON, no lo que diga el estado. */
-    var TOPE=1200;
+    var t=0;
     CUR_POLL=setInterval(function(){
       t+=8;
-      // progreso: informativo, nunca decide
-      jsonpG_(CURVAS_URL+'?action=estadoCurvas&callback=?', function(e2){
-        if(e2 && e2.paso!=null && e2.de) etapa=' · paso '+e2.paso+'/'+e2.de+(e2.detalle?' ('+e2.detalle+')':'');
-        if(e2 && e2.estado==='error') etapa=' · falló en el paso '+(e2.paso||'?');
-      }, function(){});
       curLeerSello_(function(g){
         if(g && g!==CUR_GEN0){ curFin_(true,'✓ curva publicada · '+String(g).slice(11)); return; }
-        curSt_('procesando… '+t+' s'+etapa,'#1e5a9e');
-        if(t>=TOPE) curFin_(false,'no se confirmó en 20 min'+etapa);
+        curSt_('procesando… '+t+' s','#1e5a9e');
+        if(t>=600) curFin_(false,'no se confirmó en 10 min — revise el registro');
       }, function(){
-        curSt_('procesando… '+t+' s'+etapa,'#1e5a9e');
-        if(t>=TOPE) curFin_(false,'no se pudo leer la curva publicada');
+        curSt_('procesando… '+t+' s','#1e5a9e');
+        if(t>=600) curFin_(false,'no se pudo leer la curva publicada');
       });
     },8000);
   }
