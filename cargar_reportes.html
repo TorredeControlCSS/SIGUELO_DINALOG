@@ -454,6 +454,7 @@ function pintarTarjetas(){
           '<b>Periodicidad:</b> '+ins.per+'</div>'+
         ayuda + (ins.k==='salmi' ? barraProcesos_() : '')
               + (ins.k==='recepcion' ? barraEntradas_() : '')
+              + (ins.k==='biometrico' ? barraRH_() : '')
               + (ins.k==='kardex' ? barraKardex_() : '') + cuerpo +
       '</div>'+
     '</div>');
@@ -1070,6 +1071,7 @@ function enlazarProcesos_(){
   var eb=el('entbt'); if(eb) eb.onclick=lanzarEntradas_;
   var kb=el('kdxbt'); if(kb) kb.onclick=lanzarKardex_;
   var cb=el('curbt'); if(cb) cb.onclick=lanzarCurvas_;
+  var rb=el('rhbt'); if(rb) rb.onclick=lanzarRH_;
 }
 
 /* ── Entradas de Mercancía: lanza y VERIFICA contra el JSON publicado ──
@@ -1334,6 +1336,116 @@ function lanzarKardex_(){
       });
     },6000);
   }
+}
+
+
+/* ── Recursos Humanos · biométrico ──
+   RH_MASTER ya tiene toda la maquinaria: publicar_async instala su propio
+   disparador de 1 min y sigue solo en segundo plano, y publicar_estado informa
+   el avance por áreas. Aquí no se reimplementa nada: se lanza y se verifica.
+   A diferencia de los demás insumos, este EXIGE PIN —la publicación del
+   biométrico queda firmada con el nombre de quien la autoriza— así que se
+   reutiliza el PIN que el panel ya guardó al cargar el archivo, y solo se
+   vuelve a pedir si venció. */
+var RH_GAS   = 'https://script.google.com/macros/s/AKfycby_lXwc1VIzyj5qV2kxaZBzhiBiHQ3wPbRG3raRov_Ij2lFEtBnqTGb_1DmCglx37V_/exec';
+var RH_TOKEN = 'RH_DINALOG';
+var RH_JSON_URL = 'https://torredecontrolcss.github.io/RH_BIOMETRICO/rh_data.json';
+var RH_POLL=null, RH_GEN0=null;
+
+function barraRH_(){
+  return '<div class="procbox">'+
+    '<div class="procbox-h">Actualizar tablero de Recursos Humanos</div>'+
+    '<div class="procbox-s">Cargue primero el archivo abajo; luego actualice. '+
+      'Recalcula el ciclo del biométrico y publica los datos. Requiere PIN y '+
+      'continúa en segundo plano: puede cerrar esta página.</div>'+
+    '<div class="procgrid">'+cardRH_()+'</div>'+
+  '</div>';
+}
+function cardRH_(){
+  return '<div class="proccard" id="pccard_rh">'+
+    '<div class="pc-nm">Biométrico · RH</div>'+
+    '<div class="pc-hj"><b>RH_MASTER</b> · EVENTS_RAW<br>ASISTENCIA · HORAS_EXTRA<br>rh_data.json · rh_index.json</div>'+
+    '<div class="pc-bar" id="rhbar"><i></i></div>'+
+    '<div class="pc-st" id="rhst">Sin ejecutar.</div>'+
+    '<button class="pc-bt" id="rhbt">Actualizar</button>'+
+  '</div>';
+}
+function rhSt_(txt,col){ var m=el('rhst'); if(m){ m.textContent=txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; m.style.fontSize='11px'; m.style.lineHeight='1.5'; } }
+function rhFin_(ok,txt){
+  if(RH_POLL){ clearInterval(RH_POLL); RH_POLL=null; }
+  var b=el('rhbar'); if(b) b.className='pc-bar';
+  var bt=el('rhbt'), card=el('pccard_rh');
+  rhSt_(txt, ok?'#2e7d32':'#a3331f');
+  if(card) card.className='proccard '+(ok?'ok':'err');
+  if(bt){ bt.disabled=false; bt.className='pc-bt '+(ok?'ok':'err'); bt.textContent=ok?'✓ Listo':'Reintentar'; }
+}
+/* Del JSON de RH solo se leen los primeros caracteres para sacar el sello:
+   pesa cientos de KB y bajarlo entero cada 15 s no tendría sentido. */
+function rhLeerSello_(ok,fail){
+  fetch(RH_JSON_URL+'?t='+Date.now(),{cache:'no-store'})
+    .then(function(r){ return r.ok ? r.text() : Promise.reject(r.status); })
+    .then(function(t){
+      var m=t.slice(0,600).match(/"(generado|generado_en|fecha_generacion)"\s*:\s*"([^"]+)"/);
+      ok(m?m[2]:null);
+    })
+    .catch(function(){ if(fail) fail(); });
+}
+function lanzarRH_(){
+  var bt=el('rhbt'); if(!bt) return;
+  var _p = pinVigente();
+  if(!_p){
+    /* Sin PIN vigente se pide con el mismo teclado del panel, y al validarse
+       se reentra aquí: así no hay dos flujos de autorización distintos. */
+    pedirPin(INSUMOS.filter(function(i){return i.k==='biometrico';})[0], '', function(pin){
+      cerrarPin(); pinGuardar(pin); lanzarRH_();
+    });
+    return;
+  }
+  bt.disabled=true; bt.textContent='Procesando'; bt.className='pc-bt';
+  var card=el('pccard_rh'); if(card) card.className='proccard run';
+  var bb=el('rhbar'); if(bb) bb.className='pc-bar on';
+  rhSt_('leyendo tablero actual…','#1e5a9e');
+  if(RH_POLL){ clearInterval(RH_POLL); RH_POLL=null; }
+
+  rhLeerSello_(function(g){ RH_GEN0=g; arrancarRH_(_p); },
+               function(){ RH_GEN0=null; arrancarRH_(_p); });
+}
+function arrancarRH_(pin){
+  rhSt_('lanzando…','#1e5a9e');
+  var url = RH_GAS+'?action=publicar_async&token='+encodeURIComponent(RH_TOKEN)+
+            '&pin='+encodeURIComponent(pin)+'&_='+Date.now();
+  fetch(url).then(function(r){ return r.json(); }).then(function(d){
+    if(!d || !d.ok){ rhFin_(false, (d&&d.error) ? String(d.error).slice(0,70) : 'no se pudo iniciar'); return; }
+    if(d.estado==='completado'){
+      rhFin_(true,'✓ publicado por '+(d.iniciado_por||'')+
+                  (d.colaboradores?(' · '+d.colaboradores+' colaboradores'):''));
+      return;
+    }
+    rhSt_('procesando '+(d.procesadas||0)+'/'+(d.total_areas||'?')+' áreas','#1e5a9e');
+    seguirRH_();
+  }).catch(function(){ rhFin_(false,'error de conexión al iniciar'); });
+}
+function seguirRH_(){
+  var t=0;
+  RH_POLL=setInterval(function(){
+    t+=15;
+    fetch(RH_GAS+'?action=publicar_estado&token='+encodeURIComponent(RH_TOKEN)+'&_='+Date.now())
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(d && d.ok && d.estado==='completado'){
+          /* El estado dice "completado", pero lo que confirma es el artefacto:
+             se comprueba que el sello del JSON haya cambiado. */
+          rhLeerSello_(function(g){
+            if(g && g!==RH_GEN0) rhFin_(true,'✓ datos publicados · '+String(g).slice(0,16));
+            else rhFin_(false,'el proceso terminó pero el JSON no cambió');
+          }, function(){ rhFin_(true,'✓ proceso completado'); });
+          return;
+        }
+        if(d && d.ok) rhSt_('procesando '+(d.procesadas||0)+'/'+(d.total_areas||'?')+' áreas · '+t+' s','#1e5a9e');
+        if(t>=1800) rhFin_(false,'no terminó en 30 min — revise el registro de RH_MASTER');
+      })
+      .catch(function(){ if(t>=1800) rhFin_(false,'sin respuesta de RH_MASTER'); });
+  },15000);
 }
 
 /* ── Curva de Inventario (Inventario Valorizado) ──
