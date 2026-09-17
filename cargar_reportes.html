@@ -1025,6 +1025,18 @@ function ptyHoy_(){
 function ptySello_(sel){
   if (!sel) return null;
   var t = String(sel).trim(); if (!t) return null;
+  /* Epoch en milisegundos: así lo guarda el Motor (ts: Date.now() en
+     iepGuardarEstado_). Es un instante absoluto, sin ambigüedad de zona — el
+     caso más limpio de los tres, y el que este parser no aceptaba: un número
+     no casaba con ninguna expresión y caía a 'sin marca' teniendo la hora
+     delante. Se admiten segundos por si alguna capa los manda así. */
+  if (/^\d{10,}$/.test(t)) {
+    var ep = Number(t); if (!ep) return null;
+    if (ep < 1e12) ep = ep * 1000;
+    var de = new Date(ep + PTY_MIN * 60000);
+    return { ymd: de.getUTCFullYear() + '-' + z2_(de.getUTCMonth() + 1) + '-' + z2_(de.getUTCDate()),
+             hm:  z2_(de.getUTCHours()) + ':' + z2_(de.getUTCMinutes()) };
+  }
   if (/(Z|[+\-]\d{2}:?\d{2})$/.test(t)) {
     var ms = Date.parse(t.replace(' ', 'T'));
     if (isNaN(ms)) return null;
@@ -1067,59 +1079,78 @@ function marcaPintar_(id, txt, col){
   st.style.lineHeight = '1.5';
 }
 
-/* Los 5 procesos del Motor no publican JSON: escriben en hojas. Su único
-   testigo es ?file=ingesta_estado, que hoy devuelve {estado, filas, seg} SIN
-   fecha. Por eso esta marca NO va en verde: '2,243 filas' puede ser de hoy o
-   de la semana pasada y desde aquí no hay forma de distinguirlo. Queda en
-   ámbar y lo dice con esas palabras. En cuanto el Motor agregue 'ts' y
-   'veces', esta misma función pinta fecha y contador sin tocar nada más. */
+/* Los 5 procesos del Motor no publican JSON: escriben en hojas. Su testigo es
+   ?file=ingesta_estado, que devuelve el estado guardado en PropertiesService
+   por iepGuardarEstado_ — y ese estado SÍ trae la hora: 'ts', un epoch en
+   milisegundos. Un epoch es un instante absoluto, así que la conversión a
+   Panamá no depende de en qué zona quedó configurado el proyecto.
+
+   El orden de las ramas importa y en la primera versión estaba mal: un proceso
+   'corriendo' también guarda 'ts' (el del arranque), así que preguntar por el
+   sello antes que por el estado pintaba '✓ actualizado hoy' sobre algo que
+   todavía no había terminado. Primero el estado, después la fecha. */
 function marcaMotor_(k){
   jsonpMotor_(MOTOR_URL + '?file=ingesta_estado&insumo=' + encodeURIComponent(k) + '&callback=?',
     function(r){
       var id = 'pcst_' + k;
       if (!r || r.ok === false) { marcaPintar_(id, 'sin marca'); return; }
-      if (r.ts || r.sello) {
-        var m  = marcaFecha_(r.ts || r.sello);
-        var fl = (r.filas != null) ? ' · ' + nfmt_(r.filas) + ' filas' : '';
-        /* '0 corridas hoy' junto a 'hoy sin correr' dice lo mismo dos veces. */
-        var vc = (r.veces != null && Number(r.veces) > 0)
-               ? ' · ' + r.veces + (Number(r.veces) === 1 ? ' corrida hoy' : ' corridas hoy') : '';
-        marcaPintar_(id, m.txt + fl + vc, m.col); return;
+
+      if (r.estado === 'corriendo') {
+        var pc = ptySello_(r.ts);
+        marcaPintar_(id, '\u25cf procesando ahora (otra sesi\u00f3n)' +
+                         (pc ? ' \u00b7 desde ' + pc.hm + ' PTY' : ''), COL_RUN); return;
       }
-      if (r.estado === 'corriendo') { marcaPintar_(id, '● procesando ahora (otra sesión)', COL_RUN); return; }
-      if (r.estado === 'error')     { marcaPintar_(id, '⚠ la última corrida terminó en error', COL_ERR); return; }
-      if (r.estado === 'listo') {
-        marcaPintar_(id, 'última corrida: ' +
-          (r.filas != null ? nfmt_(r.filas) + ' filas' : 'completada') +
-          ' · sin fecha en el estado', COL_AMB); return;
+      if (r.estado === 'sin_datos') { marcaPintar_(id, 'sin corridas registradas'); return; }
+      if (r.estado === 'error') {
+        var pe = ptySello_(r.ts);
+        marcaPintar_(id, '\u26a0 error' + (pe ? ' el ' + pe.ymd + ' ' + pe.hm + ' PTY' : '') +
+                         (r.error ? ' \u00b7 ' + String(r.error).slice(0, 70) : ''), COL_ERR); return;
       }
-      marcaPintar_(id, 'sin corridas registradas');
+
+      /* 'listo'. 'veces' lo agrega iepGuardarEstado_; si el backend aún no
+         está actualizado, la fecha se muestra igual y solo falta el contador. */
+      var m  = marcaFecha_(r.ts);
+      var fl = (r.filas != null) ? ' \u00b7 ' + nfmt_(r.filas) + ' filas' : '';
+      /* El contador solo se muestra si de verdad es de hoy: el backend guarda
+         'dia' junto a 'veces', y sin comprobarlo salía '… hoy sin correr · 1
+         corrida hoy' en la misma línea, que se contradice. Si no viene 'dia',
+         manda el día del propio sello. */
+      var p  = ptySello_(r.ts), hoy = ptyHoy_();
+      var esHoy = r.dia ? (String(r.dia) === hoy) : !!(p && p.ymd === hoy);
+      var vc = (esHoy && r.veces != null && Number(r.veces) > 0)
+             ? ' \u00b7 ' + r.veces + (Number(r.veces) === 1 ? ' corrida hoy' : ' corridas hoy') : '';
+      marcaPintar_(id, m.txt + fl + vc, m.col);
     },
-    function(){ marcaPintar_('pcst_' + k, 'sin marca · no respondió'); });
+    function(){ marcaPintar_('pcst_' + k, 'sin marca \u00b7 no respondi\u00f3'); });
 }
 
-/* Saldos: tres backends en una tarjeta, tres líneas. CALCULADORA y Motor tienen
-   endpoint de estado; CITAS no publica testigo, y se dice en vez de dejarlo en
-   blanco — una línea vacía se lee como 'sin correr'. */
+/* Saldos: tres backends en una tarjeta, tres líneas. CALCULADORA y Motor
+   tienen endpoint de estado; CITAS no publica testigo, y se dice en vez de
+   dejarlo en blanco — una línea vacía se lee como 'sin correr'.
+   Mismo orden de ramas que marcaMotor_: estado primero, sello después. */
+function marcaLinSaldos_(w, e){
+  if (!e)                       { salSt_(w, 'sin marca', COL_GRIS); return; }
+  if (e.estado === 'corriendo') { var pc = ptySello_(e.ts);
+                                  salSt_(w, '\u25cf procesando ahora' + (pc ? ' \u00b7 desde ' + pc.hm + ' PTY' : ''), COL_RUN); return; }
+  if (e.estado === 'error')     { salSt_(w, '\u26a0 termin\u00f3 en error', COL_ERR); return; }
+  if (e.estado === 'sin_datos') { salSt_(w, 'sin corridas registradas', COL_GRIS); return; }
+  if (e.ts || e.sello) {
+    var m  = marcaFecha_(e.ts || e.sello);
+    var fl = (e.filas != null) ? ' \u00b7 ' + nfmt_(e.filas) + ' filas' : '';
+    salSt_(w, m.txt + fl, m.col); return;
+  }
+  if (e.estado === 'listo')     { salSt_(w, '\u00faltima corrida OK \u00b7 sin fecha', COL_AMB); return; }
+  salSt_(w, 'sin marca', COL_GRIS);
+}
 function marcaSaldos_(){
   if (CALC_URL.indexOf('http') === 0) {
-    jsonpG_(CALC_URL + '?accion=ingesta_estado_saldos&callback=?', function(e){
-      if (!e)                      { salSt_('calc', 'sin marca', COL_GRIS); return; }
-      if (e.ts || e.sello)         { var m = marcaFecha_(e.ts || e.sello); salSt_('calc', m.txt, m.col); return; }
-      if (e.estado === 'corriendo'){ salSt_('calc', '● procesando ahora', COL_RUN); return; }
-      if (e.estado === 'listo')    { salSt_('calc', 'última corrida OK · sin fecha', COL_AMB); return; }
-      if (e.estado === 'error')    { salSt_('calc', '⚠ terminó en error', COL_ERR); return; }
-      salSt_('calc', 'sin corridas', COL_GRIS);
-    }, function(){ salSt_('calc', 'no respondió', COL_GRIS); });
+    jsonpG_(CALC_URL + '?accion=ingesta_estado_saldos&callback=?',
+      function(e){ marcaLinSaldos_('calc', e); },
+      function(){ salSt_('calc', 'no respondi\u00f3', COL_GRIS); });
   }
-  jsonpG_(MOTOR_URL + '?file=ingesta_estado&insumo=saldos&callback=?', function(e){
-    if (!e)                      { salSt_('motor', 'sin marca', COL_GRIS); return; }
-    if (e.ts || e.sello)         { var m = marcaFecha_(e.ts || e.sello); salSt_('motor', m.txt, m.col); return; }
-    if (e.estado === 'corriendo'){ salSt_('motor', '● procesando ahora', COL_RUN); return; }
-    if (e.estado === 'listo')    { salSt_('motor', (e.filas != null ? nfmt_(e.filas) + ' filas' : 'OK') + ' · sin fecha', COL_AMB); return; }
-    if (e.estado === 'error')    { salSt_('motor', '⚠ terminó en error', COL_ERR); return; }
-    salSt_('motor', 'sin corridas', COL_GRIS);
-  }, function(){ salSt_('motor', 'no respondió', COL_GRIS); });
+  jsonpG_(MOTOR_URL + '?file=ingesta_estado&insumo=saldos&callback=?',
+    function(e){ marcaLinSaldos_('motor', e); },
+    function(){ salSt_('motor', 'no respondi\u00f3', COL_GRIS); });
   salSt_('citas', 'sin testigo publicado', COL_GRIS);
 }
 
