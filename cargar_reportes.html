@@ -185,6 +185,10 @@
   .proccard.ok{border-color:var(--verde);background:var(--verde-bg);}
   .proccard.err{border-color:var(--rojo);background:var(--rojo-bg);}
   .proccard.run{border-color:var(--azul2);}
+  /* Faltaba el ámbar: 'corrió pero no hoy' y 'corrió incompleto' no son
+     ni éxito ni error, y sin este estado la tarjeta se quedaba en blanco
+     mientras el texto sí cambiaba de color. */
+  .proccard.warn{border-color:var(--ambar);background:var(--ambar-bg);}
   .pc-nm{font-weight:700;font-size:12.5px;color:#22303c;line-height:1.25;min-height:32px;
          overflow-wrap:anywhere;}
   /* Qué hojas toca cada proceso. Va arriba del estado y empuja el botón al
@@ -209,6 +213,8 @@
   .pc-st.ok{color:var(--verde);font-weight:600;}
   .pc-st.err{color:var(--rojo);font-weight:600;}
   .pc-st.info{color:var(--azul2);}
+  .pc-st.warn{color:var(--ambar);font-weight:600;}
+  .pc-falta{font-size:10.5px;color:var(--ambar);font-weight:600;line-height:1.35;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -522,7 +528,7 @@ var HUELLA_MAL = {};   // id de casilla → true si el título no coincidió
 function nrmTit_(s){
   return String(s===null||s===undefined?'':s)
     .toUpperCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
     .replace(/\s+/g,' ')
     .trim();
 }
@@ -896,6 +902,9 @@ function pintarResumen(res){
       });
     }
   });
+  /* Con las casillas ya resueltas se puede saber si cada proceso del Motor
+     corrió con su foto completa. */
+  try { procCalcularFaltantes_(res); } catch(e){}
 }
 
 /* Refleja en la casilla si el reporte ya tiene una carga en la fecha. */
@@ -1007,7 +1016,7 @@ avisarFecha();
    Y nada en verde por antigüedad: si el sello no es de hoy va en ámbar y dice
    de qué día es. Un tablero que parece fresco engaña peor que uno en blanco. */
 var PTY_MIN = -5 * 60;
-var COL_OK = '#2e7d32', COL_AMB = '#8a5a00', COL_RUN = '#1e5a9e',
+var COL_OK = '#2e7d32', COL_AMB = '#8a6a00', COL_RUN = '#1e5a9e',
     COL_ERR = '#a3331f', COL_GRIS = '#6b7a88';
 
 function z2_(n){ return (n < 10 ? '0' : '') + n; }
@@ -1068,6 +1077,88 @@ function marcaFecha_(sel){
                 (d > 1 ? ' (' + d + ' d)' : ''), col: COL_AMB };
 }
 
+/* Qué casillas de carga alimenta cada proceso del Motor. No es decorativo:
+   miIngestarTrazabilidad (y sus gemelas de Reservas e Inv. Neto) REEMPLAZAN la
+   hoja completa con las áreas que encuentran en la carpeta y borran el resto
+   — 'var sobra = sh.getLastRow() - nF; ... clearContent()'. Así que si falta
+   un área, esa área no queda vieja en la hoja: queda FUERA. El Motor lo
+   detecta ('llegaron 3 de 4 areas') pero lo escribe en un Logger que nadie
+   lee, y devuelve ok:true, con lo cual la tarjeta pintaba verde sobre una foto
+   incompleta. El panel ya sabe qué casillas llegaron, así que lo dice aquí
+   sin pedirle nada nuevo al backend. */
+var PROC_SUB = {
+  f8:           ['SOLICITUDES'],
+  distribucion: ['DISTRIBUCION'],
+  reservas:     ['RES_MED','RES_MQ','RES_FRIO','RES_ODO'],
+  inv_neto:     ['NETO_MED','NETO_MQ','NETO_FRIO','NETO_ODO'],
+  trazabilidad: ['TRAZ_MED','TRAZ_MQ','TRAZ_FRIO','TRAZ_ODO'],
+  saldos:       ['SALDOENLINEA']
+};
+var PROC_MARCA = {};   // k -> { txt, col, cls } de la última corrida
+var PROC_FALTA = {};   // k -> ['Odontología', …] casillas sin cargar hoy
+
+/* Nombre corto del subreporte para el aviso: de 'Trazabilidad · Odontología'
+   se queda con 'Odontología', porque el nombre del proceso ya está arriba. */
+function subCorto_(clave){
+  var e = ETIQ_SUB[clave] || clave;
+  var p = e.split('·');
+  return (p.length > 1 ? p[p.length - 1] : e).trim();
+}
+
+/* Recalcula faltantes desde el resumen que devuelve el servidor.
+
+   Se lee el resumen y NO YA_CARGADO: si el historial no respondió —el internet
+   del almacén se cae a mitad de descarga— YA_CARGADO está vacío y todas las
+   áreas parecerían faltantes. Un panel que grita 'falta todo' porque se le
+   cayó una consulta es peor que uno que no dice nada: la primera vez asusta y
+   de la tercera en adelante nadie le cree. Sin resumen, esta función no toca
+   nada y las tarjetas se quedan solo con su marca de fecha. */
+function procCalcularFaltantes_(res){
+  var recibido = null;
+  (res || []).forEach(function(r){
+    if (r && r.insumo === 'salmi' && r.subreportes && r.subreportes.length){
+      recibido = {};
+      r.subreportes.forEach(function(sub){ recibido[sub.nombre] = !!sub.recibido; });
+    }
+  });
+  if (!recibido) return;
+
+  for (var k in PROC_SUB){
+    var faltan = [], req = PROC_SUB[k];
+    for (var i = 0; i < req.length; i++){
+      /* Solo se cuenta como faltante lo que el servidor reportó y dijo que no
+         llegó. Una casilla que el resumen no menciona no se inventa. */
+      if (recibido.hasOwnProperty(req[i]) && !recibido[req[i]]) faltan.push(subCorto_(req[i]));
+    }
+    PROC_FALTA[k] = faltan;
+    procRepintar_(k);
+  }
+}
+
+/* Compone la marca con los faltantes. Se llama desde los dos lados — cuando
+   llega el estado del Motor y cuando llega el resumen de casillas — porque
+   son dos respuestas asíncronas y cualquiera puede ganar la carrera. */
+function procRepintar_(k){
+  var m = PROC_MARCA[k]; if (!m) return;
+  var faltan = PROC_FALTA[k] || [];
+  var st = el('pcst_' + k), card = el('pccard_' + k);
+  if (!st) return;
+
+  var txt = m.txt, col = m.col, cls = m.cls;
+  if (faltan.length && m.cls !== 'run'){
+    /* Incompleto pesa más que reciente: la corrida fue hoy, pero la hoja quedó
+       sin esas áreas. Verde aquí sería la mentira que buscamos evitar. */
+    txt += '<br><span class="pc-falta">⚠ sin cargar: ' + faltan.join(', ') + '</span>';
+    if (cls === 'ok'){ cls = 'warn'; col = COL_AMB; }
+  }
+  st.innerHTML = txt;
+  st.style.color = col || COL_GRIS;
+  st.style.fontWeight = (col && col !== COL_GRIS) ? '600' : '400';
+  st.style.fontSize = '11px';
+  st.style.lineHeight = '1.5';
+  if (card) card.className = 'proccard ' + (cls || '');
+}
+
 /* Pinta un estado de tarjeta por id. Estilo en línea, igual que entSt_/salSt_:
    así no hace falta CSS nuevo y el lanzamiento puede sobreescribirlo. */
 function marcaPintar_(id, txt, col){
@@ -1092,25 +1183,24 @@ function marcaPintar_(id, txt, col){
 function marcaMotor_(k){
   jsonpMotor_(MOTOR_URL + '?file=ingesta_estado&insumo=' + encodeURIComponent(k) + '&callback=?',
     function(r){
-      var id = 'pcst_' + k;
-      if (!r || r.ok === false) { marcaPintar_(id, 'sin marca'); return; }
+      if (!r || r.ok === false) { procMarcar_(k, 'sin marca', COL_GRIS, ''); return; }
 
       if (r.estado === 'corriendo') {
         var pc = ptySello_(r.ts);
-        marcaPintar_(id, '\u25cf procesando ahora (otra sesi\u00f3n)' +
-                         (pc ? ' \u00b7 desde ' + pc.hm + ' PTY' : ''), COL_RUN); return;
+        procMarcar_(k, '● procesando ahora (otra sesión)' +
+                       (pc ? ' · desde ' + pc.hm + ' PTY' : ''), COL_RUN, 'run'); return;
       }
-      if (r.estado === 'sin_datos') { marcaPintar_(id, 'sin corridas registradas'); return; }
+      if (r.estado === 'sin_datos') { procMarcar_(k, 'sin corridas registradas', COL_GRIS, ''); return; }
       if (r.estado === 'error') {
         var pe = ptySello_(r.ts);
-        marcaPintar_(id, '\u26a0 error' + (pe ? ' el ' + pe.ymd + ' ' + pe.hm + ' PTY' : '') +
-                         (r.error ? ' \u00b7 ' + String(r.error).slice(0, 70) : ''), COL_ERR); return;
+        procMarcar_(k, '⚠ error' + (pe ? ' el ' + pe.ymd + ' ' + pe.hm + ' PTY' : '') +
+                       (r.error ? ' · ' + String(r.error).slice(0, 70) : ''), COL_ERR, 'err'); return;
       }
 
       /* 'listo'. 'veces' lo agrega iepGuardarEstado_; si el backend aún no
          está actualizado, la fecha se muestra igual y solo falta el contador. */
       var m  = marcaFecha_(r.ts);
-      var fl = (r.filas != null) ? ' \u00b7 ' + nfmt_(r.filas) + ' filas' : '';
+      var fl = (r.filas != null) ? ' · ' + nfmt_(r.filas) + ' filas' : '';
       /* El contador solo se muestra si de verdad es de hoy: el backend guarda
          'dia' junto a 'veces', y sin comprobarlo salía '… hoy sin correr · 1
          corrida hoy' en la misma línea, que se contradice. Si no viene 'dia',
@@ -1118,10 +1208,17 @@ function marcaMotor_(k){
       var p  = ptySello_(r.ts), hoy = ptyHoy_();
       var esHoy = r.dia ? (String(r.dia) === hoy) : !!(p && p.ymd === hoy);
       var vc = (esHoy && r.veces != null && Number(r.veces) > 0)
-             ? ' \u00b7 ' + r.veces + (Number(r.veces) === 1 ? ' corrida hoy' : ' corridas hoy') : '';
-      marcaPintar_(id, m.txt + fl + vc, m.col);
+             ? ' · ' + r.veces + (Number(r.veces) === 1 ? ' corrida hoy' : ' corridas hoy') : '';
+      procMarcar_(k, m.txt + fl + vc, m.col, (m.col === COL_OK) ? 'ok' : 'warn');
     },
-    function(){ marcaPintar_('pcst_' + k, 'sin marca \u00b7 no respondi\u00f3'); });
+    function(){ procMarcar_(k, 'sin marca · no respondió', COL_GRIS, ''); });
+}
+
+/* Guarda la marca del proceso y la pinta pasando por procRepintar_, que es el
+   único que compone marca + faltantes. */
+function procMarcar_(k, txt, col, cls){
+  PROC_MARCA[k] = { txt: txt, col: col, cls: cls };
+  procRepintar_(k);
 }
 
 /* Saldos: tres backends en una tarjeta, tres líneas. CALCULADORA y Motor
@@ -1129,54 +1226,72 @@ function marcaMotor_(k){
    dejarlo en blanco — una línea vacía se lee como 'sin correr'.
    Mismo orden de ramas que marcaMotor_: estado primero, sello después. */
 function marcaLinSaldos_(w, e){
-  if (!e)                       { salSt_(w, 'sin marca', COL_GRIS); return; }
+  if (!e)                       { salSt_(w, 'sin marca', COL_GRIS); salClase_(w, ''); return; }
   if (e.estado === 'corriendo') { var pc = ptySello_(e.ts);
-                                  salSt_(w, '\u25cf procesando ahora' + (pc ? ' \u00b7 desde ' + pc.hm + ' PTY' : ''), COL_RUN); return; }
-  if (e.estado === 'error')     { salSt_(w, '\u26a0 termin\u00f3 en error', COL_ERR); return; }
-  if (e.estado === 'sin_datos') { salSt_(w, 'sin corridas registradas', COL_GRIS); return; }
+                                  salSt_(w, '● procesando ahora' + (pc ? ' · desde ' + pc.hm + ' PTY' : ''), COL_RUN);
+                                  salClase_(w, 'run'); return; }
+  if (e.estado === 'error')     { salSt_(w, '⚠ terminó en error', COL_ERR); salClase_(w, 'err'); return; }
+  if (e.estado === 'sin_datos') { salSt_(w, 'sin corridas registradas', COL_GRIS); salClase_(w, ''); return; }
   if (e.ts || e.sello) {
     var m  = marcaFecha_(e.ts || e.sello);
-    var fl = (e.filas != null) ? ' \u00b7 ' + nfmt_(e.filas) + ' filas' : '';
-    salSt_(w, m.txt + fl, m.col); return;
+    var fl = (e.filas != null) ? ' · ' + nfmt_(e.filas) + ' filas' : '';
+    salSt_(w, m.txt + fl, m.col); salClase_(w, (m.col === COL_OK) ? 'ok' : 'warn'); return;
   }
-  if (e.estado === 'listo')     { salSt_(w, '\u00faltima corrida OK \u00b7 sin fecha', COL_AMB); return; }
-  salSt_(w, 'sin marca', COL_GRIS);
+  if (e.estado === 'listo')     { salSt_(w, 'última corrida OK · sin fecha', COL_AMB); salClase_(w, 'warn'); return; }
+  salSt_(w, 'sin marca', COL_GRIS); salClase_(w, '');
 }
 function marcaSaldos_(){
   if (CALC_URL.indexOf('http') === 0) {
     jsonpG_(CALC_URL + '?accion=ingesta_estado_saldos&callback=?',
       function(e){ marcaLinSaldos_('calc', e); },
-      function(){ salSt_('calc', 'no respondi\u00f3', COL_GRIS); });
+      function(){ salSt_('calc', 'no respondió', COL_GRIS); });
   }
   jsonpG_(MOTOR_URL + '?file=ingesta_estado&insumo=saldos&callback=?',
     function(e){ marcaLinSaldos_('motor', e); },
-    function(){ salSt_('motor', 'no respondi\u00f3', COL_GRIS); });
+    function(){ salSt_('motor', 'no respondió', COL_GRIS); });
   salSt_('citas', 'sin testigo publicado', COL_GRIS);
+}
+
+/* La tarjeta de Saldos tiene tres líneas y una sola clase. Manda la peor de
+   las dos que sí tienen testigo: si alguna no es de hoy, la tarjeta no puede
+   verse verde. CITAS no cuenta porque no publica nada que comparar. */
+var SAL_EST = {};
+function salClase_(w, cls){
+  SAL_EST[w] = cls;
+  var card = el('pccard_saldos'); if (!card) return;
+  var vs = [SAL_EST.calc, SAL_EST.motor], peor = 'ok';
+  for (var i = 0; i < vs.length; i++){
+    if (vs[i] === 'err'){ peor = 'err'; break; }
+    if (vs[i] === 'run'){ peor = 'run'; }
+    else if (vs[i] === 'warn' && peor !== 'run'){ peor = 'warn'; }
+    else if (!vs[i] && peor === 'ok'){ peor = ''; }
+  }
+  if ((PROC_FALTA.saldos || []).length && peor === 'ok') peor = 'warn';
+  card.className = 'proccard ' + peor;
 }
 
 /* Las cuatro tarjetas que SÍ publican JSON con sello. Aquí la marca es completa
    y fechada: el artefacto publicado es el hecho, no el reporte del backend.
    Es la regla que nació en la sesión pasada, ahora también al abrir. */
+function marcaSello_(idSt, idCard, sel, extra){
+  var x = marcaFecha_(sel);
+  marcaPintar_(idSt, x.txt + (extra || ''), x.col);
+  var card = el(idCard);
+  if (card) card.className = 'proccard ' + (!sel ? '' : (x.col === COL_OK ? 'ok' : 'warn'));
+}
 function marcasSellos_(){
-  entLeerJson_(function(m){
-      var x = marcaFecha_(m && m.generado);
-      marcaPintar_('entst', x.txt + ((m && m.corte) ? ' · corte ' + m.corte : ''), x.col);
-    }, function(){ marcaPintar_('entst', 'sin marca · el JSON no respondió'); });
+  entLeerJson_(function(m){ marcaSello_('entst', 'pccard_entradas', m && m.generado,
+                              (m && m.corte) ? ' · corte ' + m.corte : ''); },
+               function(){ marcaPintar_('entst', 'sin marca · el JSON no respondió'); });
 
-  kdxLeerJson_(function(m){
-      var x = marcaFecha_(m && m.generado);
-      marcaPintar_('kdxst', x.txt, x.col);
-    }, function(){ marcaPintar_('kdxst', 'sin marca · el JSON no respondió'); });
+  kdxLeerJson_(function(m){ marcaSello_('kdxst', 'pccard_kardex', m && m.generado); },
+               function(){ marcaPintar_('kdxst', 'sin marca · el JSON no respondió'); });
 
-  rhLeerSello_(function(sel){
-      var x = marcaFecha_(sel);
-      marcaPintar_('rhst', x.txt, x.col);
-    }, function(){ marcaPintar_('rhst', 'sin marca · el JSON no respondió'); });
+  rhLeerSello_(function(sel){ marcaSello_('rhst', 'pccard_rh', sel); },
+               function(){ marcaPintar_('rhst', 'sin marca · el JSON no respondió'); });
 
-  curSelloLigero_(function(sel){
-      var x = marcaFecha_(sel);
-      marcaPintar_('curst', x.txt, x.col);
-    }, function(){ marcaPintar_('curst', 'sin marca · el JSON no respondió'); });
+  curSelloLigero_(function(sel){ marcaSello_('curst', 'pccard_curvas', sel); },
+                  function(){ marcaPintar_('curst', 'sin marca · el JSON no respondió'); });
 }
 
 /* Al abrir la página NO se descarga curvas_inventario.json (1.97 MB) solo para
