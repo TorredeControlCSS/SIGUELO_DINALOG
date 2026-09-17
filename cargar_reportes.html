@@ -985,8 +985,200 @@ el('fechaRep').addEventListener('change', function(){
 el('btnRefrescarHist').addEventListener('click', function(){
   el('tbodyHist').innerHTML='<tr><td colspan="6" class="vacio">Consultando…</td></tr>';
   cargarHistorial();
+  marcasIniciales_();   /* el mismo botón relee las marcas: quien vigila de lejos
+                           no tiene que recargar la página para ver si ya corrió */
 });
 avisarFecha();
+
+/* ═══ MARCA DE FRESCURA DE LAS TARJETAS DE ACTUALIZAR · 17-sep ═══
+   Qué arregla: 'Sin ejecutar.' estaba escrito a mano en el HTML de cada
+   tarjeta y ninguna consultaba su estado AL ABRIR la página — solo después de
+   que alguien apretaba el botón. La marca vivía en la pestaña de quien la
+   disparó y se borraba al cerrar. Desde Arizona, o a la mañana siguiente, era
+   imposible saber si alguien procesó: el verde de las casillas de abajo prueba
+   que el archivo LLEGÓ, no que se procesaron los datos. Son dos hechos
+   distintos y solo uno se veía.
+
+   Hora de Panamá, siempre rotulada PTY. Panamá es UTC−5 todo el año (no tiene
+   horario de verano), así que el desfase es fijo y no hay que preguntarle a
+   nada. Quien da soporte lo hace desde Arizona (UTC−7) y una hora sin dueño se
+   lee como la hora del lector — el mismo error del reloj que se quitó de RH.
+
+   Y nada en verde por antigüedad: si el sello no es de hoy va en ámbar y dice
+   de qué día es. Un tablero que parece fresco engaña peor que uno en blanco. */
+var PTY_MIN = -5 * 60;
+var COL_OK = '#2e7d32', COL_AMB = '#8a5a00', COL_RUN = '#1e5a9e',
+    COL_ERR = '#a3331f', COL_GRIS = '#6b7a88';
+
+function z2_(n){ return (n < 10 ? '0' : '') + n; }
+
+function ptyHoy_(){
+  var d = new Date(Date.now() + PTY_MIN * 60000);
+  return d.getUTCFullYear() + '-' + z2_(d.getUTCMonth() + 1) + '-' + z2_(d.getUTCDate());
+}
+
+/* Devuelve {ymd, hm} en hora de Panamá, o null. Dos formas de sello posibles:
+   — con zona explícita (Z o +05:00): es un instante real, se traslada a PTY.
+   — sin zona ('2026-09-17 14:32:10'): Apps Script lo escribió en la zona del
+     proyecto, que es America/Panama. Se toma tal cual. Convertir una hora que
+     ya está en PTY la correría cinco horas, y ese error no se veía nunca. */
+function ptySello_(sel){
+  if (!sel) return null;
+  var t = String(sel).trim(); if (!t) return null;
+  if (/(Z|[+\-]\d{2}:?\d{2})$/.test(t)) {
+    var ms = Date.parse(t.replace(' ', 'T'));
+    if (isNaN(ms)) return null;
+    var d = new Date(ms + PTY_MIN * 60000);
+    return { ymd: d.getUTCFullYear() + '-' + z2_(d.getUTCMonth() + 1) + '-' + z2_(d.getUTCDate()),
+             hm:  z2_(d.getUTCHours()) + ':' + z2_(d.getUTCMinutes()) };
+  }
+  var m = t.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (m) return { ymd: m[1] + '-' + m[2] + '-' + m[3], hm: m[4] + ':' + m[5] };
+  var s2 = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return s2 ? { ymd: s2[0], hm: '' } : null;
+}
+
+function diasEntre_(a, b){
+  var A = Date.parse(a + 'T00:00:00Z'), B = Date.parse(b + 'T00:00:00Z');
+  return (isNaN(A) || isNaN(B)) ? 0 : Math.round((B - A) / 86400000);
+}
+
+function nfmt_(n){ try { return Number(n).toLocaleString('es-PA'); } catch (e) { return String(n); } }
+
+/* Texto y color de un sello fechado. Verde solo si es de hoy. */
+function marcaFecha_(sel){
+  var p = ptySello_(sel);
+  if (!p) return { txt: 'sin marca', col: COL_GRIS };
+  var hoy = ptyHoy_();
+  if (p.ymd === hoy) return { txt: '✓ actualizado hoy ' + p.hm + ' PTY', col: COL_OK };
+  var d = diasEntre_(p.ymd, hoy);
+  return { txt: '⚠ última: ' + p.ymd + (p.hm ? ' ' + p.hm : '') + ' PTY · hoy sin correr' +
+                (d > 1 ? ' (' + d + ' d)' : ''), col: COL_AMB };
+}
+
+/* Pinta un estado de tarjeta por id. Estilo en línea, igual que entSt_/salSt_:
+   así no hace falta CSS nuevo y el lanzamiento puede sobreescribirlo. */
+function marcaPintar_(id, txt, col){
+  var st = el(id); if (!st) return;
+  st.innerHTML = txt;
+  st.style.color = col || COL_GRIS;
+  st.style.fontWeight = (col && col !== COL_GRIS) ? '600' : '400';
+  st.style.fontSize = '11px';
+  st.style.lineHeight = '1.5';
+}
+
+/* Los 5 procesos del Motor no publican JSON: escriben en hojas. Su único
+   testigo es ?file=ingesta_estado, que hoy devuelve {estado, filas, seg} SIN
+   fecha. Por eso esta marca NO va en verde: '2,243 filas' puede ser de hoy o
+   de la semana pasada y desde aquí no hay forma de distinguirlo. Queda en
+   ámbar y lo dice con esas palabras. En cuanto el Motor agregue 'ts' y
+   'veces', esta misma función pinta fecha y contador sin tocar nada más. */
+function marcaMotor_(k){
+  jsonpMotor_(MOTOR_URL + '?file=ingesta_estado&insumo=' + encodeURIComponent(k) + '&callback=?',
+    function(r){
+      var id = 'pcst_' + k;
+      if (!r || r.ok === false) { marcaPintar_(id, 'sin marca'); return; }
+      if (r.ts || r.sello) {
+        var m  = marcaFecha_(r.ts || r.sello);
+        var fl = (r.filas != null) ? ' · ' + nfmt_(r.filas) + ' filas' : '';
+        /* '0 corridas hoy' junto a 'hoy sin correr' dice lo mismo dos veces. */
+        var vc = (r.veces != null && Number(r.veces) > 0)
+               ? ' · ' + r.veces + (Number(r.veces) === 1 ? ' corrida hoy' : ' corridas hoy') : '';
+        marcaPintar_(id, m.txt + fl + vc, m.col); return;
+      }
+      if (r.estado === 'corriendo') { marcaPintar_(id, '● procesando ahora (otra sesión)', COL_RUN); return; }
+      if (r.estado === 'error')     { marcaPintar_(id, '⚠ la última corrida terminó en error', COL_ERR); return; }
+      if (r.estado === 'listo') {
+        marcaPintar_(id, 'última corrida: ' +
+          (r.filas != null ? nfmt_(r.filas) + ' filas' : 'completada') +
+          ' · sin fecha en el estado', COL_AMB); return;
+      }
+      marcaPintar_(id, 'sin corridas registradas');
+    },
+    function(){ marcaPintar_('pcst_' + k, 'sin marca · no respondió'); });
+}
+
+/* Saldos: tres backends en una tarjeta, tres líneas. CALCULADORA y Motor tienen
+   endpoint de estado; CITAS no publica testigo, y se dice en vez de dejarlo en
+   blanco — una línea vacía se lee como 'sin correr'. */
+function marcaSaldos_(){
+  if (CALC_URL.indexOf('http') === 0) {
+    jsonpG_(CALC_URL + '?accion=ingesta_estado_saldos&callback=?', function(e){
+      if (!e)                      { salSt_('calc', 'sin marca', COL_GRIS); return; }
+      if (e.ts || e.sello)         { var m = marcaFecha_(e.ts || e.sello); salSt_('calc', m.txt, m.col); return; }
+      if (e.estado === 'corriendo'){ salSt_('calc', '● procesando ahora', COL_RUN); return; }
+      if (e.estado === 'listo')    { salSt_('calc', 'última corrida OK · sin fecha', COL_AMB); return; }
+      if (e.estado === 'error')    { salSt_('calc', '⚠ terminó en error', COL_ERR); return; }
+      salSt_('calc', 'sin corridas', COL_GRIS);
+    }, function(){ salSt_('calc', 'no respondió', COL_GRIS); });
+  }
+  jsonpG_(MOTOR_URL + '?file=ingesta_estado&insumo=saldos&callback=?', function(e){
+    if (!e)                      { salSt_('motor', 'sin marca', COL_GRIS); return; }
+    if (e.ts || e.sello)         { var m = marcaFecha_(e.ts || e.sello); salSt_('motor', m.txt, m.col); return; }
+    if (e.estado === 'corriendo'){ salSt_('motor', '● procesando ahora', COL_RUN); return; }
+    if (e.estado === 'listo')    { salSt_('motor', (e.filas != null ? nfmt_(e.filas) + ' filas' : 'OK') + ' · sin fecha', COL_AMB); return; }
+    if (e.estado === 'error')    { salSt_('motor', '⚠ terminó en error', COL_ERR); return; }
+    salSt_('motor', 'sin corridas', COL_GRIS);
+  }, function(){ salSt_('motor', 'no respondió', COL_GRIS); });
+  salSt_('citas', 'sin testigo publicado', COL_GRIS);
+}
+
+/* Las cuatro tarjetas que SÍ publican JSON con sello. Aquí la marca es completa
+   y fechada: el artefacto publicado es el hecho, no el reporte del backend.
+   Es la regla que nació en la sesión pasada, ahora también al abrir. */
+function marcasSellos_(){
+  entLeerJson_(function(m){
+      var x = marcaFecha_(m && m.generado);
+      marcaPintar_('entst', x.txt + ((m && m.corte) ? ' · corte ' + m.corte : ''), x.col);
+    }, function(){ marcaPintar_('entst', 'sin marca · el JSON no respondió'); });
+
+  kdxLeerJson_(function(m){
+      var x = marcaFecha_(m && m.generado);
+      marcaPintar_('kdxst', x.txt, x.col);
+    }, function(){ marcaPintar_('kdxst', 'sin marca · el JSON no respondió'); });
+
+  rhLeerSello_(function(sel){
+      var x = marcaFecha_(sel);
+      marcaPintar_('rhst', x.txt, x.col);
+    }, function(){ marcaPintar_('rhst', 'sin marca · el JSON no respondió'); });
+
+  curSelloLigero_(function(sel){
+      var x = marcaFecha_(sel);
+      marcaPintar_('curst', x.txt, x.col);
+    }, function(){ marcaPintar_('curst', 'sin marca · el JSON no respondió'); });
+}
+
+/* Al abrir la página NO se descarga curvas_inventario.json (1.97 MB) solo para
+   leer 400 caracteres de sello: el internet del almacén se cae a mitad de
+   descarga y esa descarga la pagaría cada apertura. Se lee f8_estado.json
+   (~11 KB), que se publica en el mismo acto que la curva y por tanto lleva el
+   mismo momento. Si ese archivo no trae 'generado', la marca queda vacía a
+   propósito: eso es una línea en el publicador, no un motivo para castigar la
+   conexión del almacén con dos megas en cada carga. */
+var F8_ESTADO_JSON = 'https://torredecontrolcss.github.io/Curvas_de_Inventario/f8_estado.json';
+function curSelloLigero_(ok, fail){
+  fetch(F8_ESTADO_JSON + '?t=' + Date.now(), { cache: 'no-store' })
+    .then(function(r){ return r.ok ? r.text() : Promise.reject(r.status); })
+    .then(function(t){
+      var m = t.slice(0, 800).match(/"(generado|generado_en|ts|fecha_generacion)"\s*:\s*"([^"]+)"/);
+      ok(m ? m[2] : null);
+    })
+    .catch(function(){ if (fail) fail(); });
+}
+
+/* Escalonado a propósito: son seis llamadas JSONP y cuatro fetch. En el
+   internet del almacén lanzarlas juntas al abrir es la forma más segura de que
+   ninguna termine. Van de 300 en 300 ms, cada fallo es silencioso y deja 'sin
+   marca': una marca que no llega nunca bloquea el panel ni miente. */
+function marcasIniciales_(){
+  var i = 0, paso = 300;
+  PROCESOS.forEach(function(pr){
+    var k = pr.k;
+    setTimeout(function(){ if (!PROC_POLL[k]) marcaMotor_(k); }, (i++) * paso);
+  });
+  setTimeout(marcaSaldos_,   (i++) * paso);
+  setTimeout(marcasSellos_,  (i++) * paso);
+}
 
 /* ── Actualizar dashboards del Motor (grilla, lanza-y-consulta) ──
    Cada tarjeta declara a qué libro y hoja va a parar el archivo. No es
@@ -1019,7 +1211,8 @@ function barraProcesos_(){
   return '<div class="procbox">'+
     '<div class="procbox-h">Actualizar dashboards del Motor</div>'+
     '<div class="procbox-s">Cargue primero los archivos abajo; luego actualice cada proceso. '+
-      'El proceso puede tardar unos minutos — la barra indica que está trabajando.</div>'+
+      'El proceso puede tardar unos minutos — la barra indica que está trabajando. '+
+      'La marca de cada tarjeta es la última corrida registrada, en hora de Panamá (PTY).</div>'+
     '<div class="procgrid">'+cards+cardSaldos_()+cardCurvas_()+'</div>'+
   '</div>';
 }
@@ -1651,7 +1844,11 @@ function jsonpG_(url,ok,fail){
 }
 function pcSet_(k,cls,tipo,txt,barOn){
   var card=el('pccard_'+k); if(card) card.className='proccard '+(cls||'');
-  var st=el('pcst_'+k); if(st){ st.className='pc-st '+(tipo||''); st.innerHTML=txt; }
+  var st=el('pcst_'+k);
+  /* La marca de frescura pinta color y peso en línea. Si no se limpian aquí,
+     el ámbar de 'sin fecha' sobrevivía al lanzamiento y le ganaba a la clase. */
+  if(st){ st.style.color=''; st.style.fontWeight=''; st.style.fontSize=''; st.style.lineHeight='';
+          st.className='pc-st '+(tipo||''); st.innerHTML=txt; }
   var bar=el('pcbar_'+k); if(bar) bar.className='pc-bar'+(barOn?' on':'');
 }
 function lanzarProceso_(k,titulo){
@@ -1708,6 +1905,7 @@ function jsonpMotor_(url,ok,fail){
 }
 
 pintarTarjetas();
+marcasIniciales_();
 if(API_URL.indexOf('REEMPLAZAR')<0) cargarHistorial();
 else el('tbodyHist').innerHTML='<tr><td colspan="6" class="vacio">Configure API_URL en el script tras desplegar el backend.</td></tr>';
 </script>
