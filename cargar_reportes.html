@@ -458,7 +458,7 @@ function pintarTarjetas(){
         '<div class="meta"><b>Fuente:</b> '+ins.fuente+' &nbsp;·&nbsp; '+
           '<b>Responsable:</b> '+ins.resp+' &nbsp;·&nbsp; '+
           '<b>Periodicidad:</b> '+ins.per+'</div>'+
-        ayuda + (ins.k==='salmi' ? (barraProcesos_() + barraCadenas_()) : '')
+        ayuda + (ins.k==='salmi' ? barraProcesos_() : '')
               + (ins.k==='recepcion' ? barraEntradas_() : '')
               + (ins.k==='biometrico' ? barraRH_() : '')
               + (ins.k==='kardex' ? barraKardex_() : '') + cuerpo +
@@ -473,7 +473,6 @@ function pintarTarjetas(){
     else enlazarCarga(ins, null);
   });
   enlazarProcesos_();
-  enlazarCadenas_();
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1333,9 +1332,6 @@ function marcasIniciales_(){
   });
   setTimeout(marcaSaldos_,   (i++) * paso);
   setTimeout(marcasSellos_,  (i++) * paso);
-  /* Las cadenas de la Calculadora, al final y en serie: comparten backend con
-     la tarjeta de Saldos y con el disparador de 15 min. */
-  setTimeout(marcasCadenas_, (i++) * paso + 1500);
 }
 
 /* ── Actualizar dashboards del Motor (grilla, lanza-y-consulta) ──
@@ -1403,18 +1399,23 @@ function cadDispararPorCasilla_(id){
   var c = CASILLA_CADENA[id];
   if (!c) return;
   if (CALC_URL.indexOf('http') !== 0) return;
-  /* No se espera la respuesta: la cadena corre en el servidor hasta 6 min y el
-     <script> del navegador expira antes. Se lanza y la tarjeta lo vigila. */
-  if (c === 'saldos'){ jsonpG_(CALC_URL+'?accion=ingestar_saldos&callback=?', function(){}, function(){}); }
-  else { jsonpG_(CALC_URL+'?accion=cadena&c='+encodeURIComponent(c)+'&callback=?', function(){}, function(){}); }
-  /* Sin aviso aparte: este panel no tiene toast() y el mensaje de la carga ya
-     está en pantalla. El aviso va donde importa, en la tarjeta de la cadena. */
-  if (c !== 'saldos'){
-    cadSet_(c, 'run', '● lanzada por la carga…', COL_RUN);
-    setTimeout(function(){ cadPoll_(c, Date.now()); }, 4000);
-  } else {
-    cadSalDisparada_();
-  }
+  /* UNA sola ruta, y es la que está probada en producción: ?accion=ingestar_saldos.
+     Del lado del servidor ya no lanza solo saldos — lanza el CICLO COMPLETO, que
+     hace una unidad de trabajo, se encola a sí mismo a los 30 s y sigue hasta
+     publicar f8_eventos, las series y los seis artefactos del simulador.
+
+     Por qué una sola ruta y no una por insumo: las rutas ?accion=cadena&c=…
+     devuelven rechazo en 1 s por una causa que no está medida, y colgar el
+     disparo por carga de una ruta que no responde es exactamente la fragilidad
+     que hay que evitar. El ciclo decide solo qué toca según lo que entró.
+
+     No se espera la respuesta: una etapa dura hasta 6 min y el <script> expira
+     antes. Se dispara y la tarjeta de Saldos vigila el avance. */
+  jsonpG_(CALC_URL+'?accion=ingestar_saldos&callback=?', function(){}, function(){});
+  /* El aviso va en la tarjeta de Saldos en Línea, que es la que muestra el
+     estado del backend de la Calculadora. */
+  cadSalDisparada_();
+  setTimeout(marcaSaldos_, 20000);   /* a los 20 s ya hay avance que mostrar */
 }
 /* Saldos no tiene tarjeta propia en este bloque: su estado vive en la tarjeta
    'Saldos en Línea' de la grilla del Motor, que ya consulta los tres backends. */
