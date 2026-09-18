@@ -458,7 +458,7 @@ function pintarTarjetas(){
         '<div class="meta"><b>Fuente:</b> '+ins.fuente+' &nbsp;·&nbsp; '+
           '<b>Responsable:</b> '+ins.resp+' &nbsp;·&nbsp; '+
           '<b>Periodicidad:</b> '+ins.per+'</div>'+
-        ayuda + (ins.k==='salmi' ? barraProcesos_() : '')
+        ayuda + (ins.k==='salmi' ? (barraProcesos_() + barraCadenas_()) : '')
               + (ins.k==='recepcion' ? barraEntradas_() : '')
               + (ins.k==='biometrico' ? barraRH_() : '')
               + (ins.k==='kardex' ? barraKardex_() : '') + cuerpo +
@@ -473,6 +473,7 @@ function pintarTarjetas(){
     else enlazarCarga(ins, null);
   });
   enlazarProcesos_();
+  enlazarCadenas_();
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -720,6 +721,14 @@ function enviarArchivo(ins, sub, arch, pin){
         el('dzt_'+id).textContent='Ya cargado hoy · toque para reemplazar';
         bt.disabled=true; bt.className='btn ok'; bt.textContent='✓ Cargado';
         cargarHistorial();
+        /* EL DISPARO ES LA LLEGADA DEL DATO. La casilla que acaba de recibir su
+           archivo lanza SU cadena en la Calculadora, sin que nadie abra un menú
+           en otro libro. Es el mismo patrón que Entradas ya usa: se actualiza
+           solo y el botón queda de respaldo. Antes esto dependía de que alguien
+           entrara al menú del libro, y por eso detalle_ue.json y
+           matriz_snapshot.json llevaban desde el 31-ago sin publicarse mientras
+           el equipo cargaba todo a diario. */
+        try { cadDispararPorCasilla_(id); } catch(eCad){}
       } else {
         fallo('Rechazado: '+((r&&r.error)||'respuesta no válida'));
       }
@@ -1317,6 +1326,7 @@ function curSelloLigero_(ok, fail){
    ninguna termine. Van de 300 en 300 ms, cada fallo es silencioso y deja 'sin
    marca': una marca que no llega nunca bloquea el panel ni miente. */
 function marcasIniciales_(){
+  marcasCadenas_();
   var i = 0, paso = 300;
   PROCESOS.forEach(function(pr){
     var k = pr.k;
@@ -1361,6 +1371,139 @@ function barraProcesos_(){
       'La marca de cada tarjeta es la última corrida registrada, en hora de Panamá (PTY).</div>'+
     '<div class="procgrid">'+cards+cardSaldos_()+cardCurvas_()+'</div>'+
   '</div>';
+}
+
+/* ═══ CADENAS DE LA CALCULADORA · 17-sep ═══
+   Los insumos SALMI entran al Motor por las 7 tarjetas de arriba, pero los
+   tableros de la Calculadora (curva por UE, simulador, redistribución) los
+   publica OTRO proyecto, y hasta hoy solo se podía disparar abriendo su menú a
+   mano. Estas tarjetas cierran ese hueco.
+
+   Cadencia real, que es la que manda sobre el reloj: saldos 1 vez al día, F8
+   dos o tres, distribuciones 1, consumos 1 al mes. Cada una se dispara cuando
+   llega su archivo; el botón es el respaldo y la marca dice cuándo corrió. */
+var CADENAS = [
+  { k:'f8',           t:'Formas 8 · Calculadora',
+    h:['<b>CALCULADORA</b> · REQUISICIONES_F8','f8_eventos_*.json'] },
+  { k:'distribucion', t:'Distribuciones · Calculadora',
+    h:['<b>CALCULADORA</b> · DISTRIBUCIONES'] },
+  { k:'consumos',     t:'Consumo reportado',
+    h:['<b>MAESTROS_DINALOG</b> · MAESTRO_CONSUMOS_UE','consumo_reportado_*.json'] }
+];
+
+/* Qué casilla alimenta qué cadena. Una casilla puede no alimentar ninguna. */
+var CASILLA_CADENA = {
+  'salmi::SOLICITUDES':  'f8',
+  'salmi::DISTRIBUCION': 'distribucion',
+  'salmi::SALDOENLINEA': 'saldos'
+};
+function cadDispararPorCasilla_(id){
+  var c = CASILLA_CADENA[id];
+  if (!c) return;
+  if (CALC_URL.indexOf('http') !== 0) return;
+  /* No se espera la respuesta: la cadena corre en el servidor hasta 6 min y el
+     <script> del navegador expira antes. Se lanza y la tarjeta lo vigila. */
+  if (c === 'saldos'){ jsonpG_(CALC_URL+'?accion=ingestar_saldos&callback=?', function(){}, function(){}); }
+  else { jsonpG_(CALC_URL+'?accion=cadena&c='+encodeURIComponent(c)+'&callback=?', function(){}, function(){}); }
+  /* Sin aviso aparte: este panel no tiene toast() y el mensaje de la carga ya
+     está en pantalla. El aviso va donde importa, en la tarjeta de la cadena. */
+  if (c !== 'saldos'){
+    cadSet_(c, 'run', '● lanzada por la carga…', COL_RUN);
+    setTimeout(function(){ cadPoll_(c, Date.now()); }, 4000);
+  } else {
+    cadSalDisparada_();
+  }
+}
+/* Saldos no tiene tarjeta propia en este bloque: su estado vive en la tarjeta
+   'Saldos en Línea' de la grilla del Motor, que ya consulta los tres backends. */
+function cadSalDisparada_(){
+  try { salSt_('calc', '● lanzada por la carga…', COL_RUN); } catch(e){}
+}
+
+function barraCadenas_(){
+  var cards = CADENAS.map(function(cd){
+    return '<div class="proccard" id="cadcard_'+cd.k+'">'+
+      '<div class="pc-nm">'+cd.t+'</div>'+
+      '<div class="pc-hj">'+(cd.h||[]).join('<br>')+'</div>'+
+      '<div class="pc-bar" id="cadbar_'+cd.k+'"><i></i></div>'+
+      '<div class="pc-st" id="cadst_'+cd.k+'">Sin ejecutar.</div>'+
+      '<button class="pc-bt" id="cadbt_'+cd.k+'">Actualizar</button>'+
+    '</div>';
+  }).join('');
+  return '<div class="procbox">'+
+    '<div class="procbox-h">Actualizar tableros de la Calculadora</div>'+
+    '<div class="procbox-s">Se actualizan solos al cargar su archivo — el botón queda como respaldo. '+
+      'La marca es la última corrida registrada, en hora de Panamá (PTY).</div>'+
+    '<div class="procgrid">'+cards+'</div>'+
+  '</div>';
+}
+function cadSet_(k, cls, txt, col){
+  var st=el('cadst_'+k);
+  if(st){ st.innerHTML=txt; st.style.color=col||COL_GRIS;
+          st.style.fontWeight=(col&&col!==COL_GRIS)?'600':'400';
+          st.style.fontSize='11px'; st.style.lineHeight='1.5'; }
+  var card=el('cadcard_'+k); if(card) card.className='proccard '+(cls||'');
+  var bar=el('cadbar_'+k); if(bar) bar.className='pc-bar'+(cls==='run'?' on':'');
+}
+function cadLanzar_(k){
+  var b=el('cadbt_'+k); if(!b) return;
+  if(CALC_URL.indexOf('http')!==0){ cadSet_(k,'err','sin URL de la Calculadora',COL_ERR); return; }
+  b.disabled=true; b.className='pc-bt'; b.textContent='Procesando';
+  cadSet_(k,'run','Procesando…',COL_RUN);
+  var t0=Date.now();
+  setTimeout(function(){ cadPoll_(k,t0); }, 3000);
+  jsonpG_(CALC_URL+'?accion=cadena&c='+encodeURIComponent(k)+'&callback=?',
+    function(r){ if(r && r.estado && r.estado!=='corriendo') cadFin_(k,r,t0); },
+    function(){ /* el <script> expiró: el poll sigue vigilando */ });
+}
+var CAD_POLL={};
+function cadPoll_(k,t0){
+  if(CAD_POLL[k]) return;
+  CAD_POLL[k]=setInterval(function(){
+    jsonpG_(CALC_URL+'?accion=cadena_estado&c='+encodeURIComponent(k)+'&callback=?',
+      function(r){
+        if(!r || r.ok===false) return;
+        if(r.estado==='corriendo'){
+          cadSet_(k,'run','Procesando… ('+Math.round((Date.now()-t0)/1000)+' s)'+
+                          (r.faltan?(' · faltan '+r.faltan):''),COL_RUN); return; }
+        cadFin_(k,r,t0);
+      }, function(){});
+  }, 5000);
+}
+function cadFin_(k,r,t0){
+  if(CAD_POLL[k]){ clearInterval(CAD_POLL[k]); CAD_POLL[k]=null; }
+  var b=el('cadbt_'+k);
+  if(r.estado==='error'){
+    cadSet_(k,'err','⚠ error · '+String(r.error||'').slice(0,70),COL_ERR);
+    if(b){ b.disabled=false; b.className='pc-bt err'; b.textContent='Reintentar'; }
+    return;
+  }
+  /* 'sin cambios' NO es un fallo y tampoco un éxito que presumir: la fuente no
+     se movió, así que no había nada que publicar. Se dice tal cual. */
+  var m = marcaFecha_(r.ts);
+  var det = (r.filas!=null? ' · '+nfmt_(r.filas)+' filas':'') +
+            (r.corte? ' · corte '+r.corte:'') +
+            (r.sinCambios? ' · sin cambios en la fuente':'');
+  cadSet_(k, (m.col===COL_OK?'ok':'warn'), m.txt+det, m.col);
+  if(b){ b.disabled=false; b.className='pc-bt ok'; b.textContent='✓ Listo'; }
+}
+function enlazarCadenas_(){
+  CADENAS.forEach(function(cd){
+    var b=el('cadbt_'+cd.k); if(b) b.onclick=function(){ cadLanzar_(cd.k); };
+  });
+}
+function marcasCadenas_(){
+  CADENAS.forEach(function(cd,i){
+    setTimeout(function(){
+      if(CAD_POLL[cd.k]) return;
+      jsonpG_(CALC_URL+'?accion=cadena_estado&c='+encodeURIComponent(cd.k)+'&callback=?',
+        function(r){
+          if(!r || r.ok===false || r.estado==='sin_datos'){ cadSet_(cd.k,'','sin corridas registradas',COL_GRIS); return; }
+          if(r.estado==='corriendo'){ cadSet_(cd.k,'run','● procesando ahora (otra sesión)',COL_RUN); cadPoll_(cd.k,Date.now()); return; }
+          cadFin_(cd.k,r,Date.now());
+        }, function(){ cadSet_(cd.k,'','sin marca · no respondió',COL_GRIS); });
+    }, i*300);
+  });
 }
 
 /* Saldos como una tarjeta más de la grilla. Un botón, tres backends adentro. */
