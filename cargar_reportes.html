@@ -1326,7 +1326,6 @@ function curSelloLigero_(ok, fail){
    ninguna termine. Van de 300 en 300 ms, cada fallo es silencioso y deja 'sin
    marca': una marca que no llega nunca bloquea el panel ni miente. */
 function marcasIniciales_(){
-  marcasCadenas_();
   var i = 0, paso = 300;
   PROCESOS.forEach(function(pr){
     var k = pr.k;
@@ -1334,6 +1333,9 @@ function marcasIniciales_(){
   });
   setTimeout(marcaSaldos_,   (i++) * paso);
   setTimeout(marcasSellos_,  (i++) * paso);
+  /* Las cadenas de la Calculadora, al final y en serie: comparten backend con
+     la tarjeta de Saldos y con el disparador de 15 min. */
+  setTimeout(marcasCadenas_, (i++) * paso + 1500);
 }
 
 /* ── Actualizar dashboards del Motor (grilla, lanza-y-consulta) ──
@@ -1492,18 +1494,56 @@ function enlazarCadenas_(){
     var b=el('cadbt_'+cd.k); if(b) b.onclick=function(){ cadLanzar_(cd.k); };
   });
 }
-function marcasCadenas_(){
-  CADENAS.forEach(function(cd,i){
-    setTimeout(function(){
-      if(CAD_POLL[cd.k]) return;
-      jsonpG_(CALC_URL+'?accion=cadena_estado&c='+encodeURIComponent(cd.k)+'&callback=?',
-        function(r){
-          if(!r || r.ok===false || r.estado==='sin_datos'){ cadSet_(cd.k,'','sin corridas registradas',COL_GRIS); return; }
-          if(r.estado==='corriendo'){ cadSet_(cd.k,'run','● procesando ahora (otra sesión)',COL_RUN); cadPoll_(cd.k,Date.now()); return; }
-          cadFin_(cd.k,r,Date.now());
-        }, function(){ cadSet_(cd.k,'','sin marca · no respondió',COL_GRIS); });
-    }, i*300);
-  });
+/* Lectura de la marca con DIAGNÓSTICO en la propia tarjeta.
+
+   Por qué: las tres salían 'no respondió' mientras el servidor registraba
+   doGet Completada en 1 s. Un solo texto para dos fallas distintas no permite
+   saber cuál es: que el servidor rechace la petición y que la respuesta no
+   llegue a tiempo son problemas opuestos. Ahora la tarjeta dice cuál fue y
+   cuántos segundos esperó, así el diagnóstico no necesita otra ronda.
+
+   Y se leen de ÚLTIMO y de a una. Apps Script serializa las ejecuciones del
+   mismo usuario: si el disparador de 15 min está adentro (30 s de duración),
+   todo lo que el panel pregunte se encola detrás. Cuatro preguntas en paralelo
+   al abrir la página competían entre ellas y contra el disparador. En serie y
+   al final, cada una espera su turno sin pisar a las demás. */
+var CAD_ESPERA_MS = 45000;
+function marcasCadenas_(){ cadLeerMarca_(0); }
+function cadLeerMarca_(n){
+  if (n >= CADENAS.length) return;
+  var cd = CADENAS[n], sig = function(){ cadLeerMarca_(n+1); };
+  if (CAD_POLL[cd.k]) { sig(); return; }
+  if (CALC_URL.indexOf('http') !== 0){ cadSet_(cd.k,'','sin URL de la Calculadora',COL_GRIS); sig(); return; }
+
+  var url = CALC_URL+'?accion=cadena_estado&c='+encodeURIComponent(cd.k)+'&callback=?';
+  var t0 = Date.now();
+  cadSet_(cd.k,'','consultando…',COL_GRIS);
+  var reloj = setInterval(function(){
+    cadSet_(cd.k,'','consultando… ('+Math.round((Date.now()-t0)/1000)+' s)',COL_GRIS);
+  }, 2000);
+
+  jsonpG_(url,
+    function(r){
+      clearInterval(reloj);
+      if(!r || r.ok===false){ cadSet_(cd.k,'','el servidor respondió sin dato'+(r&&r.error?(' · '+String(r.error).slice(0,50)):''),COL_AMB); sig(); return; }
+      if(r.estado==='sin_datos'){ cadSet_(cd.k,'','sin corridas registradas',COL_GRIS); sig(); return; }
+      if(r.estado==='corriendo'){ cadSet_(cd.k,'run','● procesando ahora (otra sesión)',COL_RUN); cadPoll_(cd.k,Date.now()); sig(); return; }
+      cadFin_(cd.k,r,Date.now()); sig();
+    },
+    function(){
+      clearInterval(reloj);
+      var seg = Math.round((Date.now()-t0)/1000);
+      /* jsonpG_ avisa igual si el <script> falló y si expiró la espera. La
+         diferencia la da el tiempo: un rechazo vuelve en segundos, una cola
+         agota los 30 s. Se dice cuál fue, con el número. */
+      if (seg < 10){
+        cadSet_(cd.k,'','el servidor rechazó la petición ('+seg+' s) — ¿implementación al día?',COL_ERR);
+      } else {
+        cadSet_(cd.k,'','se agotó la espera tras '+seg+' s — el script estaba ocupado',COL_AMB);
+      }
+      try{ console.log('[cadena '+cd.k+'] sin respuesta en '+seg+' s · '+url); }catch(e){}
+      sig();
+    });
 }
 
 /* Saldos como una tarjeta más de la grilla. Un botón, tres backends adentro. */
