@@ -1676,7 +1676,7 @@ function fmtMil_(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
    el sello 'generado' del indice.json publicado: se verifica el resultado, no
    la intencion. Si el proceso corrio pero no publico, el boton no dice listo. */
 var KDX_JSON='https://torredecontrolcss.github.io/SIGUELO/kardex/indice.json';
-var KDX_POLL=null, KDX_GEN0=null;
+var KDX_POLL=null, KDX_GEN0=null, KDX_FIN0=null;
 
 function barraKardex_(){
   return '<div class="procbox">'+
@@ -1740,15 +1740,23 @@ function sembrarKanban_(){
     KDX_POLL2=setInterval(function(){
       t+=6;
       var espera=function(){
-        kdxSt_(KDX_P1+' · '+(yaCorria?'esperando al sembrado en curso… ':'sembrando Kanban… ')+t+' s','#1e5a9e');
+        kdxSt_(KDX_P1+' · '+(yaCorria?'esperando a la corrida en curso… ':'llenando MB51_ENTRADA… ')+t+' s','#1e5a9e');
         /* con una corrida ajena en curso se espera mas: el sembrado escribe
            28,000 filas y puede tardar dos minutos */
-        if(t>=(yaCorria?420:300)) kdxFinSiembra_(false,'el Kanban no confirmó en '+Math.round((yaCorria?420:300)/60)+' min');
+        if(t>=(yaCorria?420:300)) kdxFinSiembra_(false,'MB51_ENTRADA no confirmó en '+Math.round((yaCorria?420:300)/60)+' min');
       };
       jsonpG_(MOTOR_URL+'?file=ingesta_estado&insumo=kanban_mb51&callback=?', function(e2){
         if(e2 && e2.estado==='corriendo'){ yaCorria=true; espera(); return; }
         if(!e2 || !e2.ts || e2.ts===KDX_TS0){ espera(); return; }
-        if(e2.estado==='error'){ kdxFinSiembra_(false,'el Kanban falló: '+String(e2.error||'').slice(0,110)); return; }
+        if(e2.estado==='error'){
+          var msj2=String(e2.error||'');
+          /* El candado NO es un fallo: significa que otra corrida esta
+             trabajando. Se sigue esperando en vez de cortar y mandar al
+             usuario a pulsar otra vez. */
+          if(/ya est.{0,3} en curso/i.test(msj2)){ yaCorria=true; espera(); return; }
+          kdxFinSiembra_(false,'MB51_ENTRADA falló: '+msj2.slice(0,110));
+          return;
+        }
         if(e2.estado==='listo'){
           /* MB51_ENTRADA quedo llena; el sembrado del Kanban va en OTRA
              ejecucion. Los dos juntos no caben en 6 minutos: el 15-sep,
@@ -1762,7 +1770,7 @@ function sembrarKanban_(){
         }
         espera();
       }, function(){
-        kdxSt_(KDX_P1+' · sembrando Kanban… '+t+' s','#1e5a9e');
+        kdxSt_(KDX_P1+' · llenando MB51_ENTRADA… '+t+' s','#1e5a9e');
         if(t>=300) kdxFinSiembra_(false,'no se pudo consultar el Motor');
       });
     },6000);
@@ -1795,7 +1803,12 @@ function sembrarSeguimiento_(){
       jsonpG_(MOTOR_URL+'?file=ingesta_estado&insumo=kanban_seed&callback=?', function(e3){
         if(e3 && e3.estado==='corriendo'){ yaCorria=true; espera(); return; }
         if(!e3 || !e3.ts || e3.ts===KDX_TS3){ espera(); return; }
-        if(e3.estado==='error'){ kdxFinSeg_(false,'el Kanban falló: '+String(e3.error||'').slice(0,110)); return; }
+        if(e3.estado==='error'){
+          var msj3=String(e3.error||'');
+          if(/ya est.{0,3} en curso/i.test(msj3)){ yaCorria=true; espera(); return; }
+          kdxFinSeg_(false,'el Kanban falló: '+msj3.slice(0,110));
+          return;
+        }
         if(e3.estado==='listo'){
           kdxFinSeg_(true,'✓ Kanban: '+fmtMil_(e3.filas||0)+' pedidos con facturación');
           return;
@@ -1829,6 +1842,15 @@ function lanzarKardex_(){
   if(KDX_POLL2){ clearInterval(KDX_POLL2); KDX_POLL2=null; }
   if(KDX_POLL3){ clearInterval(KDX_POLL3); KDX_POLL3=null; }
   KDX_P1=''; KDX_P2='';
+  /* Se toma nota del sello del JSON Y del sello del proceso. El JSON solo
+     cambia si hubo algo que publicar; cuando no hay archivos pendientes el
+     ingestor sale sin escribir nada y el sello queda igual. Antes eso dejaba
+     la etapa 1 esperando cinco minutos una confirmacion imposible, y las
+     etapas 2 y 3 no llegaban a correr nunca. */
+  KDX_FIN0 = null;
+  jsonpG_(CITAS_URL+'?action=estadoKardex&callback=?', function(e0){
+    KDX_FIN0 = (e0 && e0.fin) ? e0.fin : null;
+  }, function(){});
   kdxLeerJson_(function(m0){ KDX_GEN0 = m0 ? m0.generado : null; arrancarKdx_(); },
                function(){ KDX_GEN0 = null; arrancarKdx_(); });
   function arrancarKdx_(){
@@ -1851,8 +1873,27 @@ function lanzarKardex_(){
           sembrarKanban_();          /* etapa 2: otra ejecucion, otros 6 minutos */
           return;
         }
-        kdxSt_(t<50?'esperando al servidor… '+t+' s':'procesando… '+t+' s','#1e5a9e');
-        if(t>=300) kdxFin_(false,'no se confirmó en 5 min — revise el registro de SÍGUELO');
+        /* El JSON no cambio. Puede ser que aun no termine, o que no hubiera
+           nada que publicar. Se pregunta al proceso: si ya termino y no
+           publico, se sigue igual a la etapa 2, que si tiene trabajo. */
+        jsonpG_(CITAS_URL+'?action=estadoKardex&callback=?', function(e1){
+          if(e1 && e1.estado==='listo' && e1.fin && e1.fin!==KDX_FIN0){
+            if(KDX_POLL){ clearInterval(KDX_POLL); KDX_POLL=null; }
+            KDX_P1 = '✓ Kardex sin cambios (no había archivos pendientes)';
+            kdxSt_(KDX_P1+' · llenando MB51_ENTRADA…','#1e5a9e');
+            sembrarKanban_();
+            return;
+          }
+          if(e1 && e1.estado==='error'){
+            kdxFin_(false,'el Kardex falló: '+String(e1.error||'').slice(0,110));
+            return;
+          }
+          kdxSt_(t<50?'esperando al servidor… '+t+' s':'procesando… '+t+' s','#1e5a9e');
+          if(t>=300) kdxFin_(false,'no se confirmó en 5 min — revise el registro de SÍGUELO');
+        }, function(){
+          kdxSt_(t<50?'esperando al servidor… '+t+' s':'procesando… '+t+' s','#1e5a9e');
+          if(t>=300) kdxFin_(false,'no se confirmó en 5 min — revise el registro de SÍGUELO');
+        });
       }, function(){
         kdxSt_('procesando… '+t+' s','#1e5a9e');
         if(t>=300) kdxFin_(false,'no se pudo leer el tablero publicado');
