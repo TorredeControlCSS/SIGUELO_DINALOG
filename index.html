@@ -16,13 +16,22 @@
 <!-- ===== /PWA ===== -->
 <style>
   :root{
-    --azul:#0C447C; --azul2:#1E5A9E; --azul-t:#eef4fb; --azul-b:#cfe0f4;
-    --fondo:#ececec; --borde:#a8a8a8; --borde-s:#cdd8e4;
+    --azul:#0C447C; --azul2:#1E5A9E; --azul-t:#eef4fb;
+    --fondo:#ececec; --borde:#a8a8a8;
     --texto:#333; --texto2:#5b6470;
-    --insumo:#0F6E56; --insumo-t:#e3f3ee;
-    --piloto:#a06d12; --piloto-t:#fdf3e0; --piloto-b:#efd9ac;
+    --reporte:#0F6E56;
+    --piloto:#8a5a0c; --piloto-t:#fdf3e0; --piloto-b:#efd9ac;
     --acento:#f0b429;
   }
+  /* Color por área: --c fuerte, --b pastel. Se repite en diagrama, panel y tarjetas. */
+  .a-pla { --c:#1E5A9E; --b:#e6effa; }
+  .a-aba { --c:#2E7D4F; --b:#e4f3ea; }
+  .a-adm { --c:#5B4A9E; --b:#eeeaf8; }
+  .a-tdc { --c:#0F6E56; --b:#e1f2ec; }
+  .a-inn { --c:#B4532A; --b:#fbeae3; }
+  .a-ue  { --c:#5F5F5F; --b:#f3f3f3; }
+  .nodo.a-ue rect { stroke-dasharray: 5 3; }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--fondo); font-family: "Segoe UI", Tahoma, sans-serif; color: var(--texto); min-height: 100vh; }
   button { font-family: inherit; }
@@ -39,6 +48,8 @@
   .header .logo { width: 46px; height: 46px; flex-shrink: 0; }
   .header h1 { font-size: 20px; font-weight: 600; letter-spacing: .3px; }
   .header p { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
+  .inicio { cursor: pointer; }
+  .header .inicio:hover h1 { text-decoration: underline; text-underline-offset: 4px; }
 
   /* ---------- LIENZO CON MARCA DE AGUA (se conserva) ---------- */
   .lienzo { position: relative; min-height: calc(100vh - 130px); overflow: hidden; }
@@ -51,18 +62,15 @@
   /* ---------- BARRA ---------- */
   .barra { margin: 16px 34px 0; background: rgba(255,255,255,.9); border: 1px solid var(--borde);
     border-left: 3px solid var(--azul2); border-radius: 2px; padding: 12px 16px;
-    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .barra-txt { flex: 1 1 320px; }
-  .barra-txt h2 { font-size: 15px; color: var(--azul); font-weight: 600; }
+  .barra-txt h2 { font-size: 15px; color: var(--azul); font-weight: 600; display: inline; }
+  .barra-txt h2:hover { text-decoration: underline; text-underline-offset: 3px; }
   .barra-txt p { font-size: 12px; color: var(--texto2); line-height: 1.45; margin-top: 2px; }
-  .conmuta { display: inline-flex; border: 1px solid var(--borde); border-radius: 2px; overflow: hidden; }
-  .conmuta button { font-size: 12.5px; padding: 7px 14px; border: 0; background: #fff; color: var(--azul); cursor: pointer; }
-  .conmuta button + button { border-left: 1px solid var(--borde); }
-  .conmuta button.on { background: var(--azul); color: #fff; font-weight: 600; }
-  .buscar { font-size: 12.5px; padding: 7px 10px; border: 1px solid var(--borde); border-radius: 2px; width: 210px; background: #fff; }
-  .btn-guia { font-size: 12.5px; padding: 7px 14px; border: 1px solid var(--borde); border-radius: 2px; background: #fff;
-    color: var(--azul); cursor: pointer; font-weight: 600; }
-  .btn-guia:hover, .conmuta button:not(.on):hover { background: var(--azul-t); }
+  .buscar { font-size: 12.5px; padding: 7px 10px; border: 1px solid var(--borde); border-radius: 2px; width: 220px; background: #fff; }
+  .btn-barra { font-size: 12.5px; padding: 7px 14px; border: 1px solid var(--borde); border-radius: 2px; background: #fff;
+    color: var(--azul); cursor: pointer; font-weight: 600; white-space: nowrap; }
+  .btn-barra:hover { background: var(--azul-t); }
 
   /* ---------- ESCENA: web horizontal / tableta apilada / móvil vertical ---------- */
   .escena { margin: 14px 34px 30px; display: grid; gap: 16px; grid-template-columns: minmax(0,1fr); }
@@ -75,100 +83,86 @@
   /* Diagrama */
   .diagrama svg { width: 100%; height: auto; display: block; }
   .nodo { cursor: pointer; }
-  .nodo rect { fill: #fff; stroke: var(--azul2); stroke-width: 1.2; transition: fill .12s; }
-  .nodo .n-t { fill: var(--azul); font-size: 14px; font-weight: 600; }
+  .nodo:focus { outline: none; }
+  .nodo rect { fill: var(--b); stroke: var(--c); stroke-width: 1.4; transition: fill .12s; }
+  .nodo .n-t { fill: var(--c); font-size: 14px; font-weight: 600; }
   .nodo .n-s { fill: var(--texto2); font-size: 11.5px; }
-  .nodo:hover rect { fill: var(--azul-t); }
-  .nodo.activo rect { fill: var(--azul2); stroke: var(--acento); stroke-width: 3; }
+  .nodo:hover rect { fill: #fff; }
+  .nodo.activo rect { fill: var(--c); stroke: var(--acento); stroke-width: 3; }
   .nodo.activo .n-t, .nodo.activo .n-s { fill: #fff; }
-  .hub circle { fill: var(--azul); stroke: var(--insumo); stroke-width: 4; }
+  .nodo:focus-visible rect, .nodo:focus-visible circle { stroke: var(--acento); stroke-width: 3; }
+  .hub circle { fill: var(--azul); stroke: var(--reporte); stroke-width: 4; }
   .nodo.hub .n-t { fill: #fff; font-size: 14.5px; font-weight: 600; }
   .nodo.hub .n-s { fill: #b9d2ec; font-size: 10.5px; }
-  .nodo:focus { outline: none; }
-  .nodo:focus-visible rect, .nodo:focus-visible circle { stroke: var(--acento); stroke-width: 3; }
   .hub:hover circle { fill: var(--azul2); }
   .hub.activo circle { stroke: var(--acento); }
-  .leyenda { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; font-size: 11.5px; color: var(--texto2); margin: 4px 0 12px; }
+  .leyenda { display: flex; gap: 8px 16px; justify-content: center; flex-wrap: wrap; font-size: 11.5px; color: var(--texto2); margin: 4px 0 6px; }
   .leyenda i { display: inline-block; width: 20px; vertical-align: 4px; margin-right: 5px; }
+  .leyenda .sw { display: inline-block; width: 11px; height: 11px; border: 1.5px solid var(--c); background: var(--b); vertical-align: -1px; margin-right: 5px; border-radius: 2px; }
 
-  /* Franjas transversales */
-  .franjas { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
-  .franja { text-align: left; border: 1px solid var(--borde-s); background: #fbfcfe; border-radius: 2px;
-    padding: 9px 11px; cursor: pointer; color: var(--texto); }
-  .franja.tv { border-style: dashed; border-color: #9fb3c8; }
-  .franja b { display: block; font-size: 12.5px; color: var(--azul); }
+  /* Tarjetas pastel de las capas transversales */
+  .franjas { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 10px; }
+  .franja { text-align: left; border: 1px solid var(--c); border-left: 4px solid var(--c); background: var(--b); border-radius: 0;
+    padding: 10px 12px; cursor: pointer; color: var(--texto); }
+  .franja b { display: block; font-size: 13px; color: var(--c); }
   .franja span { font-size: 11.5px; color: var(--texto2); }
-  .franja:hover { border-color: var(--azul2); background: #fff; }
-  .franja.activo { border-color: var(--azul2); background: var(--azul-t); box-shadow: inset 3px 0 0 var(--azul2); }
+  .franja:hover { background: #fff; }
+  .franja.activo { background: #fff; box-shadow: 0 0 0 2px var(--acento); }
 
   /* Línea de tiempo móvil (oculta en web) */
   .movil { display: none; }
-  .m-hub { width: 100%; text-align: left; background: var(--azul); color: #fff; border: 0; border-left: 4px solid var(--insumo);
-    border-radius: 2px; padding: 12px 14px; cursor: pointer; }
+  .m-hub { width: 100%; text-align: left; background: var(--azul); color: #fff; border: 0; border-left: 4px solid var(--reporte);
+    border-radius: 0; padding: 12px 14px; cursor: pointer; }
   .m-hub b { display: block; font-size: 14.5px; }
   .m-hub span { font-size: 12px; color: #b9d2ec; }
-  .m-linea { position: relative; margin: 12px 0 0 14px; padding-left: 22px; border-left: 2px solid var(--azul2); }
+  .m-hub.activo { box-shadow: 0 0 0 2px var(--acento); }
+  .m-linea { position: relative; margin: 12px 0 0 14px; padding-left: 22px; border-left: 2px solid #9fb3c8; }
   .m-paso { position: relative; margin-bottom: 10px; }
   .m-paso::before { content: attr(data-n); position: absolute; left: -35px; top: 9px; width: 24px; height: 24px;
-    background: var(--azul); color: #fff; font-size: 12px; font-weight: 700; border-radius: 50%;
+    background: var(--c); color: #fff; font-size: 12px; font-weight: 700; border-radius: 50%;
     display: flex; align-items: center; justify-content: center; border: 2px solid var(--fondo); }
-  .m-btn { width: 100%; text-align: left; background: #fff; border: 1px solid var(--borde-s); border-radius: 2px;
+  .m-btn { width: 100%; text-align: left; background: var(--b); border: 1px solid var(--c); border-left: 4px solid var(--c); border-radius: 0;
     padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--texto); }
-  .m-btn b { display: block; font-size: 13.5px; color: var(--azul); }
+  .m-btn b { display: block; font-size: 13.5px; color: var(--c); }
   .m-btn span { font-size: 11.5px; color: var(--texto2); }
-  .m-btn .chev { margin-left: auto; color: var(--azul2); font-size: 14px; transition: transform .15s; }
-  .m-btn.activo { border-color: var(--azul2); background: var(--azul-t); }
+  .m-btn .chev { margin-left: auto; color: var(--c); font-size: 14px; transition: transform .15s; }
+  .m-btn.activo { background: #fff; }
   .m-btn.activo .chev { transform: rotate(90deg); }
-  .m-retorno { font-size: 12px; color: var(--texto2); margin: 2px 0 14px 14px; padding-left: 22px; }
+  .m-ue-w { margin: 2px 0 14px 36px; }
+  .m-ue-w .m-btn { border-style: dashed; border-left-style: solid; }
   .m-franjas { display: grid; gap: 8px; }
   .slot:empty { display: none; }
-  .slot { margin-top: 6px; border: 1px solid var(--borde-s); border-radius: 2px; background: #fff; }
+  .slot { margin-top: 6px; border: 1px solid var(--borde); background: #fff; }
 
   @media (max-width: 719px) {
     .header { padding: 12px 16px; }
     .header h1 { font-size: 16px; }
     .barra, .escena { margin-left: 12px; margin-right: 12px; }
-    .buscar { width: 100%; }
+    .buscar { flex: 1 1 100%; width: 100%; }
     .diagrama, .panel { display: none; }
     .movil { display: block; }
     .lamina { padding: 12px; }
-    .org-grid, .org-tv { grid-template-columns: minmax(0,1fr) !important; }
   }
   @media (min-width: 720px) { .slot { display: none !important; } }
 
-  /* Organigrama */
-  .org-dir { display: flex; justify-content: center; }
-  .org-dir div { background: var(--azul); color: #fff; font-size: 14px; font-weight: 600; padding: 9px 20px; border-radius: 2px; }
-  .org-sub { display: flex; justify-content: center; margin-top: 8px; }
-  .org-sub div { background: var(--azul2); color: #fff; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 2px; }
-  .org-tronco { width: 2px; height: 14px; background: #7f93a8; margin: 0 auto; }
-  .org-rama { border-top: 2px solid #7f93a8; margin: 0 16.5% 0; height: 12px; }
-  .org-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
-  .org-card { text-align: left; background: #fff; border: 1px solid var(--borde-s); border-top: 3px solid var(--azul); border-radius: 2px;
-    padding: 11px 12px; cursor: pointer; color: var(--texto); }
-  .org-card b { display: block; font-size: 13.5px; color: var(--azul); }
-  .org-card span { display: block; font-size: 11.5px; color: var(--texto2); margin-top: 3px; line-height: 1.4; }
-  .org-card em { display: block; font-style: normal; font-size: 11.5px; color: var(--azul2); margin-top: 7px; font-weight: 600; }
-  .org-card:hover { border-color: var(--azul2); }
-  .org-card.activo { background: var(--azul-t); border-color: var(--azul2); }
-  .org-tv { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 14px; }
-  .org-tv .org-card { border-style: dashed; border-top: 3px solid var(--insumo); }
-  .org-nota { font-size: 11.5px; color: var(--texto2); text-align: center; margin-top: 12px; }
-
   /* Panel de detalle */
-  .panel { background: #fff; border: 1px solid var(--borde); border-radius: 2px; }
-  .p-top { background: var(--azul); color: #fff; padding: 14px 18px; border-bottom: 3px solid var(--acento); }
+  .panel { background: #f3f5f7; border: 1px solid var(--borde); border-radius: 2px; }
+  .p-top { background: var(--azul); color: #fff; padding: 14px 18px; border-bottom: 4px solid var(--c, var(--acento)); }
   .p-top h3 { font-size: 17px; font-weight: 600; }
   .p-top .p-resp { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
   .p-top .p-desc { font-size: 12.5px; color: #e3edf8; margin-top: 6px; line-height: 1.45; }
-  .p-top .p-volver { float: right; font-size: 11.5px; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5);
-    padding: 3px 9px; border-radius: 2px; cursor: pointer; margin-left: 10px; }
-  .p-alimenta { padding: 10px 18px; background: var(--insumo-t); border-bottom: 1px solid #c4e3d8; font-size: 12px; color: var(--insumo); }
-  .chip { display: inline-block; font-size: 11px; background: #fff; border: 1px solid #b7dccf; color: var(--insumo);
+  .p-cuerpo { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .grupo { background: #fff; border: 1px solid var(--c); border-left: 5px solid var(--c); }
+  .g-head { background: var(--b); padding: 9px 14px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--c); }
+  .g-head b { font-size: 13.5px; color: var(--c); }
+  .g-head span { font-size: 11.5px; color: var(--texto2); }
+  .g-head .g-ver { margin-left: auto; font-size: 11.5px; color: var(--c); background: none; border: 0; cursor: pointer; font-weight: 600; }
+  .g-head .g-ver:hover { text-decoration: underline; }
+  .p-alimenta { padding: 9px 14px; background: #f6faf8; border-bottom: 1px solid #dfe9e4; font-size: 12px; color: var(--reporte); }
+  .chip { display: inline-block; font-size: 11px; background: #fff; border: 1px solid #b7dccf; color: var(--reporte);
     padding: 2px 7px; border-radius: 2px; margin: 3px 4px 0 0; }
-  .p-grupo { padding: 10px 18px 2px; font-size: 12px; font-weight: 600; color: var(--azul2); border-top: 1px solid #e4e4e4; }
-  .p-grupo:first-child { border-top: 0; }
-  .fila { display: flex; gap: 12px; align-items: flex-start; padding: 10px 18px; border-bottom: 1px solid #eef0f3; }
+  .fila { display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #eef0f3; }
   .fila:last-child { border-bottom: 0; }
   .fila-txt { flex: 1; min-width: 0; }
   .fila-txt b { font-size: 13.5px; color: var(--azul); }
@@ -177,15 +171,14 @@
   .tag-p { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 2px; margin-left: 6px;
     background: var(--piloto-t); color: var(--piloto); border: 1px solid var(--piloto-b); vertical-align: 1px; }
   .entrar { flex-shrink: 0; background: var(--azul); color: #fff; text-decoration: none; font-size: 12px; font-weight: 600;
-    padding: 7px 12px; border-radius: 2px; border: 1px solid #0a3a6a; white-space: nowrap; }
+    padding: 7px 12px; border-radius: 2px; border: 1px solid #0a3a6a; white-space: nowrap; margin-top: 2px; }
   .entrar:hover { background: var(--azul2); }
-  .fuente { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; padding: 10px 18px; border-bottom: 1px solid #eef0f3; }
+  .fuente { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; padding: 10px 14px; border-bottom: 1px solid #eef0f3; }
   .fuente b { font-size: 13px; color: var(--azul); }
   .fuente p { font-size: 12px; color: #555; }
-  .fuente .dest { font-size: 11.5px; color: var(--insumo); text-align: right; }
-  .p-cta { padding: 12px 18px 16px; }
-  .p-vacio { padding: 18px; font-size: 12.5px; color: var(--texto2); }
-  .fila .entrar { margin-top: 2px; }
+  .fuente .dest { font-size: 11.5px; color: var(--reporte); text-align: right; }
+  .p-cta { padding: 12px 14px 14px; }
+  .p-vacio { padding: 16px; font-size: 12.5px; color: var(--texto2); background: #fff; border: 1px solid var(--borde); }
 
   .footer { padding: 14px 34px; font-size: 11px; color: #888; border-top: 1px solid var(--borde); background: #fff; }
 
@@ -210,7 +203,7 @@
 
 <div class="header">
   <img class="logo" src="https://torredecontrolcss.github.io/SIGUELO_DINALOG/icons/icon-192.png" alt="CSS Panamá">
-  <div>
+  <div class="inicio" data-accion="inicio" title="Volver a la vista inicial">
     <h1>SIGUELO &mdash; Portal Central DINALOG</h1>
     <p>Sistema Integrado de Gesti&oacute;n Unificada y Evaluaci&oacute;n Log&iacute;stica &middot; Direcci&oacute;n Nacional de Log&iacute;stica</p>
   </div>
@@ -220,96 +213,96 @@
 
   <div class="barra" id="barra">
     <div class="barra-txt">
-      <h2>Ciclo de abastecimiento de la Direcci&oacute;n Nacional de Log&iacute;stica</h2>
+      <h2 class="inicio" data-accion="inicio" title="Volver a la vista inicial">Ciclo de abastecimiento de la Direcci&oacute;n Nacional de Log&iacute;stica</h2>
       <p>Del plan de la demanda a la entrega en la Unidad Ejecutora. Toca una etapa para ver sus tableros.</p>
     </div>
-    <div class="conmuta" id="conmuta" role="group" aria-label="Vista del portal">
-      <button type="button" id="btnFlujo" class="on" aria-pressed="true">Flujo</button>
-      <button type="button" id="btnOrg" aria-pressed="false">Organigrama</button>
-    </div>
     <input class="buscar" id="buscar" type="search" placeholder="Buscar tablero" aria-label="Buscar tablero">
-    <button class="btn-guia" id="btnTutorial" type="button">Gu&iacute;a</button>
+    <button class="btn-barra" id="btnInicio" type="button" data-accion="inicio">Vista inicial</button>
+    <button class="btn-barra" id="btnTutorial" type="button">Gu&iacute;a</button>
   </div>
 
   <div class="escena">
 
     <div class="lamina" id="vistas">
 
-      <!-- ===== VISTA FLUJO ===== -->
-      <div id="vistaFlujo">
-
-        <div class="diagrama" id="diagrama">
-          <svg viewBox="0 0 680 370" role="img" aria-label="Ciclo de abastecimiento en cinco etapas con la Ventanilla Única de Reportes al centro">
-            <defs>
-              <marker id="mFlujo" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M2 1L8 5L2 9" fill="none" stroke="#1E5A9E" stroke-width="1.8"/></marker>
-              <marker id="mInsumo" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                <path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.8"/></marker>
-            </defs>
-            <g stroke="#1E5A9E" stroke-width="2" fill="none" marker-end="url(#mFlujo)">
-              <line x1="402" y1="70" x2="460" y2="122"/>
-              <line x1="476" y1="176" x2="444" y2="288"/>
-              <line x1="358" y1="316" x2="324" y2="316"/>
-              <line x1="238" y1="290" x2="206" y2="178"/>
-            </g>
-            <line x1="222" y1="124" x2="276" y2="72" stroke="#1E5A9E" stroke-width="2" stroke-dasharray="5 4" fill="none" marker-end="url(#mFlujo)"/>
-            <text x="100" y="94" font-size="11.5" fill="#5b6470">Saldos y consumos UE</text>
-            <g stroke="#0F6E56" stroke-width="1.4" stroke-dasharray="3 3" fill="none" marker-end="url(#mInsumo)">
-              <line x1="340" y1="130" x2="340" y2="74"/>
-              <line x1="400" y1="180" x2="412" y2="173"/>
-              <line x1="376" y1="248" x2="400" y2="288"/>
-              <line x1="304" y1="248" x2="280" y2="288"/>
-              <line x1="280" y1="180" x2="268" y2="173"/>
-            </g>
-            <g class="nodo hub" data-ref="hub" role="button" tabindex="0" aria-label="Ventanilla Única de Reportes">
-              <circle cx="340" cy="195" r="68"/>
-              <text class="n-t" x="340" y="183" text-anchor="middle">Ventanilla única</text>
-              <text class="n-t" x="340" y="201" text-anchor="middle">de reportes</text>
-              <text class="n-s" x="340" y="220" text-anchor="middle">5 áreas &middot; 22 reportes</text>
-            </g>
-            <g class="nodo" data-ref="e0" role="button" tabindex="0" aria-label="Etapa 1, Planificar">
-              <rect x="268" y="18" width="144" height="54" rx="3"/>
-              <text class="n-t" x="340" y="41" text-anchor="middle">1 &middot; Planificar</text>
-              <text class="n-s" x="340" y="59" text-anchor="middle">Planificaci&oacute;n</text>
-            </g>
-            <g class="nodo" data-ref="e1" role="button" tabindex="0" aria-label="Etapa 2, Seguir la compra">
-              <rect x="412" y="122" width="144" height="54" rx="3"/>
-              <text class="n-t" x="484" y="145" text-anchor="middle">2 &middot; Seguir compra</text>
-              <text class="n-s" x="484" y="163" text-anchor="middle">Planificaci&oacute;n</text>
-            </g>
-            <g class="nodo" data-ref="e2" role="button" tabindex="0" aria-label="Etapa 3, Recibir">
-              <rect x="358" y="289" width="144" height="54" rx="3"/>
-              <text class="n-t" x="430" y="312" text-anchor="middle">3 &middot; Recibir</text>
-              <text class="n-s" x="430" y="330" text-anchor="middle">Abasto &middot; Recepci&oacute;n</text>
-            </g>
-            <g class="nodo" data-ref="e3" role="button" tabindex="0" aria-label="Etapa 4, Registrar existencias">
-              <rect x="178" y="289" width="144" height="54" rx="3"/>
-              <text class="n-t" x="250" y="312" text-anchor="middle">4 &middot; Registrar</text>
-              <text class="n-s" x="250" y="330" text-anchor="middle">Administraci&oacute;n</text>
-            </g>
-            <g class="nodo" data-ref="e4" role="button" tabindex="0" aria-label="Etapa 5, Asignar y despachar">
-              <rect x="124" y="122" width="144" height="54" rx="3"/>
-              <text class="n-t" x="196" y="145" text-anchor="middle">5 &middot; Despachar</text>
-              <text class="n-s" x="196" y="163" text-anchor="middle">Abasto &middot; Almac&eacute;n</text>
-            </g>
-          </svg>
-          <div class="leyenda">
-            <span><i style="border-top:2px solid #1E5A9E"></i>Flujo operativo</span>
-            <span><i style="border-top:2px dashed #0F6E56"></i>Reportes que alimentan cada etapa</span>
-          </div>
-          <div class="franjas" id="franjas">
-            <button type="button" class="franja" data-ref="b0"><b>Gesti&oacute;n administrativa</b><span>Administraci&oacute;n &middot; talento humano</span></button>
-            <button type="button" class="franja tv" data-ref="hub"><b>Soporte transversal</b><span>Torre de Control</span></button>
-            <button type="button" class="franja tv" data-ref="b2"><b>Innovaci&oacute;n transversal</b><span>Pilotos de la Direcci&oacute;n</span></button>
-          </div>
+      <div class="diagrama" id="diagrama">
+        <svg viewBox="0 0 680 370" role="img" aria-label="Ciclo de abastecimiento en cinco etapas con la Ventanilla Única de Reportes al centro">
+          <defs>
+            <marker id="mFlujo" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#1E5A9E" stroke-width="1.8"/></marker>
+            <marker id="mReporte" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.8"/></marker>
+            <marker id="mExterno" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="#6b6b6b" stroke-width="1.8"/></marker>
+          </defs>
+          <g stroke="#1E5A9E" stroke-width="2" fill="none" marker-end="url(#mFlujo)">
+            <line x1="402" y1="70" x2="460" y2="122"/>
+            <line x1="476" y1="176" x2="444" y2="288"/>
+            <line x1="358" y1="316" x2="324" y2="316"/>
+            <line x1="238" y1="290" x2="206" y2="178"/>
+          </g>
+          <!-- Unidades Ejecutoras: nodo externo (no es etapa de la Dirección) que cierra el ciclo -->
+          <line x1="172" y1="120" x2="144" y2="74" stroke="#1E5A9E" stroke-width="2" fill="none" marker-end="url(#mFlujo)"/>
+          <text x="150" y="104" font-size="11" fill="#5b6470" text-anchor="end">Entrega</text>
+          <line x1="192" y1="45" x2="264" y2="45" stroke="#6b6b6b" stroke-width="2" fill="none" marker-end="url(#mExterno)"/>
+          <text x="228" y="37" font-size="11" fill="#5b6470" text-anchor="middle">Demanda</text>
+          <g class="nodo a-ue" data-ref="ue" role="button" tabindex="0" aria-label="Unidades Ejecutoras, pedidos y consumo">
+            <rect x="40" y="20" width="150" height="50" rx="3"/>
+            <text class="n-t" x="115" y="41" text-anchor="middle">Unidades Ejecutoras</text>
+            <text class="n-s" x="115" y="58" text-anchor="middle">Pedidos y consumo</text>
+          </g>
+          <g stroke="#0F6E56" stroke-width="1.4" stroke-dasharray="3 3" fill="none" marker-end="url(#mReporte)">
+            <line x1="340" y1="126" x2="340" y2="74"/>
+            <line x1="402" y1="178" x2="412" y2="173"/>
+            <line x1="378" y1="252" x2="400" y2="288"/>
+            <line x1="302" y1="252" x2="280" y2="288"/>
+            <line x1="278" y1="178" x2="268" y2="173"/>
+          </g>
+          <g class="nodo hub a-tdc" data-ref="hub" role="button" tabindex="0" aria-label="Ventanilla Única de Reportes">
+            <circle cx="340" cy="195" r="68"/>
+            <text class="n-t" x="340" y="183" text-anchor="middle">Ventanilla única</text>
+            <text class="n-t" x="340" y="201" text-anchor="middle">de reportes</text>
+            <text class="n-s" x="340" y="220" text-anchor="middle">5 &aacute;reas &middot; 22 reportes</text>
+          </g>
+          <g class="nodo a-pla" data-ref="e0" role="button" tabindex="0" aria-label="Etapa 1, Planificar">
+            <rect x="268" y="18" width="144" height="54" rx="3"/>
+            <text class="n-t" x="340" y="41" text-anchor="middle">1 &middot; Planificar</text>
+            <text class="n-s" x="340" y="59" text-anchor="middle">Planificaci&oacute;n</text>
+          </g>
+          <g class="nodo a-pla" data-ref="e1" role="button" tabindex="0" aria-label="Etapa 2, Seguir la compra">
+            <rect x="412" y="122" width="144" height="54" rx="3"/>
+            <text class="n-t" x="484" y="145" text-anchor="middle">2 &middot; Seguir compra</text>
+            <text class="n-s" x="484" y="163" text-anchor="middle">Planificaci&oacute;n</text>
+          </g>
+          <g class="nodo a-aba" data-ref="e2" role="button" tabindex="0" aria-label="Etapa 3, Recibir">
+            <rect x="358" y="289" width="144" height="54" rx="3"/>
+            <text class="n-t" x="430" y="312" text-anchor="middle">3 &middot; Recibir</text>
+            <text class="n-s" x="430" y="330" text-anchor="middle">Abasto &middot; Recepci&oacute;n</text>
+          </g>
+          <g class="nodo a-adm" data-ref="e3" role="button" tabindex="0" aria-label="Etapa 4, Registrar existencias">
+            <rect x="178" y="289" width="144" height="54" rx="3"/>
+            <text class="n-t" x="250" y="312" text-anchor="middle">4 &middot; Registrar</text>
+            <text class="n-s" x="250" y="330" text-anchor="middle">Administraci&oacute;n</text>
+          </g>
+          <g class="nodo a-aba" data-ref="e4" role="button" tabindex="0" aria-label="Etapa 5, Asignar y despachar">
+            <rect x="124" y="122" width="144" height="54" rx="3"/>
+            <text class="n-t" x="196" y="145" text-anchor="middle">5 &middot; Despachar</text>
+            <text class="n-s" x="196" y="163" text-anchor="middle">Abasto &middot; Almac&eacute;n</text>
+          </g>
+        </svg>
+        <div class="leyenda">
+          <span><i style="border-top:2px solid #1E5A9E"></i>Flujo operativo</span>
+          <span><i style="border-top:2px dashed #0F6E56"></i>Reportes que alimentan cada etapa</span>
+          <span><span style="display:inline-block;width:14px;height:11px;background:#f3f3f3;border:1.5px dashed #5F5F5F;vertical-align:-1px;margin-right:5px"></span>Unidades Ejecutoras (fuera de la Direcci&oacute;n)</span>
         </div>
-
-        <div class="movil" id="movil"></div>
+        <div class="leyenda" id="leyendaAreas"></div>
+        <div class="franjas" id="franjas">
+          <button type="button" class="franja a-adm" data-ref="b0"><b>Talento humano</b><span>Administraci&oacute;n &middot; 3 tableros</span></button>
+          <button type="button" class="franja a-inn" data-ref="b2"><b>Innovaci&oacute;n transversal</b><span>Pilotos de la Direcci&oacute;n &middot; 2 tableros</span></button>
+        </div>
       </div>
 
-      <!-- ===== VISTA ORGANIGRAMA ===== -->
-      <div id="vistaOrg" hidden></div>
-
+      <div class="movil" id="movil"></div>
     </div>
 
     <aside class="panel" id="panel" aria-live="polite"></aside>
@@ -323,6 +316,17 @@
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════
+ *  ÁREAS (color por área, igual en diagrama, panel y tarjetas)
+ * ═══════════════════════════════════════════════════════════════════ */
+var AREAS = {
+  pla:{ n:'Planificación' },
+  aba:{ n:'Abasto' },
+  adm:{ n:'Administración' },
+  tdc:{ n:'Torre de Control · soporte transversal' },
+  inn:{ n:'Innovación transversal' }
+};
+
+/* ═══════════════════════════════════════════════════════════════════
  *  CATÁLOGO DE TABLEROS  (p = piloto en prueba)
  * ═══════════════════════════════════════════════════════════════════ */
 var GH = 'https://torredecontrolcss.github.io/';
@@ -332,7 +336,7 @@ var TAB = {
   cob:{ n:'Tablero de Cobertura y Reposición', p:0, u:GH+'REPOSICION_UE_CSS/simulador_reposicion.html',
         r:'Análisis comparativo de saldos por UE, tránsitos, consumos, Formas 8 y distribuciones.' },
   cal:{ n:'Calculadora de Reposición UE', p:0, u:GH+'REPOSICION_UE_CSS/reposicion_ue.html',
-        r:'Da a cada Unidad Ejecutora visibilidad de los tránsitos de sus pedidos y le permite solicitar con una herramienta técnica en vez de la estimación manual.' },
+        r:'Herramienta de la Unidad Ejecutora para proyectar su consumo y colocar sus pedidos con base técnica, con visibilidad de los tránsitos de lo que ya pidió.' },
   red:{ n:'Redistribución entre CEDIS', p:0, u:GH+'REPOSICION_UE_CSS/redistribucion_cedis.html',
         r:'Identifica los destinos en cero que un CEDIS con consumo real puede surtir y propone los traslados entre CEDIS.' },
   tra:{ n:'Trazabilidad de OC y Tránsitos', p:0, u:GH+'seguire/transitos.html',
@@ -369,37 +373,34 @@ var TAB = {
 
 /* Etapas del ciclo */
 var ETAPAS = [
-  { ref:'e0', t:'Planificar', resp:'Planificación',
+  { ref:'e0', a:'pla', t:'Planificar', resp:'Planificación',
     d:'Define cuánto necesita cada Unidad Ejecutora y cómo se cubre, con base en saldos, consumos y tránsitos.',
-    ins:['Saldos en línea','Distribución','Solicitudes F8','Inventario valorizado'], k:['cur','cob','cal','red'] },
-  { ref:'e1', t:'Seguir la compra', resp:'Planificación · Análisis, control y seguimiento',
+    ins:['Saldos en línea','Distribución','Solicitudes F8','Inventario valorizado'], k:['cur','cob','red'] },
+  { ref:'e1', a:'pla', t:'Seguir la compra', resp:'Planificación · Análisis, control y seguimiento',
     d:'Da seguimiento a las órdenes de compra y solicitudes de entrega hasta que el proveedor agenda su cita.',
     ins:['Captura en el propio módulo'], k:['tra','seg'] },
-  { ref:'e2', t:'Recibir del proveedor', resp:'Abasto · Recepción',
+  { ref:'e2', a:'aba', t:'Recibir del proveedor', resp:'Abasto · Recepción',
     d:'Agenda, confirma y registra la entrada de los renglones que entrega el proveedor.',
     ins:['Entradas diarias de recepción'], k:['sol','con','ent'] },
-  { ref:'e3', t:'Registrar existencias', resp:'Administración · Kardex y facturación',
+  { ref:'e3', a:'adm', t:'Registrar existencias', resp:'Administración · Kardex y facturación',
     d:'Registra los movimientos y el inventario en SAP-SAFIRO a través del kardex.',
     ins:['MB51','MB52','MM60'], k:['kar'] },
-  { ref:'e4', t:'Asignar y despachar', resp:'Abasto · Almacén, distribución y despacho',
+  { ref:'e4', a:'aba', t:'Asignar y despachar', resp:'Abasto · Almacén, distribución y despacho',
     d:'Convierte las Formas 8 en asignaciones priorizadas y las sigue etapa por etapa hasta la entrega en la UE.',
     ins:['Solicitudes F8','Trazabilidad ×4','Reservas ×4','Inventario neto ×4','Cronograma de transporte'], k:['f8','mot','kan'] }
 ];
 
-/* Franjas transversales y verticales del organigrama */
+/* Capas transversales */
 var GRUPOS = {
-  b0:{ t:'Gestión administrativa', resp:'Administración · talento humano y productividad',
+  ue:{ a:'ue', t:'Unidades Ejecutoras', resp:'Unidades Ejecutoras de la red · fuera de la Dirección',
+       d:'Reciben la entrega y consumen. Con base en sus saldos y la proyección de su consumo colocan sus pedidos, que regresan a Planificar como nueva demanda.',
+       ins:['Saldos en línea','Consumos de UE','Tránsitos'], k:['cal'] },
+  b0:{ a:'adm', t:'Talento humano', resp:'Administración · Recursos humanos',
        d:'Mide cómo trabaja la gente de la Dirección: productividad por área, tiempos y beneficios.',
        ins:['Reloj biométrico'], k:['pro','rh','mis'] },
-  b2:{ t:'Innovación transversal', resp:'Pilotos creados por la Dirección Nacional de Logística',
+  b2:{ a:'inn', t:'Innovación transversal', resp:'Pilotos creados por la Dirección Nacional de Logística',
        d:'Servicios nuevos que la Dirección pone a prueba antes de extenderlos a la red.',
-       ins:null, k:['far','tur'] },
-  o0:{ t:'Planificación', resp:'Planificación de medicamentos e insumos · Análisis, control y seguimiento',
-       d:'Planifica la demanda de la red y da seguimiento a las compras.', ins:null, k:['cur','cob','cal','red','tra','seg'] },
-  o1:{ t:'Administración', resp:'Kardex y facturación · Recursos humanos',
-       d:'Registra las existencias en SAP-SAFIRO y gestiona el talento humano de la Dirección.', ins:null, k:['kar','pro','rh','mis'] },
-  o2:{ t:'Abasto', resp:'CEDIS Panamá · CEDIS Divisa · CEDIS Chiriquí',
-       d:'Recibe, almacena, asigna y despacha los renglones a las Unidades Ejecutoras.', ins:null, k:['sol','con','ent','f8','mot','kan'] }
+       ins:null, k:['far','tur'] }
 };
 
 /* Áreas que entregan reportes en la Ventanilla Única (reflejan las secciones de cargar_reportes.html) */
@@ -407,7 +408,7 @@ var FUENTES = [
   { n:'Recepción', d:'Entradas diarias', a:'Recibir' },
   { n:'Almacén y Torre de Control', d:'16 reportes del WMS SALMI: saldos, solicitudes, distribución, trazabilidad, reservas, inventario neto y valorizado', a:'Planificar · Despachar' },
   { n:'Kardex', d:'MB51, MB52 y MM60 de SAP-SAFIRO', a:'Registrar · Kanban' },
-  { n:'Recursos Humanos', d:'Reloj biométrico', a:'Gestión administrativa' },
+  { n:'Recursos Humanos', d:'Reloj biométrico', a:'Talento humano' },
   { n:'Transporte', d:'Cronograma semanal de despachos y entregas', a:'Despachar' }
 ];
 
@@ -420,6 +421,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&
 var MQ_MOVIL = window.matchMedia('(max-width: 719px)');
 function esMovil(){ return MQ_MOVIL.matches; }
 function etapaDe(ref){ for (var i=0;i<ETAPAS.length;i++) if (ETAPAS[i].ref===ref) return {e:ETAPAS[i], i:i}; return null; }
+function plural(n){ return n+' tablero'+(n===1?'':'s'); }
 
 function filaTablero(k, meta){
   var t = TAB[k];
@@ -431,51 +433,67 @@ function bloqueAlimenta(ins){
   if (!ins || !ins.length) return '';
   return '<div class="p-alimenta">Se alimenta de: '+ins.map(function(x){ return '<span class="chip">'+esc(x)+'</span>'; }).join('')+'</div>';
 }
-
-/* ═══════════════════════════════════════════════════════════════════
- *  CONTENIDO DE DETALLE
- * ═══════════════════════════════════════════════════════════════════ */
-function htmlDetalle(ref, conCabecera){
-  var top = function(titulo, resp, desc){
-    return conCabecera ? '<div class="p-top"><button type="button" class="p-volver" data-accion="todo">Ver todos</button>'+
-      '<h3>'+esc(titulo)+'</h3><div class="p-resp">Responsable: '+esc(resp)+'</div>'+
-      (desc?'<div class="p-desc">'+esc(desc)+'</div>':'')+'</div>' : '';
-  };
-  if (ref === 'hub'){
-    return top('Ventanilla Única de Reportes', 'Torre de Control · soporte transversal',
-               'Punto único donde cada área entrega sus reportes. Cada archivo cargado actualiza los tableros que alimenta.')+
-      FUENTES.map(function(f){
-        return '<div class="fuente"><div><b>'+esc(f.n)+'</b><p>'+esc(f.d)+'</p></div><div class="dest">Alimenta:<br>'+esc(f.a)+'</div></div>';
-      }).join('')+
-      '<div class="p-cta"><a class="entrar" href="'+TAB.car.u+'" target="_blank" rel="noopener">Ir a la Ventanilla</a></div>';
-  }
-  var x = etapaDe(ref);
-  if (x){
-    return top((x.i+1)+' · '+x.e.t, x.e.resp, x.e.d) + bloqueAlimenta(x.e.ins) +
-           x.e.k.map(function(k){ return filaTablero(k); }).join('');
-  }
-  var g = GRUPOS[ref];
-  if (g){
-    return top(g.t, g.resp, g.d) + bloqueAlimenta(g.ins) + g.k.map(function(k){ return filaTablero(k); }).join('');
-  }
-  return '';
+function bloqueFuentes(){
+  return FUENTES.map(function(f){
+    return '<div class="fuente"><div><b>'+esc(f.n)+'</b><p>'+esc(f.d)+'</p></div><div class="dest">Alimenta:<br>'+esc(f.a)+'</div></div>';
+  }).join('') + '<div class="p-cta"><a class="entrar" href="'+TAB.car.u+'" target="_blank" rel="noopener">Ir a la Ventanilla</a></div>';
+}
+/* Bloque de área: cabecera pastel + contenido. ref permite abrir su detalle desde la vista inicial. */
+function bloqueGrupo(area, titulo, sub, cuerpo, ref){
+  return '<section class="grupo a-'+area+'"><div class="g-head"><b>'+esc(titulo)+'</b><span>'+esc(sub)+'</span>'+
+         (ref?'<button type="button" class="g-ver" data-ref="'+ref+'">'+(ref.charAt(0)==='e'?'Ver etapa':'Ver detalle')+'</button>':'')+'</div>'+cuerpo+'</section>';
 }
 
-function htmlTodos(){
-  var h = '<div class="p-top"><h3>Todos los tableros</h3><div class="p-desc">Agrupados por etapa del ciclo. Toca una etapa en el diagrama para ver qu&eacute; la alimenta y qui&eacute;n la opera.</div></div>';
+/* ═══════════════════════════════════════════════════════════════════
+ *  CONTENIDO DEL PANEL
+ * ═══════════════════════════════════════════════════════════════════ */
+function cabecera(area, titulo, resp, desc){
+  return '<div class="p-top a-'+area+'"><h3>'+esc(titulo)+'</h3><div class="p-resp">Responsable: '+esc(resp)+'</div>'+
+         (desc?'<div class="p-desc">'+esc(desc)+'</div>':'')+'</div>';
+}
+
+/* conCabecera = panel web; sin cabecera = acordeón móvil */
+function htmlDetalle(ref, conCabecera){
+  if (ref === 'hub'){
+    var cuerpoH = bloqueFuentes();
+    return conCabecera
+      ? cabecera('tdc','Ventanilla Única de Reportes','Torre de Control · soporte transversal',
+                 'Punto único donde cada área entrega sus reportes. Cada archivo cargado actualiza los tableros que alimenta.')+
+        '<div class="p-cuerpo">'+bloqueGrupo('tdc','Áreas que entregan reportes','5 áreas · 22 reportes', cuerpoH)+'</div>'
+      : cuerpoH;
+  }
+  var x = etapaDe(ref), g = GRUPOS[ref], a, tit, resp, desc, ins, ks;
+  if (x){ a=x.e.a; tit=(x.i+1)+' · '+x.e.t; resp=x.e.resp; desc=x.e.d; ins=x.e.ins; ks=x.e.k; }
+  else if (g){ a=g.a; tit=g.t; resp=g.resp; desc=g.d; ins=g.ins; ks=g.k; }
+  else return '';
+  var filas = bloqueAlimenta(ins) + ks.map(function(k){ return filaTablero(k); }).join('');
+  if (!conCabecera) return filas;
+  return cabecera(a, tit, resp, desc) + '<div class="p-cuerpo">'+bloqueGrupo(a, 'Tableros', plural(ks.length), filas)+'</div>';
+}
+
+function htmlInicial(){
+  var h = '<div class="p-top"><h3>Todos los tableros</h3><div class="p-desc">Organizados por etapa del ciclo y por &aacute;rea. '+
+          'Toca una etapa en el diagrama para ver qu&eacute; reportes la alimentan y qui&eacute;n la opera.</div></div><div class="p-cuerpo">';
+  h += bloqueGrupo('tdc','Ventanilla Única de Reportes','Soporte transversal · Torre de Control', filaTablero('car'), 'hub');
   ETAPAS.forEach(function(e, i){
-    h += '<div class="p-grupo">'+(i+1)+' · '+esc(e.t)+'</div>' + e.k.map(function(k){ return filaTablero(k); }).join('');
+    h += bloqueGrupo(e.a, (i+1)+' · '+e.t, e.resp+' · '+plural(e.k.length),
+                     e.k.map(function(k){ return filaTablero(k); }).join(''), e.ref);
   });
-  h += '<div class="p-grupo">Gestión administrativa</div>' + GRUPOS.b0.k.map(function(k){ return filaTablero(k); }).join('');
-  h += '<div class="p-grupo">Soporte transversal</div>' + filaTablero('car');
-  h += '<div class="p-grupo">Innovación transversal</div>' + GRUPOS.b2.k.map(function(k){ return filaTablero(k); }).join('');
-  return h;
+  h += bloqueGrupo('ue', GRUPOS.ue.t, 'Pedidos y proyección de consumo · '+plural(GRUPOS.ue.k.length),
+                   GRUPOS.ue.k.map(function(k){ return filaTablero(k); }).join(''), 'ue');
+  ['b0','b2'].forEach(function(r){
+    var g = GRUPOS[r];
+    h += bloqueGrupo(g.a, g.t, g.resp.split(' · ')[0]+' · '+plural(g.k.length),
+                     g.k.map(function(k){ return filaTablero(k); }).join(''), r);
+  });
+  return h + '</div>';
 }
 
 /* Ubicación de cada tablero, para el buscador */
 function ubicacion(k){
   for (var i=0;i<ETAPAS.length;i++) if (ETAPAS[i].k.indexOf(k)>-1) return (i+1)+' · '+ETAPAS[i].t;
-  if (GRUPOS.b0.k.indexOf(k)>-1) return 'Gestión administrativa';
+  if (GRUPOS.ue.k.indexOf(k)>-1) return 'Unidades Ejecutoras';
+  if (GRUPOS.b0.k.indexOf(k)>-1) return 'Talento humano';
   if (GRUPOS.b2.k.indexOf(k)>-1) return 'Innovación transversal';
   if (k==='car') return 'Soporte transversal';
   return '';
@@ -483,41 +501,31 @@ function ubicacion(k){
 function normal(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
 /* ═══════════════════════════════════════════════════════════════════
- *  RENDER DE LA LÍNEA DE TIEMPO MÓVIL Y DEL ORGANIGRAMA
+ *  RENDER DE LEYENDA DE ÁREAS Y LÍNEA DE TIEMPO MÓVIL
  * ═══════════════════════════════════════════════════════════════════ */
+function pintarLeyenda(){
+  $('#leyendaAreas').innerHTML = Object.keys(AREAS).map(function(k){
+    return '<span class="a-'+k+'"><span class="sw"></span>'+esc(AREAS[k].n)+'</span>';
+  }).join('');
+}
+
 function pintarMovil(){
-  var h = '<button type="button" class="m-hub" data-ref="hub"><b>Ventanilla Única de Reportes</b><span>5 áreas · 22 reportes · alimenta cada etapa</span></button>'+
-          '<div class="slot" data-slot="hub"></div><div class="m-linea">';
+  var h = '<div><button type="button" class="m-hub" data-ref="hub"><b>Ventanilla Única de Reportes</b>'+
+          '<span>Soporte transversal · 5 áreas · 22 reportes</span></button><div class="slot"></div></div><div class="m-linea">';
   ETAPAS.forEach(function(e, i){
-    h += '<div class="m-paso" data-n="'+(i+1)+'"><button type="button" class="m-btn" data-ref="'+e.ref+'">'+
-         '<div><b>'+esc(e.t)+'</b><span>'+esc(e.resp)+' · '+e.k.length+' tablero'+(e.k.length>1?'s':'')+'</span></div>'+
-         '<span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot" data-slot="'+e.ref+'"></div></div>';
+    h += '<div class="m-paso a-'+e.a+'" data-n="'+(i+1)+'"><button type="button" class="m-btn" data-ref="'+e.ref+'">'+
+         '<div><b>'+esc(e.t)+'</b><span>'+esc(e.resp)+' · '+plural(e.k.length)+'</span></div>'+
+         '<span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot"></div></div>';
   });
-  h += '</div><div class="m-retorno">&#8634; Los saldos y consumos de las UE regresan a Planificar</div><div class="m-franjas">';
-  [['b0','Gestión administrativa','Administración · talento humano'],['b2','Innovación transversal','Pilotos de la Dirección']].forEach(function(f){
-    h += '<div><button type="button" class="m-btn" data-ref="'+f[0]+'"><div><b>'+f[1]+'</b><span>'+f[2]+'</span></div>'+
-         '<span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot" data-slot="'+f[0]+'"></div></div>';
+  h += '</div><div class="m-ue-w a-ue"><button type="button" class="m-btn" data-ref="ue"><div><b>Unidades Ejecutoras</b><span>Reciben la entrega; sus pedidos regresan a Planificar como nueva demanda · 1 tablero</span></div><span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot"></div></div><div class="m-franjas">';
+  ['b0','b2'].forEach(function(r){
+    var g = GRUPOS[r];
+    h += '<div class="a-'+g.a+'"><button type="button" class="m-btn" data-ref="'+r+'"><div><b>'+esc(g.t)+'</b><span>'+
+         esc(g.resp.split(' · ')[0])+' · '+plural(g.k.length)+'</span></div>'+
+         '<span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot"></div></div>';
   });
   h += '</div>';
   $('#movil').innerHTML = h;
-}
-
-function pintarOrg(){
-  var h = '<div class="org-dir"><div>Dirección Nacional de Logística</div></div>'+
-          '<div class="org-tronco"></div><div class="org-sub"><div>Sub Dirección Nacional de Logística</div></div>'+
-          '<div class="org-tronco"></div><div class="org-rama"></div><div class="org-grid">';
-  ['o0','o1','o2'].forEach(function(r){
-    var g = GRUPOS[r];
-    h += '<div><button type="button" class="org-card" data-ref="'+r+'"><b>'+esc(g.t)+'</b><span>'+esc(g.resp)+'</span>'+
-         '<em>'+g.k.length+' tableros</em></button><div class="slot" data-slot="'+r+'"></div></div>';
-  });
-  h += '</div><div class="org-tv">'+
-       '<div><button type="button" class="org-card" data-ref="hub"><b>Soporte transversal · Torre de Control</b>'+
-       '<span>Ventanilla Única de Reportes: punto único donde cada área entrega sus reportes</span></button><div class="slot" data-slot="hub-o"></div></div>'+
-       '<div><button type="button" class="org-card" data-ref="b2"><b>Innovación transversal</b>'+
-       '<span>Mi Farma Digital · Pantalla de Turnos</span></button><div class="slot" data-slot="b2-o"></div></div>'+
-       '</div><div class="org-nota">La Torre de Control da soporte a los almacenes y a la planificación.</div>';
-  $('#vistaOrg').innerHTML = h;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -526,16 +534,17 @@ function pintarOrg(){
 var SEL = null;
 
 function limpiarActivos(){
-  $$('.nodo.activo, .franja.activo, .m-btn.activo, .org-card.activo').forEach(function(x){ x.classList.remove('activo'); });
+  $$('.nodo.activo, .franja.activo, .m-btn.activo, .m-hub.activo').forEach(function(x){ x.classList.remove('activo'); });
 }
+function cerrarSlots(){ $$('.slot').forEach(function(s){ s.innerHTML=''; }); }
+function quitarResultadosMovil(){ var r = $('#resMovil'); if (r) r.remove(); }
 
 function seleccionar(ref, origen){
-  var buscar = $('#buscar'); if (buscar.value) { buscar.value = ''; }
+  $('#buscar').value = ''; quitarResultadosMovil();
   if (esMovil()){
     var slot = origen && origen.parentNode ? origen.parentNode.querySelector('.slot') : null;
     var abierto = slot && slot.innerHTML !== '';
-    $$('.slot').forEach(function(s){ s.innerHTML=''; });
-    limpiarActivos();
+    cerrarSlots(); limpiarActivos();
     if (!slot || abierto) { SEL = null; return; }
     slot.innerHTML = htmlDetalle(ref, false);
     origen.classList.add('activo');
@@ -544,29 +553,31 @@ function seleccionar(ref, origen){
   }
   limpiarActivos();
   SEL = ref;
-  $$('[data-ref="'+ref+'"]').forEach(function(x){
-    if (x.closest('#vistaOrg') && $('#vistaOrg').hidden) return;
-    x.classList.add('activo');
-  });
+  $$('.nodo[data-ref="'+ref+'"], .franja[data-ref="'+ref+'"]').forEach(function(x){ x.classList.add('activo'); });
   $('#panel').innerHTML = htmlDetalle(ref, true);
   $('#panel').scrollTop = 0;
   if (window.innerWidth < 1100 && $('#panel').scrollIntoView) $('#panel').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-function verTodos(){
-  SEL = null; limpiarActivos();
-  $('#panel').innerHTML = htmlTodos();
+/* Vista inicial: sin selección, sin búsqueda, acordeones cerrados, panel con todos los tableros */
+function vistaInicial(){
+  SEL = null;
+  $('#buscar').value = '';
+  quitarResultadosMovil(); cerrarSlots(); limpiarActivos();
+  $('#panel').innerHTML = htmlInicial();
+  $('#panel').scrollTop = 0;
+  if (window.scrollTo) { try { window.scrollTo({ top:0, behavior:'smooth' }); } catch(e){ window.scrollTo(0,0); } }
 }
 
 function buscarTableros(q){
   var n = normal(q.trim());
-  var destino = esMovil() ? null : $('#panel');
-  if (!n){ if (destino) { SEL ? seleccionar(SEL) : verTodos(); } else { $('#resMovil') && $('#resMovil').remove(); } return; }
+  if (!n){ quitarResultadosMovil(); if (!esMovil()) { SEL ? seleccionar(SEL) : ($('#panel').innerHTML = htmlInicial()); } return; }
   var hits = Object.keys(TAB).filter(function(k){ return normal(TAB[k].n+' '+TAB[k].r+' '+ubicacion(k)).indexOf(n) > -1; });
-  var h = '<div class="p-top"><h3>Resultados para “'+esc(q.trim())+'”</h3><div class="p-desc">'+hits.length+' tablero'+(hits.length===1?'':'s')+'</div></div>'+
-          (hits.length ? hits.map(function(k){ return filaTablero(k, ubicacion(k)); }).join('')
-                       : '<div class="p-vacio">Ningún tablero coincide. Prueba con el nombre del área o de la etapa.</div>');
-  if (destino){ limpiarActivos(); destino.innerHTML = h; return; }
+  var cuerpo = hits.length ? hits.map(function(k){ return filaTablero(k, ubicacion(k)); }).join('')
+                           : '<div class="p-vacio">Ningún tablero coincide. Prueba con el nombre de la etapa o del área.</div>';
+  var h = '<div class="p-top"><h3>Resultados para “'+esc(q.trim())+'”</h3><div class="p-desc">'+plural(hits.length)+'</div></div>'+
+          '<div class="p-cuerpo">'+(hits.length ? '<section class="grupo a-pla">'+cuerpo+'</section>' : cuerpo)+'</div>';
+  if (!esMovil()){ limpiarActivos(); $('#panel').innerHTML = h; return; }
   var box = $('#resMovil');
   if (!box){ box = document.createElement('div'); box.id='resMovil'; box.className='panel'; box.style.display='block'; box.style.margin='0 0 12px';
              $('#vistas').insertBefore(box, $('#vistas').firstChild); }
@@ -577,9 +588,10 @@ function buscarTableros(q){
  *  EVENTOS
  * ═══════════════════════════════════════════════════════════════════ */
 document.addEventListener('click', function(ev){
-  if (ev.target.closest('[data-accion="todo"]')) { verTodos(); return; }
+  if (ev.target.closest('a')) return;
+  if (ev.target.closest('[data-accion="inicio"]')) { vistaInicial(); return; }
   var el = ev.target.closest('[data-ref]');
-  if (!el || ev.target.closest('a')) return;
+  if (!el) return;
   seleccionar(el.getAttribute('data-ref'), el);
 });
 $$('.nodo').forEach(function(n){
@@ -587,32 +599,18 @@ $$('.nodo').forEach(function(n){
     if (ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); seleccionar(n.getAttribute('data-ref'), n); }
   });
 });
-
-function cambiarVista(org){
-  $('#vistaFlujo').hidden = org;
-  $('#vistaOrg').hidden = !org;
-  $('#btnFlujo').classList.toggle('on', !org); $('#btnFlujo').setAttribute('aria-pressed', String(!org));
-  $('#btnOrg').classList.toggle('on', org);    $('#btnOrg').setAttribute('aria-pressed', String(org));
-  $$('.slot').forEach(function(s){ s.innerHTML=''; });
-  if (!esMovil()) { SEL ? seleccionar(SEL) : verTodos(); } else { limpiarActivos(); SEL = null; }
-}
-$('#btnFlujo').addEventListener('click', function(){ cambiarVista(false); });
-$('#btnOrg').addEventListener('click', function(){ cambiarVista(true); });
 $('#buscar').addEventListener('input', function(){ buscarTableros(this.value); });
+document.addEventListener('keydown', function(ev){
+  if (ev.key === 'Escape' && document.getElementById('tourOverlay').style.display !== 'block') vistaInicial();
+});
 
-/* Al cruzar el umbral web ↔ móvil se reinicia el estado para no dejar paneles huérfanos */
-function alCambiarModo(){
-  $$('.slot').forEach(function(s){ s.innerHTML=''; });
-  var r = $('#resMovil'); if (r) r.remove();
-  $('#buscar').value = '';
-  if (esMovil()) { limpiarActivos(); SEL = null; } else { SEL ? seleccionar(SEL) : verTodos(); }
-}
-if (MQ_MOVIL.addEventListener) MQ_MOVIL.addEventListener('change', alCambiarModo);
-else if (MQ_MOVIL.addListener) MQ_MOVIL.addListener(alCambiarModo);
+/* Al cruzar el umbral web ↔ móvil se vuelve a la vista inicial para no dejar paneles huérfanos */
+if (MQ_MOVIL.addEventListener) MQ_MOVIL.addEventListener('change', vistaInicial);
+else if (MQ_MOVIL.addListener) MQ_MOVIL.addListener(vistaInicial);
 
+pintarLeyenda();
 pintarMovil();
-pintarOrg();
-verTodos();
+$('#panel').innerHTML = htmlInicial();
 </script>
 
 <!-- ===== Guía: se abre SOLO con el botón "Guía". No hay arranque automático. ===== -->
@@ -641,25 +639,21 @@ verTodos();
     { s:['#barra'], t:'Bienvenido a SIGUELO',
       x:'Este portal reúne los tableros de la Dirección Nacional de Logística, ordenados según el ciclo de abastecimiento.' },
     { s:['#diagrama svg','#movil .m-linea'], t:'El ciclo de abastecimiento',
-      x:'Cinco etapas en orden: planificar, seguir la compra, recibir, registrar y despachar. Los saldos y consumos de las UE regresan a planificar y cierran el ciclo.' },
+      x:'Cinco etapas en orden: planificar, seguir la compra, recibir, registrar y despachar. Al final, la entrega llega a las Unidades Ejecutoras (en gris, porque están fuera de la Dirección): con la Calculadora proyectan su consumo y colocan sus pedidos, que regresan a planificar como nueva demanda y cierran el ciclo. Cada color identifica al área que opera la etapa.' },
     { s:['#diagrama .hub','#movil .m-hub'], t:'La Ventanilla Única de Reportes',
-      x:'En el centro está el punto único donde cada área entrega sus reportes. Cada archivo cargado actualiza los tableros que alimenta.' },
+      x:'En el centro está el soporte transversal de la Torre de Control: el punto único donde cada área entrega sus reportes. Cada archivo cargado actualiza los tableros que alimenta.' },
     { s:['#panel','#movil .m-paso'], t:'Tableros de cada etapa',
       x:'Al tocar una etapa verás quién la opera, qué reportes la alimentan y sus tableros. El botón Entrar abre cada uno en una pestaña nueva.' },
     { s:['#franjas','#movil .m-franjas'], t:'Capas transversales',
-      x:'Gestión administrativa, soporte transversal de la Torre de Control e innovación transversal acompañan a todo el ciclo.' },
-    { s:['#conmuta'], t:'Vista de organigrama',
-      x:'Cambia a Organigrama para ver los mismos tableros ordenados por el área de la Dirección que los usa.' },
+      x:'Talento humano e innovación transversal acompañan a todo el ciclo.' },
+    { s:['#btnInicio'], t:'Volver al inicio',
+      x:'Vista inicial, o un clic en el título, regresa el portal a como lo encontraste: todos los tableros a la vista y sin filtros.' },
     { s:['#buscar'], t:'Buscar un tablero',
       x:'Si ya sabes cuál necesitas, escribe su nombre aquí.' }
   ];
   var I = 0;
 
-  function abrir(){
-    if (document.getElementById('vistaFlujo').hidden) document.getElementById('btnFlujo').click();
-    I = 0; q('#tourOverlay').style.display = 'block'; mostrar();
-    q('#tourNext').focus();
-  }
+  function abrir(){ I = 0; q('#tourOverlay').style.display = 'block'; mostrar(); q('#tourNext').focus(); }
   function cerrar(){
     q('#tourOverlay').style.display = 'none';
     var sp = q('.tour-spot'); if (sp) sp.remove();
