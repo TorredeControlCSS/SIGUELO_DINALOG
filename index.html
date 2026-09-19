@@ -15,539 +15,694 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <!-- ===== /PWA ===== -->
 <style>
+  :root{
+    --azul:#0C447C; --azul2:#1E5A9E; --azul-t:#eef4fb; --azul-b:#cfe0f4;
+    --fondo:#ececec; --borde:#a8a8a8; --borde-s:#cdd8e4;
+    --texto:#333; --texto2:#5b6470;
+    --insumo:#0F6E56; --insumo-t:#e3f3ee;
+    --piloto:#a06d12; --piloto-t:#fdf3e0; --piloto-b:#efd9ac;
+    --acento:#f0b429;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: #ececec;
-    font-family: "Segoe UI", Tahoma, sans-serif;
-    color: #333;
-    min-height: 100vh;
-  }
+  body { background: var(--fondo); font-family: "Segoe UI", Tahoma, sans-serif; color: var(--texto); min-height: 100vh; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
 
-  /* ---------- HEADER ---------- */
-  .header {
-    position: relative;
-    color: #fff;
-    padding: 16px 34px;
-    border-bottom: 3px solid #1e5a9e;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    overflow: hidden;
-    background: #0C447C;
-  }
-  .header::before {
-    content: "";
-    position: absolute; inset: 0;
-    background-image: url("assets/header_cedis.jpg");
-    background-size: cover; background-position: center 35%;
-    opacity: .20; z-index: 0;
-  }
-  .header::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, rgba(12,68,124,.95) 0%, rgba(12,68,124,.82) 50%, rgba(12,68,124,.60) 100%);
-    z-index: 1;
-  }
+  /* ---------- HEADER (se conserva) ---------- */
+  .header { position: relative; color: #fff; padding: 16px 34px; border-bottom: 3px solid var(--azul2);
+    display: flex; align-items: center; gap: 16px; overflow: hidden; background: var(--azul); }
+  .header::before { content: ""; position: absolute; inset: 0; background-image: url("assets/header_cedis.jpg");
+    background-size: cover; background-position: center 35%; opacity: .20; z-index: 0; }
+  .header::after { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(12,68,124,.95) 0%, rgba(12,68,124,.82) 50%, rgba(12,68,124,.60) 100%); z-index: 1; }
   .header > * { position: relative; z-index: 2; }
   .header .logo { width: 46px; height: 46px; flex-shrink: 0; }
   .header h1 { font-size: 20px; font-weight: 600; letter-spacing: .3px; }
   .header p { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
 
-  /* ---------- LIENZO PRINCIPAL CON MARCA DE AGUA ---------- */
-  .lienzo {
-    position: relative;
-    min-height: calc(100vh - 130px);
-    overflow: hidden;
-  }
-  .lienzo::before {
-    content: "";
-    position: absolute; inset: 0;
-    background-image: url("assets/fondo_cedis.jpg");
-    background-size: cover;
-    background-position: center;
-    opacity: .38;
-    z-index: 0;
-  }
-  .lienzo::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(236,236,236,.30) 0%, rgba(236,236,236,.55) 100%);
-    z-index: 0;
-  }
+  /* ---------- LIENZO CON MARCA DE AGUA (se conserva) ---------- */
+  .lienzo { position: relative; min-height: calc(100vh - 130px); overflow: hidden; }
+  .lienzo::before { content: ""; position: absolute; inset: 0; background-image: url("assets/fondo_cedis.jpg");
+    background-size: cover; background-position: center; opacity: .38; z-index: 0; }
+  .lienzo::after { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(236,236,236,.30) 0%, rgba(236,236,236,.55) 100%); z-index: 0; }
   .lienzo > * { position: relative; z-index: 1; }
 
-  .intro {
-    padding: 18px 24px 14px;
-    margin: 16px 34px 0;
-    max-width: 1100px;
-    background: rgba(255,255,255,.82);
-    border-left: 3px solid #1e5a9e;
-    border-radius: 2px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
-  }
-  .intro h2 { font-size: 16px; color: #0C447C; font-weight: 600; margin-bottom: 6px; }
-  .intro p { font-size: 12.5px; color: #444; line-height: 1.5; }
+  /* ---------- BARRA ---------- */
+  .barra { margin: 16px 34px 0; background: rgba(255,255,255,.9); border: 1px solid var(--borde);
+    border-left: 3px solid var(--azul2); border-radius: 2px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .barra-txt { flex: 1 1 320px; }
+  .barra-txt h2 { font-size: 15px; color: var(--azul); font-weight: 600; }
+  .barra-txt p { font-size: 12px; color: var(--texto2); line-height: 1.45; margin-top: 2px; }
+  .conmuta { display: inline-flex; border: 1px solid var(--borde); border-radius: 2px; overflow: hidden; }
+  .conmuta button { font-size: 12.5px; padding: 7px 14px; border: 0; background: #fff; color: var(--azul); cursor: pointer; }
+  .conmuta button + button { border-left: 1px solid var(--borde); }
+  .conmuta button.on { background: var(--azul); color: #fff; font-weight: 600; }
+  .buscar { font-size: 12.5px; padding: 7px 10px; border: 1px solid var(--borde); border-radius: 2px; width: 210px; background: #fff; }
+  .btn-guia { font-size: 12.5px; padding: 7px 14px; border: 1px solid var(--borde); border-radius: 2px; background: #fff;
+    color: var(--azul); cursor: pointer; font-weight: 600; }
+  .btn-guia:hover, .conmuta button:not(.on):hover { background: var(--azul-t); }
 
-  /* ---------- FLUJO HORIZONTAL DE PASOS ---------- */
-  .flujo {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
-    padding: 18px 34px 8px;
-    overflow-x: auto;
+  /* ---------- ESCENA: web horizontal / tableta apilada / móvil vertical ---------- */
+  .escena { margin: 14px 34px 30px; display: grid; gap: 16px; grid-template-columns: minmax(0,1fr); }
+  @media (min-width: 1100px) {
+    .escena { grid-template-columns: minmax(0,1.1fr) minmax(0,1fr); align-items: start; }
+    .panel { position: sticky; top: 14px; max-height: calc(100vh - 28px); overflow-y: auto; }
   }
-  .paso {
-    flex: 1 1 0;
-    min-width: 150px;
-    display: flex;
-    align-items: stretch;
-  }
-  .paso-card {
-    flex: 1;
-    background: #fff;
-    border: 1px solid #b8b8b8;
-    border-top: 3px solid #1e5a9e;
-    border-radius: 2px;
-    padding: 14px 13px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    box-shadow: 0 1px 5px rgba(0,0,0,.10);
-    transition: background-color .12s, border-color .12s, box-shadow .12s, transform .12s;
-  }
-  .paso-card:hover { background: #fff; box-shadow: 0 2px 10px rgba(30,90,158,.22); transform: translateY(-2px); }
-  .paso-card.active {
-    background: #0C447C;
-    border-color: #0C447C;
-    border-top-color: #f0b429;
-  }
-  .paso-card.active .paso-nombre,
-  .paso-card.active .paso-sub,
-  .paso-card.active .paso-count { color: #fff; }
-  .paso-card.active .paso-num { background: #fff; color: #0C447C; }
+  .lamina { background: rgba(255,255,255,.92); border: 1px solid var(--borde); border-radius: 2px; padding: 16px 18px; }
 
-  .paso-num {
-    width: 28px; height: 28px; flex-shrink: 0;
-    background: #0C447C; color: #fff; font-size: 14px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center; border-radius: 2px;
-  }
-  .paso-nombre { font-size: 13px; font-weight: 600; color: #1e5a9e; line-height: 1.25; }
-  .paso-sub { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .4px; }
-  .paso-count {
-    font-size: 10.5px; color: #666; margin-top: auto;
-    padding-top: 6px; border-top: 1px solid #e4e4e4;
-  }
+  /* Diagrama */
+  .diagrama svg { width: 100%; height: auto; display: block; }
+  .nodo { cursor: pointer; }
+  .nodo rect { fill: #fff; stroke: var(--azul2); stroke-width: 1.2; transition: fill .12s; }
+  .nodo .n-t { fill: var(--azul); font-size: 14px; font-weight: 600; }
+  .nodo .n-s { fill: var(--texto2); font-size: 11.5px; }
+  .nodo:hover rect { fill: var(--azul-t); }
+  .nodo.activo rect { fill: var(--azul2); stroke: var(--acento); stroke-width: 3; }
+  .nodo.activo .n-t, .nodo.activo .n-s { fill: #fff; }
+  .hub circle { fill: var(--azul); stroke: var(--insumo); stroke-width: 4; }
+  .nodo.hub .n-t { fill: #fff; font-size: 14.5px; font-weight: 600; }
+  .nodo.hub .n-s { fill: #b9d2ec; font-size: 10.5px; }
+  .nodo:focus { outline: none; }
+  .nodo:focus-visible rect, .nodo:focus-visible circle { stroke: var(--acento); stroke-width: 3; }
+  .hub:hover circle { fill: var(--azul2); }
+  .hub.activo circle { stroke: var(--acento); }
+  .leyenda { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; font-size: 11.5px; color: var(--texto2); margin: 4px 0 12px; }
+  .leyenda i { display: inline-block; width: 20px; vertical-align: 4px; margin-right: 5px; }
 
-  /* Flecha conectora entre pasos */
-  .flecha {
-    display: flex; align-items: center; justify-content: center;
-    width: 26px; flex-shrink: 0;
-    color: #1e5a9e; font-size: 18px; font-weight: 700;
-  }
-  @media (max-width: 900px) {
-    .flujo { flex-direction: column; }
-    .paso { min-width: 0; }
-    .flecha { width: auto; height: 22px; transform: rotate(90deg); }
-  }
+  /* Franjas transversales */
+  .franjas { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+  .franja { text-align: left; border: 1px solid var(--borde-s); background: #fbfcfe; border-radius: 2px;
+    padding: 9px 11px; cursor: pointer; color: var(--texto); }
+  .franja.tv { border-style: dashed; border-color: #9fb3c8; }
+  .franja b { display: block; font-size: 12.5px; color: var(--azul); }
+  .franja span { font-size: 11.5px; color: var(--texto2); }
+  .franja:hover { border-color: var(--azul2); background: #fff; }
+  .franja.activo { border-color: var(--azul2); background: var(--azul-t); box-shadow: inset 3px 0 0 var(--azul2); }
 
-  /* ---------- PANEL EXPANDIDO A TODO EL ANCHO ---------- */
-  .detalle {
-    padding: 8px 34px 34px;
-  }
-  .detalle-inner {
-    background: #fff;
-    border: 1px solid #a8a8a8;
-    border-radius: 2px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.07);
-    animation: fadeIn .18s ease;
-    overflow: hidden;
-  }
-  @keyframes fadeIn { from { opacity:0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+  /* Línea de tiempo móvil (oculta en web) */
+  .movil { display: none; }
+  .m-hub { width: 100%; text-align: left; background: var(--azul); color: #fff; border: 0; border-left: 4px solid var(--insumo);
+    border-radius: 2px; padding: 12px 14px; cursor: pointer; }
+  .m-hub b { display: block; font-size: 14.5px; }
+  .m-hub span { font-size: 12px; color: #b9d2ec; }
+  .m-linea { position: relative; margin: 12px 0 0 14px; padding-left: 22px; border-left: 2px solid var(--azul2); }
+  .m-paso { position: relative; margin-bottom: 10px; }
+  .m-paso::before { content: attr(data-n); position: absolute; left: -35px; top: 9px; width: 24px; height: 24px;
+    background: var(--azul); color: #fff; font-size: 12px; font-weight: 700; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; border: 2px solid var(--fondo); }
+  .m-btn { width: 100%; text-align: left; background: #fff; border: 1px solid var(--borde-s); border-radius: 2px;
+    padding: 10px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: var(--texto); }
+  .m-btn b { display: block; font-size: 13.5px; color: var(--azul); }
+  .m-btn span { font-size: 11.5px; color: var(--texto2); }
+  .m-btn .chev { margin-left: auto; color: var(--azul2); font-size: 14px; transition: transform .15s; }
+  .m-btn.activo { border-color: var(--azul2); background: var(--azul-t); }
+  .m-btn.activo .chev { transform: rotate(90deg); }
+  .m-retorno { font-size: 12px; color: var(--texto2); margin: 2px 0 14px 14px; padding-left: 22px; }
+  .m-franjas { display: grid; gap: 8px; }
+  .slot:empty { display: none; }
+  .slot { margin-top: 6px; border: 1px solid var(--borde-s); border-radius: 2px; background: #fff; }
 
-  .detalle-top {
-    background: #0C447C; color: #fff;
-    padding: 16px 24px; border-bottom: 3px solid #f0b429;
-    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  @media (max-width: 719px) {
+    .header { padding: 12px 16px; }
+    .header h1 { font-size: 16px; }
+    .barra, .escena { margin-left: 12px; margin-right: 12px; }
+    .buscar { width: 100%; }
+    .diagrama, .panel { display: none; }
+    .movil { display: block; }
+    .lamina { padding: 12px; }
+    .org-grid, .org-tv { grid-template-columns: minmax(0,1fr) !important; }
   }
-  .detalle-top .dt-num {
-    background: #fff; color: #0C447C; font-weight: 700; font-size: 13px;
-    width: 26px; height: 26px; border-radius: 2px;
-    display: inline-flex; align-items: center; justify-content: center; flex-shrink:0;
-    align-self: center;
-  }
-  .detalle-top h2 { font-size: 19px; font-weight: 600; }
-  .detalle-top .dt-desc { font-size: 12px; color: #b9d2ec; width: 100%; margin-top: 2px; line-height: 1.4; }
+  @media (min-width: 720px) { .slot { display: none !important; } }
 
-  /* Grid de dashboards del área */
-  .dash-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 14px;
-    padding: 20px 24px;
-  }
-  .dash-card {
-    border: 1px solid #cdd8e4;
-    border-radius: 2px;
-    padding: 15px 16px;
-    display: flex;
-    flex-direction: column;
-    background: #fbfcfe;
-    transition: border-color .12s, box-shadow .12s, background-color .12s;
-  }
-  .dash-card:hover { border-color: #1e5a9e; background: #fff; box-shadow: 0 1px 6px rgba(30,90,158,.15); }
-  .dash-card .dc-sys {
-    font-size: 9.5px; text-transform: uppercase; letter-spacing: .5px;
-    color: #888; font-weight: 600; margin-bottom: 5px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .dash-card .dc-dot { width:6px; height:6px; border-radius:50%; background:#1e5a9e; }
-  .dash-card.piloto .dc-dot { background:#c98a1e; }
-  .dash-card h3 { font-size: 14.5px; color: #0C447C; font-weight: 600; margin-bottom: 7px; line-height: 1.25; }
-  .dash-card .dc-resena { font-size: 12px; color: #555; line-height: 1.5; flex: 1; margin-bottom: 12px; }
-  .dash-card .dc-tags { display:flex; gap:6px; flex-wrap:wrap; margin-bottom: 12px; }
-  .tag {
-    font-size: 9.5px; font-weight: 600; padding: 3px 7px; border-radius: 2px;
-    background:#eef4fb; color:#1e5a9e; border:1px solid #cfe0f4;
-  }
-  .tag.piloto { background:#fdf3e0; color:#a06d12; border-color:#efd9ac; }
-  .btn-entrar {
-    display: inline-flex; align-items: center; justify-content:center; gap: 7px;
-    background: #0C447C; color: #fff; text-decoration: none;
-    font-size: 12.5px; font-weight: 600;
-    padding: 9px 16px; border-radius: 2px; border: 1px solid #0a3a6a;
-    transition: background-color .12s;
-  }
-  .btn-entrar:hover { background: #1e5a9e; }
+  /* Organigrama */
+  .org-dir { display: flex; justify-content: center; }
+  .org-dir div { background: var(--azul); color: #fff; font-size: 14px; font-weight: 600; padding: 9px 20px; border-radius: 2px; }
+  .org-sub { display: flex; justify-content: center; margin-top: 8px; }
+  .org-sub div { background: var(--azul2); color: #fff; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 2px; }
+  .org-tronco { width: 2px; height: 14px; background: #7f93a8; margin: 0 auto; }
+  .org-rama { border-top: 2px solid #7f93a8; margin: 0 16.5% 0; height: 12px; }
+  .org-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+  .org-card { text-align: left; background: #fff; border: 1px solid var(--borde-s); border-top: 3px solid var(--azul); border-radius: 2px;
+    padding: 11px 12px; cursor: pointer; color: var(--texto); }
+  .org-card b { display: block; font-size: 13.5px; color: var(--azul); }
+  .org-card span { display: block; font-size: 11.5px; color: var(--texto2); margin-top: 3px; line-height: 1.4; }
+  .org-card em { display: block; font-style: normal; font-size: 11.5px; color: var(--azul2); margin-top: 7px; font-weight: 600; }
+  .org-card:hover { border-color: var(--azul2); }
+  .org-card.activo { background: var(--azul-t); border-color: var(--azul2); }
+  .org-tv { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 14px; }
+  .org-tv .org-card { border-style: dashed; border-top: 3px solid var(--insumo); }
+  .org-nota { font-size: 11.5px; color: var(--texto2); text-align: center; margin-top: 12px; }
 
-  /* Estado inicial */
-  .detalle-vacio {
-    text-align: center; color: #888;
-    padding: 34px 24px;
-  }
-  .detalle-vacio h3 { font-size: 15px; color: #666; font-weight: 600; margin-bottom: 6px; }
-  .detalle-vacio p { font-size: 12.5px; line-height: 1.5; }
+  /* Panel de detalle */
+  .panel { background: #fff; border: 1px solid var(--borde); border-radius: 2px; }
+  .p-top { background: var(--azul); color: #fff; padding: 14px 18px; border-bottom: 3px solid var(--acento); }
+  .p-top h3 { font-size: 17px; font-weight: 600; }
+  .p-top .p-resp { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
+  .p-top .p-desc { font-size: 12.5px; color: #e3edf8; margin-top: 6px; line-height: 1.45; }
+  .p-top .p-volver { float: right; font-size: 11.5px; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5);
+    padding: 3px 9px; border-radius: 2px; cursor: pointer; margin-left: 10px; }
+  .p-alimenta { padding: 10px 18px; background: var(--insumo-t); border-bottom: 1px solid #c4e3d8; font-size: 12px; color: var(--insumo); }
+  .chip { display: inline-block; font-size: 11px; background: #fff; border: 1px solid #b7dccf; color: var(--insumo);
+    padding: 2px 7px; border-radius: 2px; margin: 3px 4px 0 0; }
+  .p-grupo { padding: 10px 18px 2px; font-size: 12px; font-weight: 600; color: var(--azul2); border-top: 1px solid #e4e4e4; }
+  .p-grupo:first-child { border-top: 0; }
+  .fila { display: flex; gap: 12px; align-items: flex-start; padding: 10px 18px; border-bottom: 1px solid #eef0f3; }
+  .fila:last-child { border-bottom: 0; }
+  .fila-txt { flex: 1; min-width: 0; }
+  .fila-txt b { font-size: 13.5px; color: var(--azul); }
+  .fila-txt p { font-size: 12px; color: #555; line-height: 1.45; margin-top: 2px; }
+  .fila-txt .meta { font-size: 11px; color: var(--texto2); margin-top: 3px; }
+  .tag-p { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 2px; margin-left: 6px;
+    background: var(--piloto-t); color: var(--piloto); border: 1px solid var(--piloto-b); vertical-align: 1px; }
+  .entrar { flex-shrink: 0; background: var(--azul); color: #fff; text-decoration: none; font-size: 12px; font-weight: 600;
+    padding: 7px 12px; border-radius: 2px; border: 1px solid #0a3a6a; white-space: nowrap; }
+  .entrar:hover { background: var(--azul2); }
+  .fuente { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 12px; padding: 10px 18px; border-bottom: 1px solid #eef0f3; }
+  .fuente b { font-size: 13px; color: var(--azul); }
+  .fuente p { font-size: 12px; color: #555; }
+  .fuente .dest { font-size: 11.5px; color: var(--insumo); text-align: right; }
+  .p-cta { padding: 12px 18px 16px; }
+  .p-vacio { padding: 18px; font-size: 12.5px; color: var(--texto2); }
+  .fila .entrar { margin-top: 2px; }
 
-  .footer {
-    padding: 14px 34px; font-size: 11px; color: #888;
-    border-top: 1px solid #a8a8a8; background: #fff;
-  }
-/* ===== Tutorial guiado (tour) ===== */
-#tourOverlay{position:fixed;inset:0;z-index:1000;}
-#tourBackdrop{position:absolute;inset:0;background:rgba(15,25,40,.55);}
-.tour-spot{position:absolute;border:3px solid #0C447C;border-radius:4px;
-  box-shadow:0 0 0 3px rgba(255,255,255,.6),0 0 0 9999px rgba(15,25,40,.55);
-  transition:all .25s ease;pointer-events:none;z-index:1001;}
-#tourBox{position:absolute;z-index:1002;background:#fff;border:1px solid #a8a8a8;
-  border-radius:4px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:14px 16px;
-  width:min(320px,90vw);box-sizing:border-box;}
-#tourTitulo{font-size:14px;font-weight:700;color:#1E5A9E;margin-bottom:6px;font-family:Cambria,Georgia,serif;}
-#tourTexto{font-size:12.5px;line-height:1.5;color:#333;font-family:Calibri,Segoe UI,sans-serif;}
-#tourNav{display:flex;align-items:center;gap:8px;margin-top:12px;}
-#tourPaso{font-size:11px;color:#6b7280;}
-#tourNav button{font-size:12px;padding:6px 12px;border:1px solid #a8a8a8;border-radius:3px;background:#ececec;cursor:pointer;font-family:Calibri,Segoe UI,sans-serif;}
-#tourNav button.btn-plano{background:#fff;}
-#tourNext{background:#0C447C !important;color:#fff;font-weight:700;border-color:#0C447C !important;padding:7px 14px !important;}
-#btnTutorial{margin-top:12px;background:#0C447C;color:#fff;font-weight:700;border:1px solid #0C447C;
-  border-radius:3px;padding:8px 16px;cursor:pointer;font-family:Calibri,Segoe UI,sans-serif;font-size:13px;}
+  .footer { padding: 14px 34px; font-size: 11px; color: #888; border-top: 1px solid var(--borde); background: #fff; }
+
+  /* ===== Guía (solo bajo demanda) ===== */
+  #tourOverlay { position: fixed; inset: 0; z-index: 1000; }
+  #tourBackdrop { position: absolute; inset: 0; background: transparent; }
+  .tour-spot { position: absolute; border: 3px solid var(--acento); border-radius: 4px;
+    box-shadow: 0 0 0 9999px rgba(15,25,40,.55); transition: all .25s ease; pointer-events: none; z-index: 1001; }
+  #tourBox { position: absolute; z-index: 1002; background: #fff; border: 1px solid var(--borde); border-radius: 4px;
+    box-shadow: 0 8px 28px rgba(0,0,0,.28); padding: 14px 16px; width: min(330px, 92vw); }
+  #tourTitulo { font-size: 14px; font-weight: 700; color: var(--azul2); margin-bottom: 6px; font-family: Cambria, Georgia, serif; }
+  #tourTexto { font-size: 12.5px; line-height: 1.5; color: #333; font-family: Calibri, "Segoe UI", sans-serif; }
+  #tourNav { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  #tourPaso { font-size: 11px; color: #6b7280; }
+  #tourNav button { font-size: 12px; padding: 6px 12px; border: 1px solid var(--borde); border-radius: 3px; background: #fff; cursor: pointer; }
+  #tourNext { background: var(--azul) !important; color: #fff; font-weight: 700; border-color: var(--azul) !important; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <img class="logo" src="https://torredecontrolcss.github.io/SIGUELO_DINALOG/icons/icon-192.png" alt="CSS Panama">
+  <img class="logo" src="https://torredecontrolcss.github.io/SIGUELO_DINALOG/icons/icon-192.png" alt="CSS Panamá">
   <div>
     <h1>SIGUELO &mdash; Portal Central DINALOG</h1>
-    <p>Sistema Integrado de Gesti&oacute;n Unificada y Evaluaci&oacute;n Log&iacute;stica &middot; CEDIS Panam&aacute;</p>
+    <p>Sistema Integrado de Gesti&oacute;n Unificada y Evaluaci&oacute;n Log&iacute;stica &middot; Direcci&oacute;n Nacional de Log&iacute;stica</p>
   </div>
 </div>
 
 <div class="lienzo">
 
-  <div class="intro">
-    <h2>Flujo operativo de la Direcci&oacute;n de Log&iacute;stica</h2>
-    <p>Recorre el ecosistema paso a paso, desde la cita del proveedor hasta la entrega en la Unidad Ejecutora.
-       Haz clic en una etapa para ver sus tableros.</p>
-    <button id="btnTutorial" type="button">&#9654; Ver tutorial guiado</button>
-  </div>
-
-  <div class="flujo" id="flujo"></div>
-
-  <div class="detalle" id="detalle">
-    <div class="detalle-inner">
-      <div class="detalle-vacio">
-        <h3>Selecciona una etapa del flujo</h3>
-        <p>Haz clic en cualquiera de los pasos de arriba para desplegar aqu&iacute; sus tableros.</p>
-      </div>
+  <div class="barra" id="barra">
+    <div class="barra-txt">
+      <h2>Ciclo de abastecimiento de la Direcci&oacute;n Nacional de Log&iacute;stica</h2>
+      <p>Del plan de la demanda a la entrega en la Unidad Ejecutora. Toca una etapa para ver sus tableros.</p>
     </div>
+    <div class="conmuta" id="conmuta" role="group" aria-label="Vista del portal">
+      <button type="button" id="btnFlujo" class="on" aria-pressed="true">Flujo</button>
+      <button type="button" id="btnOrg" aria-pressed="false">Organigrama</button>
+    </div>
+    <input class="buscar" id="buscar" type="search" placeholder="Buscar tablero" aria-label="Buscar tablero">
+    <button class="btn-guia" id="btnTutorial" type="button">Gu&iacute;a</button>
   </div>
 
+  <div class="escena">
+
+    <div class="lamina" id="vistas">
+
+      <!-- ===== VISTA FLUJO ===== -->
+      <div id="vistaFlujo">
+
+        <div class="diagrama" id="diagrama">
+          <svg viewBox="0 0 680 370" role="img" aria-label="Ciclo de abastecimiento en cinco etapas con la Ventanilla Única de Reportes al centro">
+            <defs>
+              <marker id="mFlujo" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M2 1L8 5L2 9" fill="none" stroke="#1E5A9E" stroke-width="1.8"/></marker>
+              <marker id="mInsumo" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.8"/></marker>
+            </defs>
+            <g stroke="#1E5A9E" stroke-width="2" fill="none" marker-end="url(#mFlujo)">
+              <line x1="402" y1="70" x2="460" y2="122"/>
+              <line x1="476" y1="176" x2="444" y2="288"/>
+              <line x1="358" y1="316" x2="324" y2="316"/>
+              <line x1="238" y1="290" x2="206" y2="178"/>
+            </g>
+            <line x1="222" y1="124" x2="276" y2="72" stroke="#1E5A9E" stroke-width="2" stroke-dasharray="5 4" fill="none" marker-end="url(#mFlujo)"/>
+            <text x="100" y="94" font-size="11.5" fill="#5b6470">Saldos y consumos UE</text>
+            <g stroke="#0F6E56" stroke-width="1.4" stroke-dasharray="3 3" fill="none" marker-end="url(#mInsumo)">
+              <line x1="340" y1="130" x2="340" y2="74"/>
+              <line x1="400" y1="180" x2="412" y2="173"/>
+              <line x1="376" y1="248" x2="400" y2="288"/>
+              <line x1="304" y1="248" x2="280" y2="288"/>
+              <line x1="280" y1="180" x2="268" y2="173"/>
+            </g>
+            <g class="nodo hub" data-ref="hub" role="button" tabindex="0" aria-label="Ventanilla Única de Reportes">
+              <circle cx="340" cy="195" r="68"/>
+              <text class="n-t" x="340" y="183" text-anchor="middle">Ventanilla única</text>
+              <text class="n-t" x="340" y="201" text-anchor="middle">de reportes</text>
+              <text class="n-s" x="340" y="220" text-anchor="middle">5 áreas &middot; 22 reportes</text>
+            </g>
+            <g class="nodo" data-ref="e0" role="button" tabindex="0" aria-label="Etapa 1, Planificar">
+              <rect x="268" y="18" width="144" height="54" rx="3"/>
+              <text class="n-t" x="340" y="41" text-anchor="middle">1 &middot; Planificar</text>
+              <text class="n-s" x="340" y="59" text-anchor="middle">Planificaci&oacute;n</text>
+            </g>
+            <g class="nodo" data-ref="e1" role="button" tabindex="0" aria-label="Etapa 2, Seguir la compra">
+              <rect x="412" y="122" width="144" height="54" rx="3"/>
+              <text class="n-t" x="484" y="145" text-anchor="middle">2 &middot; Seguir compra</text>
+              <text class="n-s" x="484" y="163" text-anchor="middle">Planificaci&oacute;n</text>
+            </g>
+            <g class="nodo" data-ref="e2" role="button" tabindex="0" aria-label="Etapa 3, Recibir">
+              <rect x="358" y="289" width="144" height="54" rx="3"/>
+              <text class="n-t" x="430" y="312" text-anchor="middle">3 &middot; Recibir</text>
+              <text class="n-s" x="430" y="330" text-anchor="middle">Abasto &middot; Recepci&oacute;n</text>
+            </g>
+            <g class="nodo" data-ref="e3" role="button" tabindex="0" aria-label="Etapa 4, Registrar existencias">
+              <rect x="178" y="289" width="144" height="54" rx="3"/>
+              <text class="n-t" x="250" y="312" text-anchor="middle">4 &middot; Registrar</text>
+              <text class="n-s" x="250" y="330" text-anchor="middle">Administraci&oacute;n</text>
+            </g>
+            <g class="nodo" data-ref="e4" role="button" tabindex="0" aria-label="Etapa 5, Asignar y despachar">
+              <rect x="124" y="122" width="144" height="54" rx="3"/>
+              <text class="n-t" x="196" y="145" text-anchor="middle">5 &middot; Despachar</text>
+              <text class="n-s" x="196" y="163" text-anchor="middle">Abasto &middot; Almac&eacute;n</text>
+            </g>
+          </svg>
+          <div class="leyenda">
+            <span><i style="border-top:2px solid #1E5A9E"></i>Flujo operativo</span>
+            <span><i style="border-top:2px dashed #0F6E56"></i>Reportes que alimentan cada etapa</span>
+          </div>
+          <div class="franjas" id="franjas">
+            <button type="button" class="franja" data-ref="b0"><b>Gesti&oacute;n administrativa</b><span>Administraci&oacute;n &middot; talento humano</span></button>
+            <button type="button" class="franja tv" data-ref="hub"><b>Soporte transversal</b><span>Torre de Control</span></button>
+            <button type="button" class="franja tv" data-ref="b2"><b>Innovaci&oacute;n transversal</b><span>Pilotos de la Direcci&oacute;n</span></button>
+          </div>
+        </div>
+
+        <div class="movil" id="movil"></div>
+      </div>
+
+      <!-- ===== VISTA ORGANIGRAMA ===== -->
+      <div id="vistaOrg" hidden></div>
+
+    </div>
+
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+
+  </div>
 </div>
 
 <div class="footer">
-  Enlaces a GitHub Pages (org: TorredeControlCSS). Cada tablero abre en pesta&ntilde;a nueva.
+  Direcci&oacute;n Nacional de Log&iacute;stica &middot; CEDIS Panam&aacute;. Cada tablero abre en pesta&ntilde;a nueva.
 </div>
 
 <script>
-const AREAS = [
-  {
-    nombre: "Recepci&oacute;n de Proveedores",
-    sub: "Entrada del flujo &middot; SÍGUELO",
-    desc: "Punto de entrada del abastecimiento: agenda y confirmaci&oacute;n de citas de proveedores para la recepci&oacute;n de rengl&oacute;nes en el CEDIS Panam&aacute;.",
-    dashboards: [
-      { nombre:"Solicitud de Cita", sistema:"S&Iacute;GUELO", piloto:false,
-        resena:"Formulario de solicitud de citas de proveedores para entrega de rengl&oacute;nes en el CEDIS Panam&aacute;. Da al proveedor una visual integrada de sus citas confirmadas, pendientes y agendadas, y de las &oacute;rdenes de compra emitidas.",
-        url:"https://torredecontrolcss.github.io/SIGUELO/solicitud_cita.html" },
-      { nombre:"Panel de Confirmaci&oacute;n", sistema:"S&Iacute;GUELO", piloto:false,
-        resena:"M&oacute;dulo central de confirmaci&oacute;n de citas de proveedores. Prioriza con el &iacute;ndice IPR (&Iacute;ndice de Prioridad de Recepci&oacute;n) para optimizar la entrada de rengl&oacute;nes en desabastecimiento.",
-        url:"https://torredecontrolcss.github.io/SIGUELO/panel_confirmacion.html" }
-    ]
-  },
-  {
-    nombre: "Asignaci&oacute;n y Despacho F8",
-    sub: "N&uacute;cleo operativo &middot; Motor de Asignaci&oacute;n",
-    desc: "Coraz&oacute;n del CEDIS: convierte las requisiciones F8 en asignaciones priorizadas y las despacha a las Unidades Ejecutoras, con trazabilidad de principio a fin.",
-    dashboards: [
-      { nombre:"Motor de Asignaci&oacute;n de Inventario", sistema:"Asignaci&oacute;n F8", piloto:false,
-        resena:"Asigna las requisiciones F8 con un modelo de inteligencia de demanda combinado con prioridad cl&iacute;nica y nivel de desabastecimiento en la UE.",
-        url:"https://torredecontrolcss.github.io/ASIGNACION_F8/" },
-      { nombre:"Confirmaci&oacute;n de Recepci&oacute;n de F8", sistema:"Asignaci&oacute;n F8", piloto:false,
-        resena:"M&oacute;dulo de confirmaci&oacute;n de Formas 8 en la ventanilla del almac&eacute;n.",
-        url:"https://torredecontrolcss.github.io/ASIGNACION_F8/confirmacion_f8.html" },
-      { nombre:"Panel de Despacho a Unidades Ejecutoras", sistema:"Asignaci&oacute;n F8", piloto:false,
-        resena:"Despacho por triage, calendario, OTIF y termograf&iacute;a de atenci&oacute;n por llenado de Unidad Ejecutora. Prioriza con el &iacute;ndice IDP (&Iacute;ndice de Prioridad de Despacho), enfocado en rengl&oacute;nes desabastecidos y vitales.",
-        url:"https://torredecontrolcss.github.io/ASIGNACION_F8/panel_despacho.html" },
-      { nombre:"Tablero Kanban de Despacho F8", sistema:"Asignaci&oacute;n F8", piloto:false,
-        resena:"Tablero Kanban que sigue cada F8 por sus etapas de despacho &mdash; desde recepci&oacute;n hasta entrega en la Unidad Ejecutora &mdash; dando visibilidad en tiempo real del estado y los cuellos de botella del flujo.",
-        url:"https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html" }
-    ]
-  },
-  {
-    nombre: "Reposici&oacute;n y Cobertura de UE",
-    sub: "Planificaci&oacute;n de inventario",
-    desc: "Herramientas para que las Unidades Ejecutoras tengan visibilidad de sus tr&aacute;nsitos y planifiquen sus pedidos con base t&eacute;cnica, no por intuici&oacute;n.",
-    dashboards: [
-      { nombre:"Tablero de Cobertura y Reposici&oacute;n", sistema:"Reposici&oacute;n UE", piloto:false,
-        resena:"An&aacute;lisis comparativo de saldos por UE, tr&aacute;nsitos, consumos, F8 y distribuciones.",
-        url:"https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html" },
-      { nombre:"Calculadora de Reposici&oacute;n UE", sistema:"Reposici&oacute;n UE", piloto:false,
-        resena:"Calculadora de reposici&oacute;n de inventario para las Unidades Ejecutoras: les da visibilidad de los tr&aacute;nsitos de sus pedidos y les permite realizar sus solicitudes apoyadas en una herramienta tecnol&oacute;gica en vez de la estimaci&oacute;n manual.",
-        url:"https://torredecontrolcss.github.io/REPOSICION_UE_CSS/reposicion_ue.html" }
-    ]
-  },
-  {
-    nombre: "Seguimiento de Solicitudes y OC",
-    sub: "Trazabilidad &middot; Seguire",
-    desc: "Rastrea las solicitudes de entrega y las &oacute;rdenes de compra a lo largo de su ciclo, capturando los tr&aacute;nsitos de OC generados.",
-    dashboards: [
-      { nombre:"M&oacute;dulo de Seguimiento", sistema:"Seguire", piloto:true,
-        resena:"Sistema de seguimiento inteligente de requisiciones. Piloto en prueba.",
-        url:"https://torredecontrolcss.github.io/seguire/" },
-      { nombre:"Tr&aacute;nsitos de &Oacute;rdenes de Compra", sistema:"Seguire", piloto:false,
-        resena:"M&oacute;dulo de captura inteligente de &oacute;rdenes de compra y solicitudes de entrega generadas.",
-        url:"https://torredecontrolcss.github.io/seguire/transitos.html" }
-    ]
-  },
-  {
-    nombre: "Desempe&ntilde;o y Recursos Humanos",
-    sub: "Gesti&oacute;n del talento &middot; DINALOG",
-    desc: "Mide c&oacute;mo trabaja la gente: productividad por &aacute;rea, tiempos, ausencias y beneficios del personal de la Direcci&oacute;n de Log&iacute;stica.",
-    dashboards: [
-      { nombre:"Productividad por &Aacute;rea", sistema:"Recursos Humanos", piloto:false,
-        resena:"Mide la productividad de cada &aacute;rea de la Direcci&oacute;n de Log&iacute;stica en t&eacute;rminos de tareas terminadas o completadas frente a horas trabajadas.",
-        url:"https://torredecontrolcss.github.io/SIGUELO_DINALOG/productividad.html" },
-      { nombre:"An&aacute;lisis de Tiempos", sistema:"Recursos Humanos", piloto:true,
-        resena:"An&aacute;lisis completo de tiempos, ausencias, tardanzas, TxT, alimentaci&oacute;n y transporte del personal de DINALOG. Piloto en prueba.",
-        url:"https://torredecontrolcss.github.io/RH_BIOMETRICO/" },
-      { nombre:"Mis Tiempos", sistema:"Recursos Humanos", piloto:true,
-        resena:"Portal personal de tiempos para el colaborador. Piloto en prueba.",
-        url:"https://torredecontrolcss.github.io/Dashboard_Pedidos-_F8v2/mis_tiempos.html" }
-    ]
-  },
-  {
-    nombre: "Inteligencia y Servicios",
-    sub: "Anal&iacute;tica y soporte",
-    desc: "Capa anal&iacute;tica y de servicios transversales: curvas de inventario, geolocalizaci&oacute;n de medicamentos y atenci&oacute;n por turnos.",
-    dashboards: [
-      { nombre:"Curvas de Inventario", sistema:"Curvas de Inventario", piloto:false,
-        resena:"An&aacute;lisis hist&oacute;rico de las curvas de inventario por rengl&oacute;n, evaluaci&oacute;n de planificadores por criterio ABC-XYZ y reportes autom&aacute;ticos de abastecimiento y vencimiento.",
-        url:"https://torredecontrolcss.github.io/Curvas_de_Inventario/" },
-      { nombre:"Mi Farma Digital &mdash; DINALOG", sistema:"Mi Farma Digital", piloto:true,
-        resena:"Geolocaliza medicamentos por per&iacute;metro mediante la f&oacute;rmula de Haversine; acota la b&uacute;squeda por per&iacute;metro, provincia y pa&iacute;s. Propuesta piloto creada por DINALOG.",
-        url:"https://torredecontrolcss.github.io/mifarmadigital/" },
-      { nombre:"Pantalla de Turnos", sistema:"Pantalla de Turnos", piloto:true,
-        resena:"Sistema de atenci&oacute;n por turnos en el almac&eacute;n y ventanillas. Piloto de prueba.",
-        url:"https://torredecontrolcss.github.io/Pantalla_de_Turnos/" }
-    ]
-  }
+/* ═══════════════════════════════════════════════════════════════════
+ *  CATÁLOGO DE TABLEROS  (p = piloto en prueba)
+ * ═══════════════════════════════════════════════════════════════════ */
+var GH = 'https://torredecontrolcss.github.io/';
+var TAB = {
+  cur:{ n:'Curvas de Inventario', p:0, u:GH+'Curvas_de_Inventario/',
+        r:'Análisis histórico de las curvas de inventario por renglón, evaluación de planificadores por criterio ABC-XYZ y reportes automáticos de abastecimiento y vencimiento.' },
+  cob:{ n:'Tablero de Cobertura y Reposición', p:0, u:GH+'REPOSICION_UE_CSS/simulador_reposicion.html',
+        r:'Análisis comparativo de saldos por UE, tránsitos, consumos, Formas 8 y distribuciones.' },
+  cal:{ n:'Calculadora de Reposición UE', p:0, u:GH+'REPOSICION_UE_CSS/reposicion_ue.html',
+        r:'Da a cada Unidad Ejecutora visibilidad de los tránsitos de sus pedidos y le permite solicitar con una herramienta técnica en vez de la estimación manual.' },
+  red:{ n:'Redistribución entre CEDIS', p:0, u:GH+'REPOSICION_UE_CSS/redistribucion_cedis.html',
+        r:'Identifica los destinos en cero que un CEDIS con consumo real puede surtir y propone los traslados entre CEDIS.' },
+  tra:{ n:'Trazabilidad de OC y Tránsitos', p:0, u:GH+'seguire/transitos.html',
+        r:'Captura inteligente de órdenes de compra y solicitudes de entrega, con el tránsito de cada OC.' },
+  seg:{ n:'SEGUIR — Seguimiento de Requisiciones', p:1, u:GH+'seguire/',
+        r:'Sistema de seguimiento inteligente de requisiciones.' },
+  sol:{ n:'Solicitud de Cita', p:0, u:GH+'SIGUELO/solicitud_cita.html',
+        r:'Formulario del proveedor para agendar la entrega de renglones en el CEDIS Panamá, con la visual de sus citas y de las órdenes de compra emitidas.' },
+  con:{ n:'Panel de Confirmación de Citas', p:0, u:GH+'SIGUELO/panel_confirmacion.html',
+        r:'Confirma las citas de proveedores y las prioriza con el Índice de Prioridad de Recepción (IPR), enfocado en renglones en desabastecimiento.' },
+  ent:{ n:'Entradas de Mercancía', p:0, u:GH+'SIGUELO/panel_entradas.html',
+        r:'Entradas de mercancía registradas por Recepción en el Centro de Distribución de Panamá.' },
+  kar:{ n:'Kardex SAP-SAFIRO', p:0, u:GH+'SIGUELO/panel_kardex.html',
+        r:'Movimientos del kardex (MB51) e inventario por lote (MB52) registrados en SAP-SAFIRO.' },
+  f8: { n:'Ventanilla de Formas 8', p:0, u:GH+'ASIGNACION_F8/confirmacion_f8.html',
+        r:'Confirmación de la recepción física de las Formas 8 en la ventanilla del almacén.' },
+  mot:{ n:'Motor de Asignación de Inventario', p:0, u:GH+'ASIGNACION_F8/',
+        r:'Asigna las requisiciones F8 con un modelo de inteligencia de demanda combinado con prioridad clínica y nivel de desabastecimiento en la UE.' },
+  kan:{ n:'Tablero Kanban de Despacho F8', p:0, u:GH+'ASIGNACION_F8/kanban_tablero.html',
+        r:'Sigue cada Forma 8 por sus etapas de despacho, desde la recepción hasta la entrega en la Unidad Ejecutora.' },
+  pro:{ n:'Productividad por Área', p:0, u:GH+'SIGUELO_DINALOG/productividad.html',
+        r:'Productividad de cada área de la Dirección en tareas completadas frente a horas trabajadas.' },
+  rh: { n:'Análisis de Tiempos', p:1, u:GH+'RH_BIOMETRICO/',
+        r:'Tiempos, ausencias, tardanzas, TxT, alimentación y transporte del personal de la Dirección.' },
+  mis:{ n:'Mis Tiempos', p:1, u:GH+'Dashboard_Pedidos-_F8v2/mis_tiempos.html',
+        r:'Portal personal de tiempos para cada colaborador.' },
+  car:{ n:'Ventanilla Única de Reportes', p:0, u:GH+'SIGUELO_DINALOG/cargar_reportes.html',
+        r:'Punto único donde cada área entrega sus reportes de SALMI, SAP-SAFIRO y demás fuentes: cada archivo cargado actualiza los tableros que alimenta.' },
+  far:{ n:'Mi Farma Digital', p:1, u:GH+'mifarmadigital/',
+        r:'Geolocaliza medicamentos por perímetro con la fórmula de Haversine y acota la búsqueda por perímetro, provincia y país.' },
+  tur:{ n:'Pantalla de Turnos', p:1, u:GH+'Pantalla_de_Turnos/',
+        r:'Atención por turnos en el almacén y las ventanillas.' }
+};
+
+/* Etapas del ciclo */
+var ETAPAS = [
+  { ref:'e0', t:'Planificar', resp:'Planificación',
+    d:'Define cuánto necesita cada Unidad Ejecutora y cómo se cubre, con base en saldos, consumos y tránsitos.',
+    ins:['Saldos en línea','Distribución','Solicitudes F8','Inventario valorizado'], k:['cur','cob','cal','red'] },
+  { ref:'e1', t:'Seguir la compra', resp:'Planificación · Análisis, control y seguimiento',
+    d:'Da seguimiento a las órdenes de compra y solicitudes de entrega hasta que el proveedor agenda su cita.',
+    ins:['Captura en el propio módulo'], k:['tra','seg'] },
+  { ref:'e2', t:'Recibir del proveedor', resp:'Abasto · Recepción',
+    d:'Agenda, confirma y registra la entrada de los renglones que entrega el proveedor.',
+    ins:['Entradas diarias de recepción'], k:['sol','con','ent'] },
+  { ref:'e3', t:'Registrar existencias', resp:'Administración · Kardex y facturación',
+    d:'Registra los movimientos y el inventario en SAP-SAFIRO a través del kardex.',
+    ins:['MB51','MB52','MM60'], k:['kar'] },
+  { ref:'e4', t:'Asignar y despachar', resp:'Abasto · Almacén, distribución y despacho',
+    d:'Convierte las Formas 8 en asignaciones priorizadas y las sigue etapa por etapa hasta la entrega en la UE.',
+    ins:['Solicitudes F8','Trazabilidad ×4','Reservas ×4','Inventario neto ×4','Cronograma de transporte'], k:['f8','mot','kan'] }
 ];
 
-const flujoEl = document.getElementById("flujo");
-const detalleEl = document.getElementById("detalle");
+/* Franjas transversales y verticales del organigrama */
+var GRUPOS = {
+  b0:{ t:'Gestión administrativa', resp:'Administración · talento humano y productividad',
+       d:'Mide cómo trabaja la gente de la Dirección: productividad por área, tiempos y beneficios.',
+       ins:['Reloj biométrico'], k:['pro','rh','mis'] },
+  b2:{ t:'Innovación transversal', resp:'Pilotos creados por la Dirección Nacional de Logística',
+       d:'Servicios nuevos que la Dirección pone a prueba antes de extenderlos a la red.',
+       ins:null, k:['far','tur'] },
+  o0:{ t:'Planificación', resp:'Planificación de medicamentos e insumos · Análisis, control y seguimiento',
+       d:'Planifica la demanda de la red y da seguimiento a las compras.', ins:null, k:['cur','cob','cal','red','tra','seg'] },
+  o1:{ t:'Administración', resp:'Kardex y facturación · Recursos humanos',
+       d:'Registra las existencias en SAP-SAFIRO y gestiona el talento humano de la Dirección.', ins:null, k:['kar','pro','rh','mis'] },
+  o2:{ t:'Abasto', resp:'CEDIS Panamá · CEDIS Divisa · CEDIS Chiriquí',
+       d:'Recibe, almacena, asigna y despacha los renglones a las Unidades Ejecutoras.', ins:null, k:['sol','con','ent','f8','mot','kan'] }
+};
 
-/* Render de los pasos horizontales con flechas */
-AREAS.forEach((area, ai) => {
-  const paso = document.createElement("div");
-  paso.className = "paso";
-  paso.innerHTML =
-    '<div class="paso-card" data-a="'+ai+'">' +
-      '<div class="paso-num">'+(ai+1)+'</div>' +
-      '<div class="paso-nombre">'+area.nombre+'</div>' +
-      '<div class="paso-sub">'+area.sub+'</div>' +
-      '<div class="paso-count">'+area.dashboards.length+' tablero'+(area.dashboards.length>1?'s':'')+'</div>' +
-    '</div>';
-  flujoEl.appendChild(paso);
+/* Áreas que entregan reportes en la Ventanilla Única (reflejan las secciones de cargar_reportes.html) */
+var FUENTES = [
+  { n:'Recepción', d:'Entradas diarias', a:'Recibir' },
+  { n:'Almacén y Torre de Control', d:'16 reportes del WMS SALMI: saldos, solicitudes, distribución, trazabilidad, reservas, inventario neto y valorizado', a:'Planificar · Despachar' },
+  { n:'Kardex', d:'MB51, MB52 y MM60 de SAP-SAFIRO', a:'Registrar · Kanban' },
+  { n:'Recursos Humanos', d:'Reloj biométrico', a:'Gestión administrativa' },
+  { n:'Transporte', d:'Cronograma semanal de despachos y entregas', a:'Despachar' }
+];
 
-  if (ai < AREAS.length - 1) {
-    const flecha = document.createElement("div");
-    flecha.className = "flecha";
-    flecha.innerHTML = "&#10142;";
-    flujoEl.appendChild(flecha);
+/* ═══════════════════════════════════════════════════════════════════
+ *  UTILIDADES
+ * ═══════════════════════════════════════════════════════════════════ */
+function $(s, r){ return (r||document).querySelector(s); }
+function $$(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+var MQ_MOVIL = window.matchMedia('(max-width: 719px)');
+function esMovil(){ return MQ_MOVIL.matches; }
+function etapaDe(ref){ for (var i=0;i<ETAPAS.length;i++) if (ETAPAS[i].ref===ref) return {e:ETAPAS[i], i:i}; return null; }
+
+function filaTablero(k, meta){
+  var t = TAB[k];
+  return '<div class="fila"><div class="fila-txt"><b>'+esc(t.n)+'</b>'+(t.p?'<span class="tag-p">Piloto</span>':'')+
+         '<p>'+esc(t.r)+'</p>'+(meta?'<div class="meta">'+esc(meta)+'</div>':'')+'</div>'+
+         '<a class="entrar" href="'+t.u+'" target="_blank" rel="noopener">Entrar</a></div>';
+}
+function bloqueAlimenta(ins){
+  if (!ins || !ins.length) return '';
+  return '<div class="p-alimenta">Se alimenta de: '+ins.map(function(x){ return '<span class="chip">'+esc(x)+'</span>'; }).join('')+'</div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  CONTENIDO DE DETALLE
+ * ═══════════════════════════════════════════════════════════════════ */
+function htmlDetalle(ref, conCabecera){
+  var top = function(titulo, resp, desc){
+    return conCabecera ? '<div class="p-top"><button type="button" class="p-volver" data-accion="todo">Ver todos</button>'+
+      '<h3>'+esc(titulo)+'</h3><div class="p-resp">Responsable: '+esc(resp)+'</div>'+
+      (desc?'<div class="p-desc">'+esc(desc)+'</div>':'')+'</div>' : '';
+  };
+  if (ref === 'hub'){
+    return top('Ventanilla Única de Reportes', 'Torre de Control · soporte transversal',
+               'Punto único donde cada área entrega sus reportes. Cada archivo cargado actualiza los tableros que alimenta.')+
+      FUENTES.map(function(f){
+        return '<div class="fuente"><div><b>'+esc(f.n)+'</b><p>'+esc(f.d)+'</p></div><div class="dest">Alimenta:<br>'+esc(f.a)+'</div></div>';
+      }).join('')+
+      '<div class="p-cta"><a class="entrar" href="'+TAB.car.u+'" target="_blank" rel="noopener">Ir a la Ventanilla</a></div>';
   }
-});
+  var x = etapaDe(ref);
+  if (x){
+    return top((x.i+1)+' · '+x.e.t, x.e.resp, x.e.d) + bloqueAlimenta(x.e.ins) +
+           x.e.k.map(function(k){ return filaTablero(k); }).join('');
+  }
+  var g = GRUPOS[ref];
+  if (g){
+    return top(g.t, g.resp, g.d) + bloqueAlimenta(g.ins) + g.k.map(function(k){ return filaTablero(k); }).join('');
+  }
+  return '';
+}
 
-/* Al hacer clic en un paso, expandir sus dashboards a todo el ancho */
-flujoEl.addEventListener("click", (e) => {
-  const card = e.target.closest(".paso-card");
-  if (!card) return;
-  const ai = +card.dataset.a;
-  const area = AREAS[ai];
-
-  document.querySelectorAll(".paso-card.active").forEach(x => x.classList.remove("active"));
-  card.classList.add("active");
-
-  let cards = "";
-  area.dashboards.forEach(d => {
-    cards +=
-      '<div class="dash-card'+(d.piloto?' piloto':'')+'">' +
-        '<div class="dc-sys"><span class="dc-dot"></span>'+d.sistema+'</div>' +
-        '<h3>'+d.nombre+'</h3>' +
-        '<div class="dc-resena">'+d.resena+'</div>' +
-        '<div class="dc-tags">' +
-          '<span class="tag">'+d.sistema+'</span>' +
-          (d.piloto?'<span class="tag piloto">Piloto en prueba</span>':'') +
-        '</div>' +
-        '<a class="btn-entrar" href="'+d.url+'" target="_blank" rel="noopener">Entrar al tablero &rarr;</a>' +
-      '</div>';
+function htmlTodos(){
+  var h = '<div class="p-top"><h3>Todos los tableros</h3><div class="p-desc">Agrupados por etapa del ciclo. Toca una etapa en el diagrama para ver qu&eacute; la alimenta y qui&eacute;n la opera.</div></div>';
+  ETAPAS.forEach(function(e, i){
+    h += '<div class="p-grupo">'+(i+1)+' · '+esc(e.t)+'</div>' + e.k.map(function(k){ return filaTablero(k); }).join('');
   });
+  h += '<div class="p-grupo">Gestión administrativa</div>' + GRUPOS.b0.k.map(function(k){ return filaTablero(k); }).join('');
+  h += '<div class="p-grupo">Soporte transversal</div>' + filaTablero('car');
+  h += '<div class="p-grupo">Innovación transversal</div>' + GRUPOS.b2.k.map(function(k){ return filaTablero(k); }).join('');
+  return h;
+}
 
-  detalleEl.innerHTML =
-    '<div class="detalle-inner">' +
-      '<div class="detalle-top">' +
-        '<span class="dt-num">'+(ai+1)+'</span>' +
-        '<h2>'+area.nombre+'</h2>' +
-        '<div class="dt-desc">'+area.desc+'</div>' +
-      '</div>' +
-      '<div class="dash-grid">'+cards+'</div>' +
-    '</div>';
+/* Ubicación de cada tablero, para el buscador */
+function ubicacion(k){
+  for (var i=0;i<ETAPAS.length;i++) if (ETAPAS[i].k.indexOf(k)>-1) return (i+1)+' · '+ETAPAS[i].t;
+  if (GRUPOS.b0.k.indexOf(k)>-1) return 'Gestión administrativa';
+  if (GRUPOS.b2.k.indexOf(k)>-1) return 'Innovación transversal';
+  if (k==='car') return 'Soporte transversal';
+  return '';
+}
+function normal(s){ return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
-  if (detalleEl.scrollIntoView) detalleEl.scrollIntoView({ behavior:"smooth", block:"nearest" });
+/* ═══════════════════════════════════════════════════════════════════
+ *  RENDER DE LA LÍNEA DE TIEMPO MÓVIL Y DEL ORGANIGRAMA
+ * ═══════════════════════════════════════════════════════════════════ */
+function pintarMovil(){
+  var h = '<button type="button" class="m-hub" data-ref="hub"><b>Ventanilla Única de Reportes</b><span>5 áreas · 22 reportes · alimenta cada etapa</span></button>'+
+          '<div class="slot" data-slot="hub"></div><div class="m-linea">';
+  ETAPAS.forEach(function(e, i){
+    h += '<div class="m-paso" data-n="'+(i+1)+'"><button type="button" class="m-btn" data-ref="'+e.ref+'">'+
+         '<div><b>'+esc(e.t)+'</b><span>'+esc(e.resp)+' · '+e.k.length+' tablero'+(e.k.length>1?'s':'')+'</span></div>'+
+         '<span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot" data-slot="'+e.ref+'"></div></div>';
+  });
+  h += '</div><div class="m-retorno">&#8634; Los saldos y consumos de las UE regresan a Planificar</div><div class="m-franjas">';
+  [['b0','Gestión administrativa','Administración · talento humano'],['b2','Innovación transversal','Pilotos de la Dirección']].forEach(function(f){
+    h += '<div><button type="button" class="m-btn" data-ref="'+f[0]+'"><div><b>'+f[1]+'</b><span>'+f[2]+'</span></div>'+
+         '<span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot" data-slot="'+f[0]+'"></div></div>';
+  });
+  h += '</div>';
+  $('#movil').innerHTML = h;
+}
+
+function pintarOrg(){
+  var h = '<div class="org-dir"><div>Dirección Nacional de Logística</div></div>'+
+          '<div class="org-tronco"></div><div class="org-sub"><div>Sub Dirección Nacional de Logística</div></div>'+
+          '<div class="org-tronco"></div><div class="org-rama"></div><div class="org-grid">';
+  ['o0','o1','o2'].forEach(function(r){
+    var g = GRUPOS[r];
+    h += '<div><button type="button" class="org-card" data-ref="'+r+'"><b>'+esc(g.t)+'</b><span>'+esc(g.resp)+'</span>'+
+         '<em>'+g.k.length+' tableros</em></button><div class="slot" data-slot="'+r+'"></div></div>';
+  });
+  h += '</div><div class="org-tv">'+
+       '<div><button type="button" class="org-card" data-ref="hub"><b>Soporte transversal · Torre de Control</b>'+
+       '<span>Ventanilla Única de Reportes: punto único donde cada área entrega sus reportes</span></button><div class="slot" data-slot="hub-o"></div></div>'+
+       '<div><button type="button" class="org-card" data-ref="b2"><b>Innovación transversal</b>'+
+       '<span>Mi Farma Digital · Pantalla de Turnos</span></button><div class="slot" data-slot="b2-o"></div></div>'+
+       '</div><div class="org-nota">La Torre de Control da soporte a los almacenes y a la planificación.</div>';
+  $('#vistaOrg').innerHTML = h;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  SELECCIÓN: web → panel lateral · móvil → acordeón en su lugar
+ * ═══════════════════════════════════════════════════════════════════ */
+var SEL = null;
+
+function limpiarActivos(){
+  $$('.nodo.activo, .franja.activo, .m-btn.activo, .org-card.activo').forEach(function(x){ x.classList.remove('activo'); });
+}
+
+function seleccionar(ref, origen){
+  var buscar = $('#buscar'); if (buscar.value) { buscar.value = ''; }
+  if (esMovil()){
+    var slot = origen && origen.parentNode ? origen.parentNode.querySelector('.slot') : null;
+    var abierto = slot && slot.innerHTML !== '';
+    $$('.slot').forEach(function(s){ s.innerHTML=''; });
+    limpiarActivos();
+    if (!slot || abierto) { SEL = null; return; }
+    slot.innerHTML = htmlDetalle(ref, false);
+    origen.classList.add('activo');
+    SEL = ref;
+    return;
+  }
+  limpiarActivos();
+  SEL = ref;
+  $$('[data-ref="'+ref+'"]').forEach(function(x){
+    if (x.closest('#vistaOrg') && $('#vistaOrg').hidden) return;
+    x.classList.add('activo');
+  });
+  $('#panel').innerHTML = htmlDetalle(ref, true);
+  $('#panel').scrollTop = 0;
+  if (window.innerWidth < 1100 && $('#panel').scrollIntoView) $('#panel').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function verTodos(){
+  SEL = null; limpiarActivos();
+  $('#panel').innerHTML = htmlTodos();
+}
+
+function buscarTableros(q){
+  var n = normal(q.trim());
+  var destino = esMovil() ? null : $('#panel');
+  if (!n){ if (destino) { SEL ? seleccionar(SEL) : verTodos(); } else { $('#resMovil') && $('#resMovil').remove(); } return; }
+  var hits = Object.keys(TAB).filter(function(k){ return normal(TAB[k].n+' '+TAB[k].r+' '+ubicacion(k)).indexOf(n) > -1; });
+  var h = '<div class="p-top"><h3>Resultados para “'+esc(q.trim())+'”</h3><div class="p-desc">'+hits.length+' tablero'+(hits.length===1?'':'s')+'</div></div>'+
+          (hits.length ? hits.map(function(k){ return filaTablero(k, ubicacion(k)); }).join('')
+                       : '<div class="p-vacio">Ningún tablero coincide. Prueba con el nombre del área o de la etapa.</div>');
+  if (destino){ limpiarActivos(); destino.innerHTML = h; return; }
+  var box = $('#resMovil');
+  if (!box){ box = document.createElement('div'); box.id='resMovil'; box.className='panel'; box.style.display='block'; box.style.margin='0 0 12px';
+             $('#vistas').insertBefore(box, $('#vistas').firstChild); }
+  box.innerHTML = h;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  EVENTOS
+ * ═══════════════════════════════════════════════════════════════════ */
+document.addEventListener('click', function(ev){
+  if (ev.target.closest('[data-accion="todo"]')) { verTodos(); return; }
+  var el = ev.target.closest('[data-ref]');
+  if (!el || ev.target.closest('a')) return;
+  seleccionar(el.getAttribute('data-ref'), el);
+});
+$$('.nodo').forEach(function(n){
+  n.addEventListener('keydown', function(ev){
+    if (ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); seleccionar(n.getAttribute('data-ref'), n); }
+  });
 });
 
-/* Abrir el primer paso por defecto */
-document.querySelector(".paso-card").click();
+function cambiarVista(org){
+  $('#vistaFlujo').hidden = org;
+  $('#vistaOrg').hidden = !org;
+  $('#btnFlujo').classList.toggle('on', !org); $('#btnFlujo').setAttribute('aria-pressed', String(!org));
+  $('#btnOrg').classList.toggle('on', org);    $('#btnOrg').setAttribute('aria-pressed', String(org));
+  $$('.slot').forEach(function(s){ s.innerHTML=''; });
+  if (!esMovil()) { SEL ? seleccionar(SEL) : verTodos(); } else { limpiarActivos(); SEL = null; }
+}
+$('#btnFlujo').addEventListener('click', function(){ cambiarVista(false); });
+$('#btnOrg').addEventListener('click', function(){ cambiarVista(true); });
+$('#buscar').addEventListener('input', function(){ buscarTableros(this.value); });
+
+/* Al cruzar el umbral web ↔ móvil se reinicia el estado para no dejar paneles huérfanos */
+function alCambiarModo(){
+  $$('.slot').forEach(function(s){ s.innerHTML=''; });
+  var r = $('#resMovil'); if (r) r.remove();
+  $('#buscar').value = '';
+  if (esMovil()) { limpiarActivos(); SEL = null; } else { SEL ? seleccionar(SEL) : verTodos(); }
+}
+if (MQ_MOVIL.addEventListener) MQ_MOVIL.addEventListener('change', alCambiarModo);
+else if (MQ_MOVIL.addListener) MQ_MOVIL.addListener(alCambiarModo);
+
+pintarMovil();
+pintarOrg();
+verTodos();
 </script>
 
-<!-- ===== Overlay del tutorial guiado ===== -->
+<!-- ===== Guía: se abre SOLO con el botón "Guía". No hay arranque automático. ===== -->
 <div id="tourOverlay" style="display:none;">
   <div id="tourBackdrop"></div>
-  <div id="tourBox">
+  <div id="tourBox" role="dialog" aria-modal="true" aria-labelledby="tourTitulo">
     <div id="tourTitulo"></div>
     <div id="tourTexto"></div>
     <div id="tourNav">
       <span id="tourPaso"></span>
       <span style="flex:1"></span>
-      <button id="tourSkip" class="btn-plano" type="button">Saltar</button>
-      <button id="tourPrev" class="btn-plano" type="button">&#9666; Atr&aacute;s</button>
-      <button id="tourNext" type="button">Siguiente &#9656;</button>
+      <button id="tourSkip" type="button">Cerrar</button>
+      <button id="tourPrev" type="button">Atr&aacute;s</button>
+      <button id="tourNext" type="button">Siguiente</button>
     </div>
   </div>
 </div>
 
-<!-- ===== Lógica del tutorial guiado ===== -->
 <script>
 (function(){
-  function elx(s){ return document.querySelector(s); }
+  function q(s){ return document.querySelector(s); }
+  function visible(el){ return !!(el && el.offsetParent !== null && el.getBoundingClientRect().width > 0); }
+  function primero(lista){ for (var i=0;i<lista.length;i++){ var e=q(lista[i]); if (visible(e)) return e; } return null; }
 
-  var TOUR_STEPS = [
-    { sel:'.intro',   tit:'1. Bienvenido a SIGUELO', txt:'Este portal reune todos los tableros de la Direccion de Logistica, organizados segun el flujo operativo real, desde la cita del proveedor hasta la entrega en la Unidad Ejecutora.' },
-    { sel:'#flujo',   tit:'2. El flujo operativo',   txt:'Cada tarjeta es una etapa del proceso. Estan en orden: siga el numero para recorrer el ciclo completo de la logistica.' },
-    { sel:'.paso-card', tit:'3. Elija una etapa',    txt:'Al hacer clic en una etapa, se resalta y despliega sus tableros justo abajo. El tour ya abrio la primera para mostrarselo.', prep:'abrir' },
-    { sel:'#detalle', tit:'4. Los tableros de la etapa', txt:'Aqui aparecen los tableros de la etapa elegida, cada uno con su reseña, el sistema que lo alimenta y su estado (algunos en piloto de prueba).', prep:'abrir' },
-    { sel:'.btn-entrar', tit:'5. Entrar al tablero', txt:'Este boton abre el tablero en una pestaña nueva, sin perder el portal. Desde alli trabaja normalmente.', prep:'abrir' }
+  var PASOS = [
+    { s:['#barra'], t:'Bienvenido a SIGUELO',
+      x:'Este portal reúne los tableros de la Dirección Nacional de Logística, ordenados según el ciclo de abastecimiento.' },
+    { s:['#diagrama svg','#movil .m-linea'], t:'El ciclo de abastecimiento',
+      x:'Cinco etapas en orden: planificar, seguir la compra, recibir, registrar y despachar. Los saldos y consumos de las UE regresan a planificar y cierran el ciclo.' },
+    { s:['#diagrama .hub','#movil .m-hub'], t:'La Ventanilla Única de Reportes',
+      x:'En el centro está el punto único donde cada área entrega sus reportes. Cada archivo cargado actualiza los tableros que alimenta.' },
+    { s:['#panel','#movil .m-paso'], t:'Tableros de cada etapa',
+      x:'Al tocar una etapa verás quién la opera, qué reportes la alimentan y sus tableros. El botón Entrar abre cada uno en una pestaña nueva.' },
+    { s:['#franjas','#movil .m-franjas'], t:'Capas transversales',
+      x:'Gestión administrativa, soporte transversal de la Torre de Control e innovación transversal acompañan a todo el ciclo.' },
+    { s:['#conmuta'], t:'Vista de organigrama',
+      x:'Cambia a Organigrama para ver los mismos tableros ordenados por el área de la Dirección que los usa.' },
+    { s:['#buscar'], t:'Buscar un tablero',
+      x:'Si ya sabes cuál necesitas, escribe su nombre aquí.' }
   ];
-  var TOUR_I = 0;
+  var I = 0;
 
-  function tourAbrirEtapaDemo(){
-    var activa = document.querySelector('.paso-card.active');
-    if (!activa){
-      var primera = document.querySelector('.paso-card');
-      if (primera) primera.click();
-    }
+  function abrir(){
+    if (document.getElementById('vistaFlujo').hidden) document.getElementById('btnFlujo').click();
+    I = 0; q('#tourOverlay').style.display = 'block'; mostrar();
+    q('#tourNext').focus();
   }
-
-  function iniciarTour(){
-    TOUR_I = 0;
-    elx('#tourOverlay').style.display='block';
-    setTimeout(mostrarPasoTour, 350);
+  function cerrar(){
+    q('#tourOverlay').style.display = 'none';
+    var sp = q('.tour-spot'); if (sp) sp.remove();
+    q('#btnTutorial').focus();
   }
-  function cerrarTour(){
-    elx('#tourOverlay').style.display='none';
-    var sp=document.querySelector('.tour-spot'); if(sp) sp.remove();
-    try{ localStorage.setItem('siguelo_tour_visto','1'); }catch(e){}
-  }
-  function mostrarPasoTour(){
-    var step = TOUR_STEPS[TOUR_I];
-    if(!step){ cerrarTour(); return; }
-    if (step.prep==='abrir') tourAbrirEtapaDemo();
-    setTimeout(function(){ posicionarTour(step); }, step.prep? 250 : 0);
-  }
-  function posicionarTour(step){
-    var target = document.querySelector(step.sel);
-    var box = elx('#tourBox');
-    var sp = document.querySelector('.tour-spot');
-    if(!sp){ sp=document.createElement('div'); sp.className='tour-spot'; elx('#tourOverlay').appendChild(sp); }
-    if (target){
-      box.style.transform='';
-      target.scrollIntoView({block:'center', behavior:'smooth'});
-      setTimeout(function(){
-        var r = target.getBoundingClientRect();
-        sp.style.top=(r.top-6)+'px'; sp.style.left=(r.left-6)+'px';
-        sp.style.width=(r.width+12)+'px'; sp.style.height=(r.height+12)+'px';
-        sp.style.display='block';
-        var bh=box.offsetHeight||160, bw=box.offsetWidth||320;
-        var top = r.bottom+14; if (top+bh > window.innerHeight-10) top = Math.max(10, r.top-bh-14);
-        var left = Math.min(Math.max(10, r.left), window.innerWidth-bw-10);
-        box.style.top=top+'px'; box.style.left=left+'px';
-      }, 300);
-    } else {
-      sp.style.display='none';
-      box.style.top='50%'; box.style.left='50%'; box.style.transform='translate(-50%,-50%)';
-    }
-    elx('#tourTitulo').textContent = step.tit;
-    elx('#tourTexto').textContent = step.txt;
-    elx('#tourPaso').textContent = 'Paso '+(TOUR_I+1)+' de '+TOUR_STEPS.length;
-    elx('#tourPrev').style.visibility = TOUR_I===0 ? 'hidden' : 'visible';
-    elx('#tourNext').textContent = TOUR_I===TOUR_STEPS.length-1 ? 'Terminar' : 'Siguiente \u25B8';
+  function mostrar(){
+    var p = PASOS[I], box = q('#tourBox');
+    var sp = q('.tour-spot');
+    if (!sp){ sp = document.createElement('div'); sp.className = 'tour-spot'; q('#tourOverlay').appendChild(sp); }
+    q('#tourTitulo').textContent = p.t;
+    q('#tourTexto').textContent = p.x;
+    q('#tourPaso').textContent = (I+1)+' de '+PASOS.length;
+    q('#tourPrev').style.visibility = I===0 ? 'hidden' : 'visible';
+    q('#tourNext').textContent = I===PASOS.length-1 ? 'Terminar' : 'Siguiente';
+    var el = primero(p.s);
+    if (!el){ sp.style.display='none'; box.style.top='50%'; box.style.left='50%'; box.style.transform='translate(-50%,-50%)'; return; }
+    box.style.transform = '';
+    el.scrollIntoView({ block:'center', behavior:'smooth' });
+    setTimeout(function(){
+      var r = el.getBoundingClientRect();
+      sp.style.display='block';
+      sp.style.top=(r.top-6)+'px'; sp.style.left=(r.left-6)+'px';
+      sp.style.width=(r.width+12)+'px'; sp.style.height=(r.height+12)+'px';
+      var bh = box.offsetHeight||170, bw = box.offsetWidth||330;
+      var top = r.bottom+14; if (top+bh > window.innerHeight-10) top = Math.max(10, r.top-bh-14);
+      if (top+bh > window.innerHeight-10) top = Math.max(10, window.innerHeight-bh-10);
+      var left = Math.min(Math.max(10, r.left), window.innerWidth-bw-10);
+      box.style.top = top+'px'; box.style.left = left+'px';
+    }, 320);
   }
 
-  var b=elx('#btnTutorial'); if(b) b.addEventListener('click', iniciarTour);
-  var n=elx('#tourNext'); if(n) n.addEventListener('click', function(){
-    if(TOUR_I>=TOUR_STEPS.length-1){ cerrarTour(); return; }
-    TOUR_I++; mostrarPasoTour();
+  q('#btnTutorial').addEventListener('click', abrir);
+  q('#tourNext').addEventListener('click', function(){ if (I>=PASOS.length-1){ cerrar(); return; } I++; mostrar(); });
+  q('#tourPrev').addEventListener('click', function(){ if (I>0){ I--; mostrar(); } });
+  q('#tourSkip').addEventListener('click', cerrar);
+  q('#tourBackdrop').addEventListener('click', cerrar);
+  document.addEventListener('keydown', function(ev){
+    if (q('#tourOverlay').style.display !== 'block') return;
+    if (ev.key === 'Escape') cerrar();
+    else if (ev.key === 'ArrowRight') q('#tourNext').click();
+    else if (ev.key === 'ArrowLeft') q('#tourPrev').click();
   });
-  var p=elx('#tourPrev'); if(p) p.addEventListener('click', function(){ if(TOUR_I>0){ TOUR_I--; mostrarPasoTour(); } });
-  var s=elx('#tourSkip'); if(s) s.addEventListener('click', cerrarTour);
-  window.addEventListener('resize', function(){
-    if (elx('#tourOverlay').style.display==='block') posicionarTour(TOUR_STEPS[TOUR_I]);
-  });
-
-  // Auto-arranque solo en la primera visita
-  var visto = false;
-  try{ visto = localStorage.getItem('siguelo_tour_visto')==='1'; }catch(e){}
-  if(!visto){
-    window.addEventListener('load', function(){ setTimeout(iniciarTour, 900); });
-  }
+  window.addEventListener('resize', function(){ if (q('#tourOverlay').style.display==='block') mostrar(); });
 })();
 </script>
 
@@ -556,6 +711,7 @@ document.querySelector(".paso-card").click();
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("sw.js")
+      .then(function (reg) { reg.update(); })
       .catch(function (err) { console.warn("SW no registrado:", err); });
   });
 }
