@@ -381,6 +381,8 @@ var TAB = {
         r:'Análisis histórico de las curvas de inventario por renglón, evaluación de planificadores por criterio ABC-XYZ y reportes automáticos de abastecimiento y vencimiento.' },
   cob:{ n:'Tablero de Cobertura y Reposición', p:0, u:GH+'REPOSICION_UE_CSS/simulador_reposicion.html',
         r:'Análisis comparativo de saldos por UE, tránsitos, consumos, Formas 8 y distribuciones.' },
+  rcu:{ n:'Registro de Consumos UE', p:1, u:GH+'REPOSICION_UE_CSS/consumos_ue.html',
+        r:'Cada Unidad Ejecutora reporta su consumo mensual en pantalla o subiendo un Excel; Planificación lo valida y aprueba, y el valor aprobado alimenta el Motor de Asignación, con trazabilidad de cada envío.' },
   cal:{ n:'Calculadora de Reposición UE', p:0, u:GH+'REPOSICION_UE_CSS/reposicion_ue.html',
         r:'Herramienta de la Unidad Ejecutora para proyectar su consumo y colocar sus pedidos con base técnica, con visibilidad de los tránsitos de lo que ya pidió.' },
   red:{ n:'Redistribución entre CEDIS', p:0, u:GH+'REPOSICION_UE_CSS/redistribucion_cedis.html',
@@ -440,8 +442,8 @@ var ETAPAS = [
 /* Capas transversales */
 var GRUPOS = {
   ue:{ a:'ue', t:'Unidades Ejecutoras', resp:'Unidades Ejecutoras de la red · fuera de la Dirección',
-       d:'Reciben la entrega y consumen. Con base en sus saldos y la proyección de su consumo colocan sus pedidos, que regresan a Planificar como nueva demanda.',
-       ins:['Saldos en línea','Consumos de UE','Formas 8'], k:['cal'] },
+       d:'Reciben la entrega, consumen y reportan su consumo cada mes. Con base en sus saldos y la proyección de su consumo colocan sus pedidos, que regresan a Planificar como nueva demanda.',
+       ins:['Saldos en línea','Formas 8'], nota:'El consumo lo reporta cada Unidad Ejecutora en el Registro de Consumos; Planificación lo valida y aprueba antes de que llegue al Motor.', k:['rcu','cal'] },
   b0:{ a:'adm', t:'Talento humano', resp:'Administración · Recursos humanos',
        d:'Mide cómo trabaja la gente de la Dirección: productividad por área, tiempos y beneficios.',
        ins:['Reloj biométrico'], k:['rh','pro','mis'] },
@@ -513,7 +515,7 @@ function htmlDetalle(ref, conCabecera){
   }
   var x = etapaDe(ref), g = GRUPOS[ref], a, tit, resp, desc, ins, ks, nota;
   if (x){ a=x.e.a; tit=(x.i+1)+' · '+x.e.t; resp=x.e.resp; desc=x.e.d; ins=x.e.ins; ks=x.e.k; nota=x.e.nota; }
-  else if (g){ a=g.a; tit=g.t; resp=g.resp; desc=g.d; ins=g.ins; ks=g.k; }
+  else if (g){ a=g.a; tit=g.t; resp=g.resp; desc=g.d; ins=g.ins; ks=g.k; nota=g.nota; }
   else return '';
   var filas = bloqueAlimenta(ins, nota) + ks.map(function(k){ return filaTablero(k); }).join('');
   if (!conCabecera) return filas;
@@ -528,7 +530,7 @@ function htmlInicial(){
     h += bloqueGrupo(e.a, (i+1)+' · '+e.t, e.resp+' · '+plural(e.k.length),
                      e.k.map(function(k){ return filaTablero(k); }).join(''), e.ref);
   });
-  h += bloqueGrupo('ue', GRUPOS.ue.t, 'Pedidos y proyección de consumo · '+plural(GRUPOS.ue.k.length),
+  h += bloqueGrupo('ue', GRUPOS.ue.t, 'Consumo, pedidos y proyección · '+plural(GRUPOS.ue.k.length),
                    GRUPOS.ue.k.map(function(k){ return filaTablero(k); }).join(''), 'ue');
   ['b0','b2'].forEach(function(r){
     var g = GRUPOS[r];
