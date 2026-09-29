@@ -2059,20 +2059,50 @@ function lanzarCurvas_(){
   curLeerSello_(function(g){ CUR_GEN0=g; arrancarCur_(); },
                 function(){ CUR_GEN0=null; arrancarCur_(); });
 
+  /* 29-sep-2026 · La cadena ahora tiene seis etapas (índice, JSON, reporte de
+     abastecimiento, reporte de vencimientos). Ya no basta con ver cambiar el
+     sello del JSON: eso ocurre en la etapa 4 y los reportes llegan después.
+     Se sigue ?action=estadoCurvas y se cierra solo cuando el backend dice
+     'listo' Y el sello del JSON cambió. El texto final trae el conteo de
+     filas de cada reporte, leído de la propia hoja. */
   function arrancarCur_(){
     curSt_('lanzando…','#1e5a9e');
     jsonpG_(CURVAS_URL+'?action=publicarCurvas&callback=?', function(){}, function(){});
-    var t=0;
+    var t=0, visto=false;
     CUR_POLL=setInterval(function(){
       t+=8;
-      curLeerSello_(function(g){
-        if(g && g!==CUR_GEN0){ curFin_(true,'✓ curva publicada · '+String(g).slice(11)); return; }
-        curSt_('procesando… '+t+' s','#1e5a9e');
-        if(t>=600) curFin_(false,'no se confirmó en 10 min — revise el registro');
+      jsonpG_(CURVAS_URL+'?action=estadoCurvas&callback=?', function(e){
+        if(!e){ return; }
+        if(e.estado==='corriendo'){
+          visto=true;
+          curSt_('etapa '+(e.paso||0)+' de '+(e.de||6)+' · '+(e.detalle||'procesando')+' · '+t+' s','#1e5a9e');
+          return;
+        }
+        if(!visto){
+          // Estado terminal de una corrida anterior: el lanzamiento aún no llegó.
+          curSt_('esperando que arranque… '+t+' s','#1e5a9e');
+          if(t>=180) curFin_(false,'el lanzamiento no llegó al servidor — pulse Reintentar');
+          return;
+        }
+        var pasos=e.pasos||[];
+        function linea(pref){ for(var i=pasos.length-1;i>=0;i--){ if(String(pasos[i]).indexOf(pref)===0) return String(pasos[i]).slice(pref.length).trim(); } return ''; }
+        var ab=linea('Reporte de abastecimiento:'), ve=linea('Reporte de vencimientos:');
+        var extra=(ab?' · abastecimiento '+ab:'')+(ve?' · vencimientos '+ve:'');
+        if(e.estado==='listo'){
+          curLeerSello_(function(g){
+            if(g && g!==CUR_GEN0) curFin_(true,'✓ curva publicada · '+String(g).slice(11)+extra);
+            else curFin_(false,'el servidor dijo listo pero el JSON no cambió — revise');
+          }, function(){ curFin_(true,'✓ listo (no se pudo releer el JSON)'+extra); });
+          return;
+        }
+        if(e.estado==='error'){
+          var ult=pasos.length?String(pasos[pasos.length-1]):'';
+          curFin_(false,'etapa '+(e.paso||'?')+': '+(e.error||'error')+(ult?' · '+ult:''));
+        }
       }, function(){
-        curSt_('procesando… '+t+' s','#1e5a9e');
-        if(t>=600) curFin_(false,'no se pudo leer la curva publicada');
+        curSt_('procesando… '+t+' s (reintentando conexión)','#1e5a9e');
       });
+      if(t>=2700) curFin_(false,'no terminó en 45 min — pulse Reintentar');
     },8000);
   }
 }
