@@ -4,7 +4,7 @@
  * - Íconos y manifiesto se guardan para que la app abra rápido.
  * - Las preguntas a YARVIS (POST a Apps Script) NUNCA pasan por la caché.
  * Al publicar cambios grandes en yarvis.html, subir el número de versión. */
-var VERSION = 'yarvis-v2';
+var VERSION = 'yarvis-v3';
 var BASICOS = ['./yarvis.html', './yarvis.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', function (e) {
