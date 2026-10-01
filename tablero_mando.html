@@ -682,6 +682,8 @@ function ueFilas(mes){
   var f=kanMes(mes), u=(f&&f.ue)||{}, tot=(S.src.kanban&&S.src.kanban.ueTotales)||{};
   return Object.keys(u).filter(function(n){ return !NO_UE.test(n); }).map(function(n){ var x=u[n], tt=tot[n]||{}; return { n:n, x:x, tt:tt }; });
 }
+/* Saldos en las unidades por nombre (reposicion_resumen.json) */
+function invUE(){ if(S._iv) return S._iv; var o={}, R=S.src.inventarioUE; if(R&&R.ues) R.ues.forEach(function(u){ o[u.ue]=u; }); S._iv=o; return o; }
 function totUE(){ var tot=(S.src.kanban&&S.src.kanban.ueTotales)||{}, o={}; Object.keys(tot).forEach(function(n){ if(!NO_UE.test(n)) o[n]=tot[n]; }); return o; }
 /* Fecha prometida por UE: sale del detalle del Kanban (kanban/tablero.json, ~1.8 MB).
    Se baja SOLO al abrir Despachos, una vez por sesión. fechaComprometida = la que fija
@@ -790,6 +792,7 @@ function dibujarMapaUE(){
         '<table style="font-size:12px;margin-top:6px;border-collapse:collapse">'+
         linea('Fill rate',fr!=null?fmt(fr,'%'):'—')+linea('A tiempo',x.on!=null&&x.s?fmt(x.on,'%'):'—')+
         linea('Despachadas en '+MES[+mes.substring(5,7)-1]+' (F8)',num(x.s||0))+linea('Pendientes hoy (F8)',num(x.p!=null?x.p:(tt.f8||0)))+linea('Atrasadas (F8)',x.v!=null?num(x.v):'—')+
+        linea('Renglones críticos (saldos)',invUE()[n]&&invUE()[n].r!=null?num(invUE()[n].r):'—')+linea('Pedir ya (saldos)',invUE()[n]&&invUE()[n].a!=null?num(invUE()[n].a):'—')+
         linea('Confirmó recibido',x.cf!=null?fmt(x.cf,'%'):'—')+linea('Última entrega en bahía',ult?fCorta(ult)+' '+ult.substring(0,4):'—')+'</table>'+
         '<div style="margin-top:6px;font-size:11px">'+chip(st,fr==null?'Sin despachos en el mes':(st==='ok'?'En meta':st==='bajo'?'Cerca de la meta':'Lejos de la meta'))+'</div></div>');
       S.mk[n]=mk; pts.push([xy.lat,xy.lng]);
@@ -853,16 +856,26 @@ function ubicarUE(nm){
 function vUE(){
   var mes=S.meses[S.idx], g=S.reg.indicadores, R=ueFilas(mes), tot=totUE();
   var h=cabecera('ue','Unidades ejecutoras','Cómo se atiende a cada unidad ejecutora y en qué no se le cumple.');
-  var nombres={}; R.forEach(function(r){ nombres[r.n]=1; }); Object.keys(tot).forEach(function(n){ nombres[n]=1; });
+  var nombres={}; R.forEach(function(r){ nombres[r.n]=1; }); Object.keys(tot).forEach(function(n){ nombres[n]=1; }); Object.keys(invUE()).forEach(function(n){ nombres[n]=1; });
   var filas=Object.keys(nombres).map(function(n){ var r=R.filter(function(z){ return z.n===n; })[0], x=r?r.x:{}, tt=tot[n]||{};
     var ult=S.ultEnt?(S.ultEnt[n]||''):'', dSin=ult?Math.max(0,Math.round((hoyPTY()-fISO(ult))/864e5)):null;
     /* columnas visibles: unidad, F8 en curso, despachadas, a tiempo, fill rate, confirmó, pendientes, última entrega, días sin entrega
        (provincia, urgentes y mensuales van al final: salen en el detalle del mapa, no en la tabla) */
-    return [n,tt.f8,x.s||0,x.on,x.fr,x.cf,x.p,ult,dSin,(S.ueProv||{})[n]||'',tt.urg,tt.mens]; });
-  filas.sort(function(a,b){ return (a[4]==null?999:a[4])-(b[4]==null?999:b[4]); });
-  var conS=filas.filter(function(r){ return r[2]>0; }).length, bajoFR=filas.filter(function(r){ return r[4]!=null && r[4]<g['9'].meta; }).length;
-  var cfs=filas.map(function(r){ return r[5]; }).filter(function(v){ return v!=null; }), cfm=cfs.length?Math.round(10*cfs.reduce(function(a,b){ return a+b; },0)/cfs.length)/10:null;
-  var nUE=filas.filter(function(r){ return r[4]!=null; }).length;
+    var iv=invUE()[n]||{};
+    return [n,iv.r!=null?iv.r:null,iv.a!=null?iv.a:null,tt.f8,x.s||0,x.on,x.fr,x.cf,x.p,ult,dSin,(S.ueProv||{})[n]||'',tt.urg,tt.mens]; });
+  filas.sort(function(a,b){ return (a[6]==null?999:a[6])-(b[6]==null?999:b[6]); });
+  var conS=filas.filter(function(r){ return r[4]>0; }).length, bajoFR=filas.filter(function(r){ return r[6]!=null && r[6]<g['9'].meta; }).length;
+  var cfs=filas.map(function(r){ return r[7]; }).filter(function(v){ return v!=null; }), cfm=cfs.length?Math.round(10*cfs.reduce(function(a,b){ return a+b; },0)/cfs.length)/10:null;
+  var nUE=filas.filter(function(r){ return r[6]!=null; }).length;
+  /* Inventario en las unidades: saldos en línea clasificados con la Calculadora de Reposición UE */
+  var RI=S.src.inventarioUE;
+  if(RI && RI.ues){ var sr=0, sa=0, sp=0, sv=0, conR=0; RI.ues.forEach(function(u){ sr+=u.r||0; sa+=u.a||0; sp+=u.p||0; sv+=u.v||0; if(u.r>0) conR++; });
+    h+='<div class="pn"><div class="ph"><h3>Inventario en las unidades ejecutoras · saldos al '+esc(fCorta(RI.corte))+' · '+num(RI.ues.length)+' unidades</h3></div><div class="kp k4">'+
+      kc(sr?'crit':'ok','Renglones críticos',num(sr),'en cero o sin cobertura para la entrega · suma de las unidades')+
+      kc(sa?'bajo':'ok','Pedir ya',num(sa),'bajo su punto de pedido')+
+      kc(conR?'crit':'ok','Unidades con renglones críticos',num(conR)+' de '+num(RI.ues.length),'incluye las del interior (CEDIS Divisa y Chiriquí)')+
+      kc('ok','Con cobertura',num(sv),'renglones cubiertos · '+num(sp)+' pedirán pronto')+'</div>'+
+      '<div class="nota">Misma clasificación de la Calculadora de Reposición UE (entrega en '+((RI.params||{}).L||20)+' días, cubrir '+((RI.params||{}).cubrir||30)+' días). Cada renglón de cada unidad cuenta una vez.</div></div>'; }
   h+='<div class="kp kf">'+kc('ok','Unidades atendidas',num(conS),'con Formas 8 despachadas en '+MESL[+mes.substring(5,7)-1])+
     kc(bajoFR?'bajo':'ok','Unidades bajo la meta de fill rate',num(bajoFR)+' de '+num(nUE),'con fill rate menor a '+g['9'].meta+'% en '+MESL[+mes.substring(5,7)-1])+
     kc('con','Confirmación de recibido',cfm!=null?fmt(cfm,'%'):'—','promedio de las unidades')+
@@ -871,7 +884,9 @@ function vUE(){
     '<div id="mapaUE"><div class="load">Cargando mapa…</div></div>'+
     '<div class="mleg"><span><i style="background:'+COL.ok[0]+'"></i>En meta (≥ '+g['9'].meta+'%)</span><span><i style="background:'+COL.bajo[0]+'"></i>Cerca de la meta</span><span><i style="background:'+COL.crit[0]+'"></i>Lejos de la meta</span><span><i style="background:'+COL.con[0]+'"></i>Sin despachos de CEDIS Panamá en el mes</span><span>Clic en un nodo para ver el detalle de la unidad. Letra: H hospital · P policlínica · C CAPPS · U ULAPS. Mancha roja: lejos de la meta; verde: en meta. Despachos de CEDIS Panamá (Kanban): las unidades del interior se atienden desde CEDIS Divisa y Chiriquí.</span></div></div>';
   var pc=function(id){ return function(v){ return v==null?'—':chip(estado(g[id],v),fmt(v,'%')); }; };
-  var cols=[{h:'Unidad ejecutora',t:'txt',w:44},{h:'F8 en curso',t:'num',w:11},{h:'Despachadas (F8)',t:'num',w:12},{h:'A tiempo',t:'dec',w:10,a:'c',html:pc('1a')},{h:'Fill rate',t:'dec',w:10,a:'c',html:pc('9')},
+  var cols=[{h:'Unidad ejecutora',t:'txt',w:44},
+    {h:'Renglones críticos',t:'num',w:11,a:'c',html:function(v){ return v==null?'—':(v?'<b style="color:#9b1c1c">'+num(v)+'</b>':'0'); }},{h:'Pedir ya',t:'num',w:9,a:'c',vacio:'—'},
+    {h:'F8 en curso',t:'num',w:11},{h:'Despachadas (F8)',t:'num',w:12},{h:'A tiempo',t:'dec',w:10,a:'c',html:pc('1a')},{h:'Fill rate',t:'dec',w:10,a:'c',html:pc('9')},
     {h:'Confirmó recibido',t:'dec',w:12,a:'c',html:function(v){ return v==null?'—':esc(fmt(v,'%')); }},{h:'Pendientes (F8)',t:'num',w:12},
     {h:'Última entrega',t:'txt',w:13,a:'c',vacio:S.entErr?'No disponible':(S.ultEnt?'Sin registro':'Consultando…'),html:function(v){ return v?esc(fCorta(v)):''; }},{h:'Días sin entrega',t:'num',w:11,vacio:'—'}];
   h+='<div class="pn"><div class="ph"><h3>Nivel de servicio por unidad · '+esc(mesLabel(mes))+' · clic en una fila para ubicarla</h3><button type="button" data-xls="ue">Excel (todas)</button></div>'+
