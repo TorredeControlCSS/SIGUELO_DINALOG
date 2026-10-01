@@ -52,6 +52,10 @@
   .header p { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
   .inicio { cursor: pointer; }
   .header .inicio:hover h1 { text-decoration: underline; text-underline-offset: 4px; }
+  /* 01-oct-2026 · acceso al Tablero de Mando de la Dirección */
+  .header .mando { margin-left: auto; display: flex; align-items: center; gap: 8px; background: #fff; color: var(--azul);
+    text-decoration: none; font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 3px; white-space: nowrap; }
+  .header .mando:hover { background: #e8f0f9; }
 
   /* ---------- LIENZO CON MARCA DE AGUA (se conserva) ---------- */
   .lienzo { position: relative; min-height: calc(100vh - 130px); overflow: hidden; }
@@ -218,6 +222,7 @@
     <h1>SIGUELO &mdash; Portal Central DINALOG</h1>
     <p>Sistema Integrado de Gesti&oacute;n Unificada y Evaluaci&oacute;n Log&iacute;stica &middot; Direcci&oacute;n Nacional de Log&iacute;stica</p>
   </div>
+  <a class="mando" href="tablero_mando.html" title="Indicadores del Plan Estratégico">Tablero de Mando de la Direcci&oacute;n &rarr;</a>
 </div>
 
 <div class="lienzo">
