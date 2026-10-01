@@ -116,7 +116,9 @@ main{max-width:1600px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 .kp.k3{grid-template-columns:repeat(3,minmax(0,1fr))}.kp.kf{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.3fr)}
 .kc.fil{background:#fff}.kc.fil input{width:100%;min-height:30px;border:1px solid var(--bd);padding:0 8px;font-size:13px;font-family:inherit}
 .duo{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:10px;align-items:stretch}
-.duo3{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.duo3{display:grid;grid-template-columns:minmax(0,2.6fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.duo3 .chev{flex:1}.duo3 .chev div{justify-content:center}
+.tri .pn{justify-content:flex-start}.tri .pn .nota{margin-top:auto}.tri .pn>.cuerpo{flex:1;display:flex;align-items:center}
 .tri{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .cb{position:relative}.cb input{width:100%;min-height:30px;border:1px solid var(--bd);padding:0 52px 0 8px;font-size:13px;font-family:inherit}
 .cb .cbx,.cb .cbt{position:absolute;top:0;height:30px;width:24px;border:none;background:transparent;cursor:pointer;color:var(--tx2);font-size:13px}.cb .cbt{right:2px}.cb .cbx{right:26px}
@@ -899,7 +901,7 @@ function lineas(P,g){
 function dona(titulo,partes,nota){
   var tot=partes.reduce(function(a,p){ return a+p.n; },0), r=46, C=2*Math.PI*r, acc=0;
   var arcs=partes.filter(function(p){ return p.n>0; }).map(function(p){ var f=p.n/tot, s='<circle r="'+r+'" cx="60" cy="60" fill="none" stroke="'+p.c+'" stroke-width="22" stroke-dasharray="'+(f*C).toFixed(2)+' '+C.toFixed(2)+'" stroke-dashoffset="'+(-acc*C).toFixed(2)+'" transform="rotate(-90 60 60)"><title>'+esc(p.l)+': '+p.n+'</title></circle>'; acc+=f; return s; }).join('');
-  return '<div class="pn" style="flex:1 1 280px;min-width:0"><div class="ph"><h3>'+esc(titulo)+'</h3></div><div style="display:flex;align-items:center;gap:14px">'+
+  return '<div class="pn" style="flex:1 1 280px;min-width:0"><div class="ph"><h3>'+esc(titulo)+'</h3></div><div class="cuerpo" style="display:flex;align-items:center;gap:14px;flex:1">'+
     '<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="'+esc(titulo)+'">'+arcs+'<text x="60" y="58" text-anchor="middle" font-size="20" font-weight="700" font-family="Consolas,monospace" fill="#1c1c1c">'+tot+'</text><text x="60" y="74" text-anchor="middle" font-size="10" fill="#4a4a4a">total</text></svg>'+
     '<div style="display:flex;flex-direction:column;gap:5px;font-size:12px">'+partes.map(function(p){ return '<div><i style="display:inline-block;width:11px;height:11px;background:'+p.c+';margin-right:6px;vertical-align:middle"></i>'+esc(p.l)+' · <b style="font-family:Consolas,monospace">'+p.n+'</b>'+(tot?' ('+Math.round(100*p.n/tot)+'%)':'')+'</div>'; }).join('')+'</div></div>'+
     (nota?'<div class="nota">'+esc(nota)+'</div>':'')+'</div>';
@@ -997,9 +999,8 @@ function vPres(){
     '<div class="nota">Las etapas sin fuente dependen de que Finanzas registre el trámite de pago.</div></div>';
   /* Serie de tiempo de #5: línea mes a mes con su valor y la meta rotulada */
   var ms=I5?Object.keys(I5.serie).sort():[];
-  var izq='<div class="pn" style="min-width:0"><div class="ph"><h3>Cumplimiento de entrega de proveedores · '+(ms[0]||'').substring(0,4)+'</h3></div>'+
-    lineas(ms.map(function(m){ return { l:MES[+m.substring(5,7)-1], v:I5.serie[m].v }; }),g5)+
-    '<div class="nota">Entregas a tiempo ÷ entregas comparables, por mes de recepción. '+(corteE?'Último corte: '+fCorta(corteE)+'.':'')+'</div></div>';
+  var izq='<div class="pn" style="min-width:0"><div class="ph"><h3>Proveedores a tiempo por mes · '+(ms[0]||'').substring(0,4)+(corteE?' · corte '+fCorta(corteE):'')+'</h3></div>'+
+    lineas(ms.map(function(m){ return { l:MES[+m.substring(5,7)-1], v:I5.serie[m].v }; }),g5)+'</div>';
   /* tabla por proveedor */
   var P={};
   if(ent&&ent.rows) ent.rows.forEach(function(x){ var k=x.prov||'(sin proveedor)'; if(!P[k]) P[k]={ v:0, oc:{}, a:0, n:0, late:[], ult:'' };
@@ -1030,18 +1031,18 @@ function proveedoresBajos(n){
 function accionSugerida(id){
   var k=S.src.kanban, est=(k&&k.estado)||{}, red=S.src.redistribucion, rk=red&&red.kpi, inv=S.src.inventario;
   switch(id){
-    case '1a': return est.vencidosConStock ? 'Despachar las '+num(est.vencidosConStock)+' Formas 8 atrasadas que ya tienen producto en el almacén.' : 'Revisar la fase del Kanban con más pedidos atrasados.';
-    case '1b': return est.vencidosCero ? num(est.vencidosCero)+' Formas 8 atrasadas esperan producto: priorizar sus renglones en compras y traslados.' : 'Revisar renglones con faltante en los pedidos del mes.';
-    case '9': return 'Revisar los renglones con mayor cantidad no asignada y su cobertura en los tres CEDIS.';
+    case '1a': return est.vencidosConStock ? 'Despachar las **'+num(est.vencidosConStock)+' Formas 8 atrasadas** que **ya tienen producto** en el almacén.' : 'Revisar la fase del Kanban con más pedidos atrasados.';
+    case '1b': return est.vencidosCero ? '**'+num(est.vencidosCero)+' Formas 8 atrasadas esperan producto**: priorizar sus renglones en **compras y traslados**.' : 'Revisar renglones con faltante en los pedidos del mes.';
+    case '9': return 'Revisar los renglones con **mayor cantidad no asignada** y su cobertura en los tres CEDIS.';
     case '2': { var n=0, c={}; if(red&&red.f) red.f.forEach(function(x){ if(x.destinoEnCero && /PANAMA/i.test(x.destino) && !c[x.cod]){ c[x.cod]=1; n++; } });
-      return (inv&&inv.indicadores['2']?inv.indicadores['2'].detalle+'. ':'')+(n?num(n)+' de ellos se pueden surtir hoy desde otro CEDIS (Planificación).':''); }
-    case '3': return 'Cruzar los renglones de menor cobertura con las órdenes de compra en tránsito (Tránsitos de OC).';
-    case '5': { var L=proveedoresBajos(3); return L.length ? 'Gestionar con los proveedores de mayor valor bajo meta: '+L.map(function(x){ return x.p+' ('+fmt(x.pct,'%')+')'; }).join(', ')+'.' : 'Revisar los proveedores bajo meta.'; }
+      return (inv&&inv.indicadores['2']?'**'+inv.indicadores['2'].detalle+'**. ':'')+(n?'**'+num(n)+'** de ellos se pueden **surtir hoy desde otro CEDIS** (Planificación).':''); }
+    case '3': return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra en tránsito** (Tránsitos de OC).';
+    case '5': { var L=proveedoresBajos(3); return L.length ? 'Gestionar con los proveedores de mayor valor bajo meta: '+L.map(function(x){ return '**'+x.p+'** ('+fmt(x.pct,'%')+')'; }).join(', ')+'.' : 'Revisar los proveedores bajo meta.'; }
     case '6': return 'Separar el tiempo de pedidos mensuales y urgencias para medir contra su meta.';
     case '7': return 'Sostener el ritmo de salidas del almacén.';
-    case '8': return rk ? 'Ejecutar los '+num(rk.urgentes)+' traslados urgentes entre CEDIS ('+num(rk.unidadesUrgentes)+' unidades).' : 'Ejecutar los traslados urgentes entre CEDIS.';
-    case '10': return (inv&&inv.indicadores['10']?inv.indicadores['10'].detalle+': ':'')+'redistribuir a unidades con consumo antes de su vencimiento.';
-    case '4': return 'Pendiente de los datos de Finanzas (cifra preliminar del Plan).';
+    case '8': return rk ? 'Ejecutar los **'+num(rk.urgentes)+' traslados urgentes** entre CEDIS ('+num(rk.unidadesUrgentes)+' unidades).' : 'Ejecutar los traslados urgentes entre CEDIS.';
+    case '10': return (inv&&inv.indicadores['10']?'**'+inv.indicadores['10'].detalle+'**: ':'')+'**redistribuir** a unidades con consumo antes de su vencimiento.';
+    case '4': return '**Pendiente de los datos de Finanzas** (cifra preliminar del Plan).';
   }
   return '';
 }
@@ -1051,25 +1052,29 @@ function vAlertas(){
   ['1a','1b','9','2','3','4','5','6','7','8','10'].forEach(function(id){
     var g=S.reg.indicadores[id], x=valorEn(id,mes); if(!x||x.vacio||x.v==null) return;
     var st=estado(g,x.v); if(st==='ok') return;
-    filas.push([id+' · '+g.nombre,x.v,(g.dir==='up'?'≥ ':'≤ ')+fmt(g.meta,g.unidad),textoGap(g,x.v).replace(' para llegar a la meta',''),st,accionSugerida(id),g.responsable||'',id]);
+    var pa=valorEn(id,mesAnt(mes)), dv=(pa&&!pa.vacio&&pa.v!=null&&!(pa.corte&&pa.corte===x.corte))?x.v-pa.v:null;
+    filas.push([id+' · '+g.nombre,x.v,(g.dir==='up'?'≥ ':'≤ ')+fmt(g.meta,g.unidad),textoGap(g,x.v).replace(' para llegar a la meta',''),st,accionSugerida(id),g.responsable||'',id,dv]);
   });
   filas.sort(function(a,b){ return (a[4]==='crit'?0:1)-(b[4]==='crit'?0:1); });
   var nR=vitalesRenglones();
   h+='<div class="kp k3">'+kc(filas.length?'crit':'ok','Indicadores fuera de meta',String(filas.length),'en '+MESL[+mes.substring(5,7)-1])+
     '<a href="#plan" data-go="plan" style="text-decoration:none;color:inherit">'+kc(nR?'crit':'ok','Renglones vitales en cero en al menos un CEDIS',num(nR),'con traslado posible hoy · ver Planificación →')+'</a>'+
     kc(est.vencidosConStock?'bajo':'ok','Pedidos atrasados con producto',num(est.vencidosConStock),'Formas 8 que pasaron su fecha de entrega y ya tienen producto')+'</div>';
-  var cols=[{h:'Indicador',t:'txt',w:38},{h:'Valor',t:'dec',w:10,html:function(v,r){ return esc(fmt(v,S.reg.indicadores[r[7]].unidad)); }},
-    {h:'Meta',t:'txt',w:10},{h:'Distancia',t:'txt',w:16},{h:'Nivel',t:'txt',w:10,html:function(v){ return chip(v,v==='crit'?'Crítico':'Bajo meta'); }},
-    {h:'Acción sugerida por los datos',t:'txt',w:70},{h:'Responsable',t:'txt',w:22,vacio:'Por definir'}];
+  var cols=[{h:'Indicador',t:'txt',w:38},{h:'Valor',t:'dec',w:16,html:function(v,r){ var g=S.reg.indicadores[r[7]], d=r[8], tri='';
+      if(d!=null && Math.abs(d)>=0.05){ var mejor=g.dir==='up'?d>0:d<0; tri=' <span title="frente al mes anterior" style="font-size:11px;font-weight:700;color:'+(mejor?'#1d5a27':'#9b1c1c')+'">'+(d>0?'▲':'▼')+' '+fmt(Math.abs(d),uGap(g.unidad))+'</span>'; }
+      else if(d!=null) tri=' <span style="font-size:11px;color:#6a6a6a">= igual</span>';
+      return '<b style="font-family:Consolas,monospace">'+esc(fmt(v,g.unidad))+'</b>'+tri; }},
+    {h:'Meta',t:'txt',w:10},{h:'Distancia',t:'txt',w:16,html:function(v,r){ var g=S.reg.indicadores[r[7]]; return '<span style="font-weight:700;color:#9b1c1c">'+(g.dir==='up'?'▲':'▼')+'</span> '+esc(v); }},{h:'Nivel',t:'txt',w:10,html:function(v){ return chip(v,v==='crit'?'Crítico':'Bajo meta'); }},
+    {h:'Acción sugerida por los datos',t:'txt',w:70,html:function(v){ return esc(v).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>'); }},{h:'Responsable',t:'txt',w:22,vacio:'Por definir'}];
   h+='<div class="pn"><div class="ph"><h3>Indicadores fuera de meta · '+esc(mesLabel(mes))+'</h3><button type="button" data-xls="ind">Excel</button></div>'+
     tabla('ind',cols,filas.map(function(r){ return r; }))+
-    '<div class="nota">La acción sugerida se calcula con los datos del momento de cada fuente. Responsable: pendiente de la lista de responsables por indicador.</div></div>';
+    '<div class="nota">La acción sugerida se calcula con los datos del momento de cada fuente. ▲▼ junto al valor: cambio frente al mes anterior (verde mejora, rojo empeora). En Distancia, la flecha indica hacia dónde debe moverse el indicador.</div></div>';
   return h;
 }
 function exportarTabla(key){
   var T=TABLAS[key]; if(!T) return;
   var nom={ ind:['Indicadores_fuera_de_meta','Indicadores fuera de meta y acción sugerida'], plan:['Vitales_CEDIS_en_cero_planificacion','Vitales con un CEDIS en cero: inventario y cobertura nacional'], desp:['Despachos_por_unidad','Despachos por unidad ejecutora'], ue:['Nivel_servicio_por_unidad','Nivel de servicio por unidad ejecutora'], prov:['Proveedores_recibido','Proveedores: recibido y cumplimiento de entrega'] }[key];
-  var filas=T.filas.map(function(r){ return r.slice(0,T.cols.length).map(function(v,i){ var c=T.cols[i]; if(key==='ind'&&i===4) return v==='crit'?'Crítico':'Bajo meta'; return (v===''||v==null)?(c.vacio||''):v; }); });
+  var filas=T.filas.map(function(r){ return r.slice(0,T.cols.length).map(function(v,i){ var c=T.cols[i]; if(key==='ind'&&i===4) return v==='crit'?'Crítico':'Bajo meta'; if(typeof v==='string') v=v.replace(/\*\*/g,''); return (v===''||v==null)?(c.vacio||''):v; }); });
   xlsInstitucional(nom[0],nom[1],[],T.cols.map(function(c){ return { h:c.h, t:c.t, w:c.w }; }),filas);
 }
 
