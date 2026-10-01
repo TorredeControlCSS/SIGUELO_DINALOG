@@ -112,14 +112,17 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 .vh a{font-size:12px;font-weight:700}
 .kp{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .kp.k3{grid-template-columns:repeat(3,minmax(0,1fr))}.kp.k4{grid-template-columns:repeat(4,minmax(0,1fr))}
-.kc{border:1px solid var(--bd);padding:7px 10px;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:center;min-width:0}
-.kc .v{grid-row:1/3;grid-column:1}.kc .l{grid-column:2}.kc .s{grid-column:2}
+.kc{border:1px solid var(--bd);padding:6px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kc .vs{display:flex;align-items:baseline;gap:8px;min-width:0}
+.kc .v{white-space:nowrap}.kc .s{line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.kc .l{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kc .l{font-size:12px;font-weight:700;color:var(--tx2)}.kc .v{font-family:var(--mono);font-size:20px;font-weight:700}.kc .s{font-size:11px;color:var(--tx3)}
 .pn{background:#fff;border:1px solid var(--bd);padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .pn .ph{display:flex;align-items:center;gap:10px}.pn .ph h3{margin:0;font-size:13px;font-weight:700;color:var(--az);flex-grow:1}
 .pn .ph button{min-height:28px;padding:0 10px;background:#fff;color:var(--az);border:1px solid var(--az);font-size:12px;font-weight:600;cursor:pointer}
 .pn .nota{font-size:11px;color:var(--tx3)}
-.tw{overflow-x:auto}
+.tw{overflow:auto;max-height:460px;border:1px solid #e3e3e3}
+table.t thead th{position:sticky;top:0;z-index:2}
 table.t{border-collapse:collapse;width:100%;font-size:12px}
 table.t th{background:var(--az);color:#fff;text-align:left;padding:7px 8px;font-weight:600;white-space:nowrap}
 table.t td{border-bottom:1px solid #d9d9d9;padding:6px 8px;vertical-align:top}
@@ -290,12 +293,14 @@ function evaluarFuentes(){
     if(j){
       var ref = f.id==='kanban' ? String(j.generado||'').substring(0,10)
               : f.id==='recepcion' ? ((j._meta&&j._meta.corte)||'')
+              : f.id==='transitos' ? String((j._meta&&j._meta.generado)||'').substring(0,10)
               : f.id==='redistribucion' ? ((j.kpi&&j.kpi.corte)||'')
               : (j.corte||'');
       var d=fISO(ref); e.ref=ref; e.dh = d ? diasHabiles(d,hoy) : 99; e.stale = e.dh > f.diasHabilesMax;
       var g='';
       if(f.id==='redistribucion' && j.generado){ g=new Date(j.generado).toLocaleString('sv-SE',{timeZone:'America/Panama'}); }
       else if(f.id==='recepcion'){ g=(j._meta&&j._meta.generado)||''; }
+      else if(f.id==='transitos'){ g=String((j._meta&&j._meta.generado)||'').replace(' PTY',''); }
       else if(f.tipo!=='manual'){ g=String(j.generado||''); }
       g=String(g).substring(0,16);
       if(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(g) && g>mayor) mayor=g;
@@ -514,16 +519,16 @@ var DETALLE={ alertas:'https://torredecontrolcss.github.io/REPOSICION_UE_CSS/red
 var TABLAS={};
 function bal(x){ return 'B/. '+(Math.abs(x)>=1e6 ? (Math.round(x/1e5)/10).toLocaleString('en-US')+' MM' : Math.round(x).toLocaleString('en-US')); }
 function num(x){ return Number(x||0).toLocaleString('en-US'); }
-function kc(est,l,v,s){ var c=COL[est]||COL.con; return '<div class="kc" style="background:'+c[2]+'"><div class="l">'+esc(l)+'</div><div class="v" style="color:'+c[1]+'">'+v+'</div><div class="s">'+esc(s)+'</div></div>'; }
+function kc(est,l,v,s){ var c=COL[est]||COL.con; return '<div class="kc" style="background:'+c[2]+'"><div class="l">'+esc(l)+'</div><div class="vs"><div class="v" style="color:'+c[1]+'">'+v+'</div><div class="s">'+esc(s)+'</div></div></div>'; }
 function chip(est,txt){ var m={ ok:['#d6ecd6','#1d5a27'], bajo:['#fbe0bd','#7a4a00'], crit:['#f5cccc','#9b1c1c'], con:['#dcdcdc','#2e2e2e'] }[est]; return '<span class="ch" style="background:'+m[0]+';color:'+m[1]+'">'+esc(txt)+'</span>'; }
 function cabecera(v,titulo,pregunta){ return '<div class="vh"><h2>'+esc(titulo)+'</h2><p>'+esc(pregunta)+'</p><a href="'+DETALLE[v]+'" target="_blank" rel="noopener">Ver detalle en el tablero operativo ↗</a></div>'; }
 /* Tablas: todas se ordenan con clic en el encabezado (ascendente / descendente).
    El orden se aplica a la lista completa; el recorte de filas visibles va después. */
-function celda(c,v,r){ var h=(c.html&&c.html(v,r))||(v===''||v==null?'<span class="sf">'+esc(c.vacio||'')+'</span>':esc(c.t==='num'?num(v):c.t==='dec'?fmt(v,''):v)); return '<td'+(c.t&&c.t!=='txt'?' class="n"':'')+'>'+h+'</td>'; }
+function celda(c,v,r){ if(c.a==='c'){ var h0=(c.html&&c.html(v,r))||(v===''||v==null?'<span class="sf">'+esc(c.vacio||'')+'</span>':esc(c.t==='num'?num(v):c.t==='dec'?fmt(v,''):v)); return '<td style="text-align:center">'+h0+'</td>'; } var h=(c.html&&c.html(v,r))||(v===''||v==null?'<span class="sf">'+esc(c.vacio||'')+'</span>':esc(c.t==='num'?num(v):c.t==='dec'?fmt(v,''):v)); return '<td'+(c.t&&c.t!=='txt'?' class="n"':'')+'>'+h+'</td>'; }
 function htmlTabla(key){
-  var T=TABLAS[key], fs=T.max?T.filas.slice(0,T.max):T.filas;
+  var T=TABLAS[key], fs=T.filas;   /* todas las filas; la caja tiene su propio desplazamiento */
   return '<table class="t"><thead><tr>'+T.cols.map(function(c,i){ var ar=T.oc===i?(T.od>0?'▲':'▼'):'⇅';
-      return '<th class="so" data-k="'+key+'" data-c="'+i+'" title="Ordenar">'+esc(c.h)+'<span class="ar">'+ar+'</span></th>'; }).join('')+'</tr></thead><tbody>'+
+      return '<th class="so" data-k="'+key+'" data-c="'+i+'" title="Ordenar"'+(c.a==='c'?' style="text-align:center"':'')+'>'+esc(c.h)+'<span class="ar">'+ar+'</span></th>'; }).join('')+'</tr></thead><tbody>'+
     fs.map(function(r){ return '<tr>'+r.slice(0,T.cols.length).map(function(v,i){ return celda(T.cols[i],v,r); }).join('')+'</tr>'; }).join('')+'</tbody></table>';
 }
 function tabla(key,cols,filas,maxFilas){
@@ -544,7 +549,7 @@ function vista(v){
   Array.prototype.forEach.call(document.querySelectorAll('nav .tab'),function(b){ b.classList.toggle('on',b.getAttribute('data-v')===v); });
   $('navm').style.display = v==='panel' ? '' : 'none';
   if(v!=='panel'){ var el=$('v-'+v); if(el.dataset.mes!==S.meses[S.idx]){ el.innerHTML=({ alertas:vAlertas, pres:vPres, desp:vDesp, ue:vUE, plan:vPlan }[v])(v); el.dataset.mes=S.meses[S.idx];
-      if(v==='ue'){ if(!S.ueProv){ cargarProv().then(function(){ el.dataset.mes=''; if(!el.hidden) vista('ue'); }); } else dibujarMapaUE(); } } }
+      if(v==='ue'){ if(!S.ueProv || (!S.ultEnt && !S.entErr)){ Promise.all([cargarProv(),cargarEntregas()]).then(function(){ el.dataset.mes=''; if(!el.hidden) vista('ue'); }); } else dibujarMapaUE(); } } }
   if(location.hash!=='#'+v) history.replaceState(null,'','#'+v);
   window.scrollTo(0,0);
 }
@@ -596,12 +601,12 @@ function vDesp(){
   if(!f||!f.salidas){ var pm=mesAnt(mes); h+='<div class="pn"><div class="ph"><h3>'+esc(mesLabel(mes))+'</h3></div><div style="font-size:13px">Sin salidas registradas aún en '+esc(MESL[+mes.substring(5,7)-1])+'. Seleccione '+esc(MESL[+pm.substring(5,7)-1])+' en el panel ejecutivo para ver el cierre del mes anterior.</div></div>'; return h; }
   var g=S.reg.indicadores;
   h+='<div class="kp">'+
-    kc(estado(g['1a'],f['1a']),'A tiempo',fmt(f['1a'],'%'),'meta ≥ '+g['1a'].meta+'% (provisional)')+
-    kc(estado(g['1b'],f['1b']),'Completo',fmt(f['1b'],'%'),'meta ≥ '+g['1b'].meta+'% (provisional)')+
-    kc(estado(g['9'],f['9']),'Fill rate',fmt(f['9'],'%'),'asignado ÷ solicitado · meta ≥ '+g['9'].meta+'%')+
-    kc('con','A tiempo y completo (OTIF)',f.otif!=null?fmt(f.otif,'%'):'—','las dos condiciones a la vez')+
-    kc('con','Formas 8 despachadas',num(f.salidas),'salidas del almacén · '+mesLabel(mes))+
-    kc(est.vencidos?'bajo':'ok','Formas 8 pendientes hoy',num(est.pendientes),num(est.vencidos)+' atrasadas (pasó su fecha de entrega) · '+num(est.vencidosConStock)+' de ellas con producto')+'</div>'+
+    kc(estado(g['1a'],f['1a']),'A tiempo',fmt(f['1a'],'%'),'meta ≥ '+g['1a'].meta+'% · prov.')+
+    kc(estado(g['1b'],f['1b']),'Completo',fmt(f['1b'],'%'),'meta ≥ '+g['1b'].meta+'% · prov.')+
+    kc(estado(g['9'],f['9']),'Fill rate',fmt(f['9'],'%'),'meta ≥ '+g['9'].meta+'%')+
+    kc('con','OTIF (a tiempo y completo)',f.otif!=null?fmt(f.otif,'%'):'—','ambas a la vez')+
+    kc('con','Formas 8 despachadas',num(f.salidas),mesLabel(mes))+
+    kc(est.vencidos?'bajo':'ok','Formas 8 pendientes hoy',num(est.pendientes),num(est.vencidos)+' atrasadas · '+num(est.vencidosConStock)+' con producto')+'</div>'+
     (S.promEstado==='ok' ? (function(){ var con=0; Object.keys(S.prom).forEach(function(k){ con+=S.prom[k].con; });
       return '<div class="pn" style="flex-direction:row;align-items:center;gap:12px"><b style="font-size:13px;color:#0C447C">Compromisos de entrega</b><span style="font-size:13px">'+
         num(con)+' Formas 8 pendientes tienen fecha prometida en el Kanban; '+num(Math.max(0,(est.vencidos||0)-con))+' atrasadas siguen sin fecha.</span></div>'; })() : '');
@@ -615,69 +620,122 @@ function vDesp(){
     {h:'Dónde pierde más',t:'txt',w:28},{h:'Pendientes (F8)',t:'num',w:12},{h:'Atrasadas (F8)',t:'num',w:12},
     {h:'Cuándo se le cumple',t:'txt',w:24,html:function(v){ return v==='Sin fecha prometida'?'<span style="color:#9b1c1c;font-weight:700">'+esc(v)+'</span>':esc(v); }}];
   h+='<div class="pn"><div class="ph"><h3>A quién no le he cumplido y por qué · '+esc(mesLabel(mes))+' · peor primero</h3><button type="button" data-xls="desp">Excel (todas)</button></div>'+
-    tabla('desp',cols,filas,15)+
-    '<div class="nota">Ordenado por OTIF de menor a mayor. "Dónde pierde más" compara cuánto le falta a la salida a tiempo del almacén y cuánto al producto completo. Pendientes y atrasadas son Formas 8 (documentos) en la foto de hoy; "atrasada" es la que pasó su fecha de entrega, no un producto vencido. "Cuándo se le cumple" es la fecha prometida que fija el supervisor en el Kanban (F. prometida); un pedido vencido sin fecha prometida no tiene compromiso de entrega. '+num(filas.length)+' unidades con salidas en el mes; el Excel trae todas.</div></div>';
+    tabla('desp',cols,filas)+
+    '<div class="nota">Ordenado por OTIF de menor a mayor. "Dónde pierde más" compara cuánto le falta a la salida a tiempo del almacén y cuánto al producto completo. Pendientes y atrasadas son Formas 8 (documentos) en la foto de hoy; "atrasada" es la que pasó su fecha de entrega, no un producto vencido. "Cuándo se le cumple" es la fecha prometida que fija el supervisor en el Kanban (F. prometida); un pedido vencido sin fecha prometida no tiene compromiso de entrega. '+num(filas.length)+' unidades con despachos en el mes.</div></div>';
   return h;
 }
 /* Unidades ejecutoras: cómo se atiende a cada una, con mapa de calor por provincia */
-var UEPROV_URL='ue_provincias.json', POLI_URL='polygons_provincias.js';
+var UEPROV_URL='ue_provincias.json', COORD_URL='ue_coordenadas.json', POLI_URL='polygons_provincias.js';
 function cargarProv(){ if(!S.provP) S.provP=cargar(UEPROV_URL).then(function(j){ S.ueProv=j.ue||{}; }).catch(function(){ S.ueProv={}; }); return S.provP; }
 function cargarMapaDatos(){
   if(S.mapaEstado) return S.mapaEstado;
-  S.mapaEstado=Promise.all([ lib('leaf'), cargarProv(),
-    new Promise(function(res,rej){ if(typeof PROVINCIAS_POLIGONOS!=='undefined') return res(); var s=document.createElement('script'); s.src=POLI_URL; s.onload=res; s.onerror=function(){ rej(new Error('No se pudieron cargar los polígonos')); }; document.head.appendChild(s); }) ]);
+  S.mapaEstado=Promise.all([ lib('leaf').then(function(){ return lib('heat').catch(function(){}); }), cargarProv(),
+    cargar(COORD_URL).then(function(j){ S.ueXY=j.ue||{}; }),
+    new Promise(function(res){ if(typeof PROVINCIAS_POLIGONOS!=='undefined') return res(); var s=document.createElement('script'); s.src=POLI_URL; s.onload=res; s.onerror=res; document.head.appendChild(s); }) ]);
   return S.mapaEstado;
 }
-function agregadoProvincias(mes){
-  var A={}; ueFilas(mes).forEach(function(r){
-    if(/^CEDIS/i.test(r.n)) return; var pv=(S.ueProv||{})[r.n]; if(!pv) return; var x=r.x; if(!x.s) return;
-    if(!A[pv]) A[pv]={ s:0, fr:0, on:0, n:0, p:0 }; var a=A[pv]; a.s+=x.s; a.n++; a.p+=x.p||0;
-    if(x.fr!=null) a.fr+=x.fr*x.s; if(x.on!=null) a.on+=x.on*x.s; });
-  Object.keys(A).forEach(function(k){ var a=A[k]; a.fr=Math.round(10*a.fr/a.s)/10; a.on=Math.round(10*a.on/a.s)/10; });
-  return A;
-}
+/* Mapa de nivel de servicio: un nodo por unidad ejecutora (coordenadas de Mi Farma Digital),
+   coloreado por su fill rate del mes, más un mapa de calor (rojo: lejos de la meta; verde: en meta).
+   Clic en el nodo: el detalle de la unidad. Los CEDIS como solicitantes no se dibujan. */
 function dibujarMapaUE(){
-  var mes=S.meses[S.idx], g=S.reg.indicadores['9'];
+  var mes=S.meses[S.idx], g9=S.reg.indicadores['9'], g1=S.reg.indicadores['1a'];
   cargarMapaDatos().then(function(){
     var el=$('mapaUE'); if(!el) return;
     if(S.mapa){ S.mapa.remove(); S.mapa=null; }
-    var L=window.L, m=L.map('mapaUE',{scrollWheelZoom:false,attributionControl:true}).setView([8.45,-80.1],7); S.mapa=m;
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:12,attribution:'© OpenStreetMap'}).addTo(m);
-    var A=agregadoProvincias(mes), capa=[];
-    PROVINCIAS_POLIGONOS.forEach(function(pp){
-      var a=A[pp.prov], st=a?estado(g,a.fr):'con', col=COL[st][0];
-      var gj=L.geoJSON(pp.geometry,{style:{color:'#555',weight:1,fillColor:col,fillOpacity:a?0.55:0.15}}).addTo(m);
-      gj.bindTooltip('<b>'+esc(pp.prov)+'</b><br>'+(a?('Fill rate '+fmt(a.fr,'%')+' · a tiempo '+fmt(a.on,'%')+'<br>'+a.n+' unidades · '+num(a.s)+' Formas 8 despachadas · '+num(a.p)+' pendientes'):'Sin despachos de CEDIS Panamá en el mes'),{sticky:true});
-      capa.push(gj);
+    el.innerHTML='';
+    var L=window.L, m=L.map('mapaUE',{scrollWheelZoom:false}).setView([8.45,-80.1],7); S.mapa=m;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:16,attribution:'© OpenStreetMap'}).addTo(m);
+    if(typeof PROVINCIAS_POLIGONOS!=='undefined') PROVINCIAS_POLIGONOS.forEach(function(pp){ L.geoJSON(pp.geometry,{style:{color:'#7a8899',weight:1,fill:false},interactive:false}).addTo(m); });
+    var tot=(S.src.kanban&&S.src.kanban.ueTotales)||{}, F={}; ueFilas(mes).forEach(function(r){ F[r.n]=r.x; });
+    var nombres={}; Object.keys(F).forEach(function(n){ nombres[n]=1; }); Object.keys(tot).forEach(function(n){ nombres[n]=1; });
+    var malo=[], bueno=[], pts=[], sinXY=[];
+    Object.keys(nombres).forEach(function(n){
+      if(/^CEDIS/i.test(n)) return;
+      var xy=(S.ueXY||{})[n]; if(!xy){ sinXY.push(n); return; }
+      var x=F[n]||{}, fr=(x.s>0 && x.fr!=null)?x.fr:null, st=fr==null?'con':estado(g9,fr), col=COL[st][0];
+      if(fr!=null){ if(fr<g9.meta) malo.push([xy.lat,xy.lng,Math.max(0.2,(g9.meta-fr)/g9.meta)]); else bueno.push([xy.lat,xy.lng,Math.max(0.2,Math.min(1,(fr-g9.meta)/(100-g9.meta)+0.3))]); }
+      var letra=({'CAPPS':'C','Hospital':'H','Policlínica':'P','ULAPS':'U'}[xy.tipo])||(xy.tipo?xy.tipo.charAt(0).toUpperCase():'•');
+      var mk=L.marker([xy.lat,xy.lng],{icon:L.divIcon({className:'',iconSize:[22,22],iconAnchor:[11,11],
+        html:'<div style="width:22px;height:22px;border-radius:50%;background:'+col+';border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#fff;font:700 11px Segoe UI,Arial">'+letra+'</div>'})}).addTo(m);
+      var tt=tot[n]||{}, ult=S.ultEnt?(S.ultEnt[n]||''):'';
+      var linea=function(k,v){ return '<tr><td style="color:#4a4a4a;padding:1px 8px 1px 0">'+k+'</td><td style="font-family:Consolas,monospace;text-align:right">'+v+'</td></tr>'; };
+      mk.bindPopup('<div style="min-width:230px;font-family:Segoe UI,Arial"><b style="color:#0C447C">'+esc(n)+'</b><br><span style="font-size:11px;color:#666">'+esc(xy.nombre)+' · '+esc((S.ueProv||{})[n]||'')+'</span>'+
+        '<table style="font-size:12px;margin-top:6px;border-collapse:collapse">'+
+        linea('Fill rate',fr!=null?fmt(fr,'%'):'—')+linea('A tiempo',x.on!=null&&x.s?fmt(x.on,'%'):'—')+
+        linea('Despachadas en '+MES[+mes.substring(5,7)-1]+' (F8)',num(x.s||0))+linea('Pendientes hoy (F8)',num(x.p!=null?x.p:(tt.f8||0)))+linea('Atrasadas (F8)',x.v!=null?num(x.v):'—')+
+        linea('Confirmó recibido',x.cf!=null?fmt(x.cf,'%'):'—')+linea('Última entrega en bahía',ult?fCorta(ult)+' '+ult.substring(0,4):'—')+'</table>'+
+        '<div style="margin-top:6px;font-size:11px">'+chip(st,fr==null?'Sin despachos en el mes':(st==='ok'?'En meta':st==='bajo'?'Cerca de la meta':'Lejos de la meta'))+'</div></div>');
+      pts.push([xy.lat,xy.lng]);
     });
-    setTimeout(function(){ m.invalidateSize(); },60);
-  }).catch(function(e){ var el=$('mapaUE'); if(el) el.innerHTML='<div class="load">'+esc(e.message||'Mapa no disponible')+'</div>'; });
+    if(L.heatLayer){
+      if(bueno.length) L.heatLayer(bueno,{radius:34,blur:26,minOpacity:.25,max:1,gradient:{0:'rgba(39,174,96,0)',0.5:'#7dcea0',1:'#1e8449'}}).addTo(m);
+      if(malo.length) L.heatLayer(malo,{radius:34,blur:26,minOpacity:.3,max:1,gradient:{0:'rgba(192,57,43,0)',0.4:'#f4d03f',0.7:'#e67e22',1:'#c0392b'}}).addTo(m);
+    }
+    if(pts.length) m.fitBounds(pts,{padding:[24,24],maxZoom:9});
+    S.sinXY=sinXY;
+    setTimeout(function(){ m.invalidateSize(); },80);
+  }).catch(function(e){ var el=$('mapaUE'); if(el) el.innerHTML='<div class="load">'+esc((e&&e.message)||'Mapa no disponible')+'</div>'; });
+}
+/* Última entrega en bahía por UE: Memoria de entregas del Kanban (entregados.json, ~0.7 MB,
+   se baja solo al abrir esta vista). Se excluyen las confirmaciones retroactivas de limpieza
+   ("entrega en julio", "LIMPIEZA DE DATOS"…), que llevan la fecha en que se confirmaron y no la
+   de la entrega. Cotejado con los Informes de la bahía: 24, 25 y 29-sep iguales; 28-sep +3; 30-sep +1. */
+var ENTREG_URL='https://torredecontrolcss.github.io/ASIGNACION_F8/entregados/entregados.json';
+var RETRO=/^\s*(entregas?\s+(de\s+|en\s+)?(julio|agosto|septiembre)|limpieza de datos)/i;
+function cargarEntregas(){
+  if(S.entP) return S.entP;
+  S.entP=cargar(ENTREG_URL).then(function(j){ var U={};
+    (j.entregados||[]).forEach(function(e){ if(!e.fEntrega || RETRO.test(e.recibio||'')) return; if(!U[e.ue] || e.fEntrega>U[e.ue]) U[e.ue]=e.fEntrega; });
+    S.ultEnt=U; }).catch(function(){ S.ultEnt=null; S.entErr=true; });
+  return S.entP;
 }
 function vUE(){
   var mes=S.meses[S.idx], g=S.reg.indicadores, R=ueFilas(mes), tot=(S.src.kanban&&S.src.kanban.ueTotales)||{};
   var h=cabecera('ue','Unidades ejecutoras','Cómo se atiende a cada unidad ejecutora y en qué no se le cumple.');
   var nombres={}; R.forEach(function(r){ nombres[r.n]=1; }); Object.keys(tot).forEach(function(n){ nombres[n]=1; });
   var filas=Object.keys(nombres).map(function(n){ var r=R.filter(function(z){ return z.n===n; })[0], x=r?r.x:{}, tt=tot[n]||{};
-    return [n,(S.ueProv||{})[n]||'',tt.f8,tt.urg,tt.mens,x.s||0,x.on,x.fr,x.cf,x.p]; });
+    var ult=S.ultEnt?(S.ultEnt[n]||''):'', dSin=ult?Math.max(0,Math.round((hoyPTY()-fISO(ult))/864e5)):null;
+    return [n,(S.ueProv||{})[n]||'',tt.f8,tt.urg,tt.mens,x.s||0,x.on,x.fr,x.cf,x.p,ult,dSin]; });
   filas.sort(function(a,b){ return (a[7]==null?999:a[7])-(b[7]==null?999:b[7]); });
   var conS=filas.filter(function(r){ return r[5]>0; }).length, bajoFR=filas.filter(function(r){ return r[7]!=null && r[7]<g['9'].meta; }).length;
   var cfs=filas.map(function(r){ return r[8]; }).filter(function(v){ return v!=null; }), cfm=cfs.length?Math.round(10*cfs.reduce(function(a,b){ return a+b; },0)/cfs.length)/10:null;
   h+='<div class="kp k3">'+kc('ok','Unidades atendidas',num(conS),'con Formas 8 despachadas en '+MESL[+mes.substring(5,7)-1])+
     kc(bajoFR?'bajo':'ok','Bajo la meta de fill rate',num(bajoFR),'meta ≥ '+g['9'].meta+'% · '+mesLabel(mes))+
     kc('con','Confirmación de recibido',cfm!=null?fmt(cfm,'%'):'—','promedio de las unidades')+'</div>';
-  h+='<div class="pn"><div class="ph"><h3>Nivel de servicio por provincia · fill rate de '+esc(mesLabel(mes))+'</h3></div>'+
+  h+='<div class="pn"><div class="ph"><h3>Mapa de nivel de servicio · fill rate de '+esc(mesLabel(mes))+' por unidad ejecutora</h3></div>'+
     '<div id="mapaUE"><div class="load">Cargando mapa…</div></div>'+
-    '<div class="mleg"><span><i style="background:'+COL.ok[0]+'"></i>En meta (≥ '+g['9'].meta+'%)</span><span><i style="background:'+COL.bajo[0]+'"></i>Cerca de la meta</span><span><i style="background:'+COL.crit[0]+'"></i>Lejos de la meta</span><span><i style="background:'+COL.con[0]+'"></i>Sin despachos de CEDIS Panamá</span><span>Despachos de CEDIS Panamá (Kanban), fill rate ponderado por Formas 8 despachadas. Las provincias del interior se atienden desde CEDIS Divisa y CEDIS Chiriquí, que aquí aparecen como unidades solicitantes. Pase el cursor sobre una provincia para ver el detalle.</span></div></div>';
+    '<div class="mleg"><span><i style="background:'+COL.ok[0]+'"></i>En meta (≥ '+g['9'].meta+'%)</span><span><i style="background:'+COL.bajo[0]+'"></i>Cerca de la meta</span><span><i style="background:'+COL.crit[0]+'"></i>Lejos de la meta</span><span><i style="background:'+COL.con[0]+'"></i>Sin despachos de CEDIS Panamá en el mes</span><span>Clic en un nodo para ver el detalle de la unidad. Letra: H hospital · P policlínica · C CAPPS · U ULAPS. Mancha roja: lejos de la meta; verde: en meta. Despachos de CEDIS Panamá (Kanban): las unidades del interior se atienden desde CEDIS Divisa y Chiriquí.</span></div></div>';
   var pc=function(id){ return function(v){ return v==null?'—':chip(estado(g[id],v),fmt(v,'%')); }; };
   var cols=[{h:'Unidad ejecutora',t:'txt',w:44},{h:'Provincia',t:'txt',w:14,vacio:'—'},{h:'F8 en curso',t:'num',w:11},{h:'Urgentes (F8)',t:'num',w:11},{h:'Mensuales (F8)',t:'num',w:11},
     {h:'Despachadas en el mes (F8)',t:'num',w:14},{h:'A tiempo',t:'dec',w:10,html:pc('1a')},{h:'Fill rate',t:'dec',w:10,html:pc('9')},
-    {h:'Confirmó recibido',t:'dec',w:12,html:function(v){ return v==null?'—':esc(fmt(v,'%')); }},{h:'Pendientes (F8)',t:'num',w:12}];
+    {h:'Confirmó recibido',t:'dec',w:12,html:function(v){ return v==null?'—':esc(fmt(v,'%')); }},{h:'Pendientes (F8)',t:'num',w:12},
+    {h:'Última entrega en bahía',t:'txt',w:14,vacio:S.entErr?'No disponible':(S.ultEnt?'Sin registro':'Consultando…')},{h:'Días sin entrega',t:'num',w:11,vacio:'—'}];
   h+='<div class="pn"><div class="ph"><h3>Nivel de servicio por unidad ejecutora · '+esc(mesLabel(mes))+' · peor fill rate primero</h3><button type="button" data-xls="ue">Excel (todas)</button></div>'+
-    tabla('ue',cols,filas,20)+'<div class="nota">Mismas definiciones que el correo semanal de Nivel de servicio. "F8 en curso" son las Formas 8 activas hoy en el Kanban. '+num(filas.length)+' unidades; el Excel trae todas. Clic en un encabezado para ordenar.</div></div>';
+    tabla('ue',cols,filas)+'<div class="nota">Mismas definiciones que el correo semanal de Nivel de servicio. "F8 en curso" son las Formas 8 activas hoy en el Kanban. "Última entrega en bahía" sale de la Memoria de entregas del Kanban, sin las confirmaciones retroactivas de limpieza. '+num(filas.length)+' unidades. Clic en un encabezado para ordenar.</div></div>';
   return h;
 }
 
 /* Planificación: vitales con un CEDIS en cero, cuánto hay en el país y cuándo se acaba */
+/* Tránsitos de OC del renglón hacia los CEDIS que están en cero (transitos_oc.json). Preliminar:
+   es el registro de Planificación; CANT_ENTREGADA no se actualiza, se toma el saldo registrado. */
+/* Dona SVG con leyenda. partes: [{l, n, c}] */
+function dona(titulo,partes,nota){
+  var tot=partes.reduce(function(a,p){ return a+p.n; },0), r=46, C=2*Math.PI*r, acc=0;
+  var arcs=partes.filter(function(p){ return p.n>0; }).map(function(p){ var f=p.n/tot, s='<circle r="'+r+'" cx="60" cy="60" fill="none" stroke="'+p.c+'" stroke-width="22" stroke-dasharray="'+(f*C).toFixed(2)+' '+C.toFixed(2)+'" stroke-dashoffset="'+(-acc*C).toFixed(2)+'" transform="rotate(-90 60 60)"><title>'+esc(p.l)+': '+p.n+'</title></circle>'; acc+=f; return s; }).join('');
+  return '<div class="pn" style="flex:1;min-width:0"><div class="ph"><h3>'+esc(titulo)+'</h3></div><div style="display:flex;align-items:center;gap:14px">'+
+    '<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="'+esc(titulo)+'">'+arcs+'<text x="60" y="58" text-anchor="middle" font-size="20" font-weight="700" font-family="Consolas,monospace" fill="#1c1c1c">'+tot+'</text><text x="60" y="74" text-anchor="middle" font-size="10" fill="#4a4a4a">total</text></svg>'+
+    '<div style="display:flex;flex-direction:column;gap:5px;font-size:12px">'+partes.map(function(p){ return '<div><i style="display:inline-block;width:11px;height:11px;background:'+p.c+';margin-right:6px;vertical-align:middle"></i>'+esc(p.l)+' · <b style="font-family:Consolas,monospace">'+p.n+'</b>'+(tot?' ('+Math.round(100*p.n/tot)+'%)':'')+'</div>'; }).join('')+'</div></div>'+
+    (nota?'<div class="nota">'+esc(nota)+'</div>':'')+'</div>';
+}
+function transitoDe(cod,ceros,corte){
+  var T=S.src.transitos, out={ u:0, prox:'', n:0 }; if(!T||!T.rows) return out;
+  var ced=ceros.map(function(c){ return String(c).replace(/^CEDIS\s+/i,'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); });
+  T.rows.forEach(function(x){ if(String(x.cod)!==String(cod)) return;
+    var c=String(x.cedis||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); if(ced.indexOf(c)<0) return;
+    var u=x.saldo!=null?x.saldo:x.cant; if(!u) return; out.n++;
+    if(x.vencEntrega && x.vencEntrega>=corte){ out.u+=u; if(!out.prox || x.vencEntrega<out.prox) out.prox=x.vencEntrega; } });
+  return out;
+}
 function vPlan(){
   var red=S.src.redistribucion, dic=S.dic, k=red&&red.kpi, g=S.reg.indicadores, mes=S.meses[S.idx];
   var h=cabecera('plan','Planificación','Cómo está el abastecimiento de los vitales, cuánto hay, cuándo se acaba y qué mover hoy.');
@@ -692,7 +750,10 @@ function vPlan(){
   L.sort(function(a,b){ return (a.nac.meses==null?99:a.nac.meses)-(b.nac.meses==null?99:b.nac.meses) || (b.nac.demandaMes||0)-(a.nac.demandaMes||0); });
   var filas=L.map(function(r){ var m=r.nac.meses, fin='';
     if(m!=null && corte){ var d=new Date(corte); d.setDate(d.getDate()+Math.round(m*30.4)); fin=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-    return [r.cod,String(r.renglon||'').split(',').slice(0,2).join(','),r.ceros.join(', '),r.nac.saldo,r.nac.demandaMes,m,fin,r.mover,r.origenes.join(' y ')]; });
+    var tr=transitoDe(r.cod,r.ceros,k.corte), lleg='';
+    if(tr.prox){ if(!fin || tr.prox<=fin) lleg='Sí'; else lleg='No · hueco de '+Math.round((fISO(tr.prox)-fISO(fin))/864e5)+' días'; }
+    else lleg=tr.n?'Entrega vencida sin registrar':'Sin OC registrada';
+    return [r.cod,String(r.renglon||'').split(',').slice(0,2).join(','),r.ceros.join(', '),r.nac.saldo,r.nac.demandaMes,m,fin,tr.u||null,tr.prox||'',lleg,r.mover,r.origenes.join(' y ')]; });
   h+='<div class="kp">'+
     kc(x2?estado(g['2'],x2.v):'con','Desabasto · CEDIS Panamá',x2?fmt(x2.v,'%'):'—','meta ≤ '+g['2'].meta+'% · corte '+(x2?fCorta(x2.corte):'—'))+
     kc(x3?estado(g['3'],x3.v):'con','Cobertura · CEDIS Panamá',x3?fmt(x3.v,'m'):'—','mediana · meta ≥ '+g['3'].meta+' m')+
@@ -700,15 +761,26 @@ function vPlan(){
     kc('con','Traslados entre CEDIS sugeridos',num(k.totalTraslados),'entre los 3 CEDIS · '+num(k.urgentes)+' urgentes · '+num(k.unidadesUrgentes)+' unidades')+
     kc(k.invExceso?'bajo':'ok','Renglones en exceso',num(k.invExceso),'más de '+k.mesesExceso+' meses de inventario')+
     kc('con','Corte de la fuente',fCorta(k.corte),'Redistribución entre CEDIS · F8 al '+fCorta(k.corteF8))+'</div>';
-  var cols=[{h:'Renglón',t:'txt',w:12},{h:'Descripción',t:'txt',w:44},{h:'CEDIS en cero',t:'txt',w:22},
+  /* Gráficos: cobertura nacional de los vitales en cero, CEDIS en cero, y si la OC llega antes del quiebre */
+  var bk={a:0,b:0,c:0,d:0}; filas.forEach(function(f){ var m=f[5]; if(m==null) return; if(m<0.5) bk.a++; else if(m<1) bk.b++; else if(m<3) bk.c++; else bk.d++; });
+  var ce={}; L.forEach(function(r){ r.ceros.forEach(function(c){ ce[c]=(ce[c]||0)+1; }); });
+  var pal=['#0C447C','#5b8fc7','#a7c4e5'];
+  var ll={si:0,no:0,venc:0,sin:0}; filas.forEach(function(f){ var v=f[9]; if(v==='Sí') ll.si++; else if(/^No/.test(v)) ll.no++; else if(/vencida/.test(v)) ll.venc++; else ll.sin++; });
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+    dona('Cobertura nacional de los vitales en cero',[{l:'Menos de 0.5 meses',n:bk.a,c:COL.crit[0]},{l:'0.5 a 1 mes',n:bk.b,c:COL.bajo[0]},{l:'1 a 3 meses',n:bk.c,c:'#7fb77e'},{l:'Más de 3 meses',n:bk.d,c:COL.ok[0]}],'Renglones vitales en cero en al menos un CEDIS, según los meses que alcanza el inventario del país.')+
+    dona('Casos por CEDIS en cero',Object.keys(ce).sort().map(function(c,i){ return { l:c, n:ce[c], c:pal[i%3] }; }),'Un renglón en cero en dos CEDIS cuenta en ambos.')+
+    (S.src.transitos?dona('¿Llega la OC antes del quiebre?',[{l:'Sí',n:ll.si,c:COL.ok[0]},{l:'No (hueco)',n:ll.no,c:COL.crit[0]},{l:'Entrega vencida sin registrar',n:ll.venc,c:COL.bajo[0]},{l:'Sin OC registrada',n:ll.sin,c:COL.con[0]}],'Tránsitos de OC (registro de Planificación, preliminar).'):'')+'</div>';
+  var cols=[{h:'Renglón',t:'txt',w:12,a:'c'},{h:'Descripción',t:'txt',w:44},{h:'CEDIS en cero',t:'txt',w:22,a:'c'},
     {h:'Inventario en el país',t:'num',w:16},{h:'Demanda del país / mes',t:'num',w:16},
-    {h:'Cobertura nacional (m)',t:'dec',w:12,html:function(v){ return v==null?'—':chip(v<1?'crit':v<3?'bajo':'ok',fmt(v,'m')); }},
-    {h:'Se acaba aprox. (sin OC)',t:'txt',w:16,html:function(v){ return v?esc(fCorta(v)+' '+v.substring(0,4)):'—'; }},
+    {h:'Cobertura nacional (m)',t:'dec',w:12,a:'c',html:function(v){ return v==null?'—':chip(v<1?'crit':v<3?'bajo':'ok',fmt(v,'m')); }},
+    {h:'Se acaba aprox. (sin OC)',t:'txt',w:16,a:'c',html:function(v){ return v?esc(fCorta(v)+' '+v.substring(0,4)):'—'; }},
+    {h:'En tránsito al CEDIS en cero (u)',t:'num',w:16,vacio:S.src.transitos?'—':'Por conectar'},{h:'Próxima entrega',t:'txt',w:14,a:'c',html:function(v){ return v?esc(fCorta(v)+' '+v.substring(0,4)):'—'; }},
+    {h:'¿Llega antes del quiebre?',t:'txt',w:22,a:'c',html:function(v){ if(!S.src.transitos) return '<span class="sf">Por conectar</span>'; return v==='Sí'?chip('ok','Sí'):chip(/^No/.test(v)?'crit':'bajo',v); }},
     {h:'Traslado entre CEDIS hoy (u)',t:'num',w:16},{h:'Desde',t:'txt',w:26}];
   h+='<div class="pn"><div class="ph"><h3>Renglones vitales en cero en al menos un CEDIS · cuánto hay en el país y cuándo se acaba · menor cobertura primero</h3><button type="button" data-xls="plan">Excel (todos)</button></div>'+
-    tabla('plan',cols,filas,20)+
-    '<div class="nota">Inventario, demanda y cobertura nacionales de la Redistribución entre CEDIS (demanda: Formas 8, media móvil de 90 días). "Se acaba" proyecta la cobertura nacional desde el corte sin contar órdenes de compra en camino. Se muestran 20 de '+num(filas.length)+'; el Excel trae todos.</div></div>';
-  h+='<div class="pn"><div class="ph"><h3>Quiebre contra la orden de compra y cuánto pedir · por conectar</h3></div>'+
+    tabla('plan',cols,filas)+
+    '<div class="nota">Inventario, demanda y cobertura nacionales de la Redistribución entre CEDIS (demanda: Formas 8, media móvil de 90 días). "Se acaba" proyecta la cobertura nacional desde el corte sin contar órdenes de compra. "En tránsito" y "Próxima entrega" salen de Tránsitos de OC (registro de Planificación, preliminar): saldo de las OC y solicitudes con fecha de entrega desde el corte, hacia el CEDIS en cero. '+num(filas.length)+' renglones.</div></div>';
+  if(!S.src.transitos) h+='<div class="pn"><div class="ph"><h3>Quiebre contra la orden de compra y cuánto pedir · por conectar</h3></div>'+
     '<div style="font-size:13px">Para saber si la OC llega antes del quiebre y cuánto pedir, el simulador de reposición tiene que publicar sus alertas en un JSON, igual que las demás fuentes. Cuando exista, esta sección mostrará por renglón vital: OC en camino, fecha de llegada, días de hueco y cantidad sugerida.</div></div>';
   return h;
 }
@@ -724,26 +796,39 @@ function vPres(){
   var g4=S.reg.indicadores['4'], g5=S.reg.indicadores['5'], pAn=tt?Math.round(1000*ta/tt)/10:null;
   var corteE=ent&&ent._meta?ent._meta.corte:'';
   h+='<div class="kp">'+
-    kc('ok','Presupuesto modificado',pr?bal(pr.modificado):'—','preliminar: GR55 de '+(pr?fCorta(pr.corte):'—')+' del Plan')+
-    kc(pr?estado(g4,pctE):'con','Ejecutado (dev. + pag.)',pr?bal(pr.ejecutado):'—',(pr?fmt(pctE,'%'):'')+' · meta ≥ '+g4.meta+'% · preliminar, pendiente de Finanzas')+
+    kc('ok','Presupuesto modificado',pr?bal(pr.modificado):'—','GR55 '+(pr?fCorta(pr.corte):'—')+' · preliminar')+
+    kc(pr?estado(g4,pctE):'con','Ejecutado (dev. + pag.)',pr?bal(pr.ejecutado):'—',(pr?fmt(pctE,'%'):'')+' · meta ≥ '+g4.meta+'% · preliminar')+
     kc('con','Comprometido',pr?bal(pr.comprometido):'—',pr?fmt(pctC,'%')+' del modificado':'')+
-    kc('ok','Recibido en el año',ent?bal(rec):'—','Entradas por Recepción · corte '+fCorta(corteE))+
-    kc(estado(g5,pAn),'Proveedores a tiempo',pAn!=null?fmt(pAn,'%'):'—',num(ta)+' de '+num(tt)+' entregas · meta ≥ '+g5.meta+'%')+
-    kc('con','Pendiente de pago','Sin fuente','Recibido − pagado: Finanzas no lo registra')+'</div>';
+    kc('ok','Recibido en el año',ent?bal(rec):'—','Recepción · corte '+fCorta(corteE))+
+    kc(estado(g5,pAn),'Proveedores a tiempo',pAn!=null?fmt(pAn,'%'):'—',num(ta)+' de '+num(tt)+' · meta ≥ '+g5.meta+'%')+
+    kc('con','Pendiente de pago','—','sin fuente: Finanzas')+'</div>';
   /* ciclo de pago */
   var paso=function(t,s,est,txt){ var c=COL[est]; return '<div style="background:'+c[2]+'"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><span>'+chip(est,txt)+'</span></div>'; };
   h+='<div class="pn"><div class="ph"><h3>El ciclo de pago, de la orden al pago</h3></div><div class="chev">'+
-    paso('Orden de compra','Tránsitos de OC (registro de Planificación)','bajo','Por conectar')+
+    (S.src.transitos?paso('Orden de compra','Tránsitos de OC · registro de Planificación','bajo','Con fuente · preliminar'):paso('Orden de compra','Tránsitos de OC (registro de Planificación)','bajo','Por conectar'))+
     paso('Recepción','Entradas por Recepción',(S.est.recepcion&&S.est.recepcion.stale)?'bajo':'ok',(S.est.recepcion&&S.est.recepcion.stale)?'Desactualizada':'Con fuente')+
     paso('Devengado','GR55 · carga manual','ok','Con fuente')+
     paso('Trámite de pago','Sin registro en el ecosistema','con','Sin fuente')+
     paso('Pagado','Sin registro en el ecosistema','con','Sin fuente')+'</div>'+
     '<div class="nota">Las etapas sin fuente dependen de que Finanzas registre el trámite de pago.</div></div>';
+  /* Órdenes y solicitudes registradas por Planificación, y cuántas ya entraron por Recepción */
+  var T=S.src.transitos;
+  if(T&&T.rows){
+    var docs={}, ocs={}, mont=0, porEst={}, oc10=function(s){ return String(s||'').replace(/\D/g,'').substring(0,10); }, ocRec={};
+    if(ent&&ent.rows) ent.rows.forEach(function(x){ var o=oc10(x.oc); if(o) ocRec[o]=1; });
+    var conOc=0, recibidas=0;
+    T.rows.forEach(function(x){ docs[x.doc||x.id]=1; mont+=x.monto||0; porEst[x.estado||'—']=(porEst[x.estado||'—']||0)+1;
+      if(x.oc){ conOc++; if(ocRec[oc10(x.oc)]) recibidas++; } });
+    h+='<div class="kp k4">'+kc('con','Documentos registrados',num(Object.keys(docs).length),num(T.rows.length)+' líneas · OC y solicitudes de entrega')+
+      kc('con','Monto registrado',bal(mont),(T._meta&&T._meta.montoNoNumerico?num(T._meta.montoNoNumerico)+' líneas con monto no numérico · ':'')+'preliminar')+
+      kc(porEst.REVISAR?'bajo':'ok','Por revisar',num(porEst.REVISAR||0),'líneas escaneadas sin validar por el planificador')+
+      kc('con','Con entrada en Recepción',conOc?fmt(Math.round(1000*recibidas/conOc)/10,'%'):'—',num(recibidas)+' de '+num(conOc)+' líneas con número de OC')+'</div>';
+  }
   /* barras mensuales de #5 */
   var ms=I5?Object.keys(I5.serie).sort():[], bars='';
   ms.forEach(function(m){ var v=I5.serie[m].v, st=estado(g5,v); bars+='<div class="b"><em>'+fmt(v,'%')+'</em><i style="height:'+(v*1.4)+'px;background:'+COL[st][0]+'"></i><span>'+MES[+m.substring(5,7)-1]+'</span></div>'; });
   var izq='<div class="pn"><div class="ph"><h3>Cumplimiento de entrega de proveedores · '+(ms[0]||'').substring(0,4)+'</h3></div>'+
-    '<div class="bars"><div class="mt" style="bottom:'+(g5.meta*1.4+18)+'px" title="Meta"></div>'+bars+'</div>'+
+    '<div class="bars"><div class="mt" style="bottom:'+(g5.meta*1.4+18)+'px"><span style="position:absolute;right:0;top:-15px;font-size:11px;font-weight:700;background:#fff;padding:0 4px">Meta '+g5.meta+'%</span></div>'+bars+'</div>'+
     '<div class="nota">Entregas a tiempo ÷ entregas comparables, por mes de recepción. Línea punteada: meta '+g5.meta+'%. '+(corteE?'Último corte: '+fCorta(corteE)+'.':'')+'</div></div>';
   /* tabla por proveedor */
   var P={};
@@ -758,8 +843,8 @@ function vPres(){
     {h:'A tiempo',t:'dec',w:11,html:function(v){ return v==null?'—':chip(estado(g5,v),fmt(v,'%')); }},
     {h:'Atraso típico (días)',t:'num',w:14,vacio:'—'},{h:'Última entrega',t:'txt',w:13},
     {h:'Pagado',t:'txt',w:12,vacio:'Sin fuente'},{h:'Pendiente',t:'txt',w:12,vacio:'Sin fuente'},{h:'Etapa del trámite',t:'txt',w:16,vacio:'Sin fuente'}];
-  var der='<div class="pn"><div class="ph"><h3>Proveedores · 10 mayores por valor recibido en el año</h3><button type="button" data-xls="prov">Excel (todos)</button></div>'+
-    tabla('prov',cols,filas,10)+'<div class="nota">Atraso típico: mediana de días de las entregas tardías. '+num(filas.length)+' proveedores en total; el Excel trae la lista completa.</div></div>';
+  var der='<div class="pn"><div class="ph"><h3>Proveedores · recibido y cumplimiento de entrega en el año · mayor valor primero</h3><button type="button" data-xls="prov">Excel (todos)</button></div>'+
+    tabla('prov',cols,filas)+'<div class="nota">Atraso típico: mediana de días de las entregas tardías. '+num(filas.length)+' proveedores.</div></div>';
   return h+izq+der;
 }
 
@@ -823,9 +908,10 @@ var LIBS={ h2c:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2ca
   xls:'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js',
   pdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   at:'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
-  leaf:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js' };
+  leaf:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+  heat:'https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js' };
 var GLOB={ h2c:'html2canvas', xls:'ExcelJS', pdf:'jspdf', leaf:'L' };
-function lib(k){ return new Promise(function(res,rej){ if(lib[k] || (GLOB[k] && window[GLOB[k]])) return res(); var s=document.createElement('script'); s.src=LIBS[k]; s.onload=function(){ lib[k]=1; res(); }; s.onerror=function(){ rej(new Error('No se pudo preparar la descarga: revise la conexión y vuelva a intentar.')); }; document.head.appendChild(s); }); }
+function lib(k){ return new Promise(function(res,rej){ if(lib[k] || (GLOB[k] && window[GLOB[k]]) || (k==='heat' && window.L && window.L.heatLayer)) return res(); var s=document.createElement('script'); s.src=LIBS[k]; s.onload=function(){ lib[k]=1; res(); }; s.onerror=function(){ rej(new Error('No se pudo preparar la descarga: revise la conexión y vuelva a intentar.')); }; document.head.appendChild(s); }); }
 function sello(){ return new Date().toLocaleString('sv-SE',{timeZone:'America/Panama'}).substring(0,16); }
 function estFuente(f){ var e=S.est[f.id]||{}; return !e.ok?'No disponible':e.stale?'Desactualizada':'Al día'; }
 /* Tabla del histórico: una fila por indicador, una columna por mes con dato. */
