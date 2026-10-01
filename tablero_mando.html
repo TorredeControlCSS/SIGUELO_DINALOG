@@ -47,7 +47,7 @@ nav span.off{opacity:.55;cursor:default}
 .navm .play{min-height:28px;padding:0 10px;margin-right:6px;background:#fff;color:var(--az);border:none;font-size:12px;font-weight:700;cursor:pointer}
 .navm .mb{min-width:36px;min-height:28px;border:1px solid rgba(255,255,255,.55);background:transparent;color:#fff;font-size:12px;font-weight:600;cursor:pointer;padding:0 4px}
 .navm .mb.on{background:#fff;color:var(--az);border-color:#fff}
-main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-direction:column;gap:10px}
+main{max-width:1600px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-direction:column;gap:10px}
 .dec{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:stretch}
 .dec .lbl{background:var(--az);color:#fff;padding:5px 12px;display:flex;flex-direction:column;justify-content:center}
 .dec .lbl b{font-size:12px;letter-spacing:.3px}.dec .lbl span{font-size:11px}
@@ -115,7 +115,15 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 .kp{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .kp.k3{grid-template-columns:repeat(3,minmax(0,1fr))}.kp.kf{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.3fr)}
 .kc.fil{background:#fff}.kc.fil input{width:100%;min-height:30px;border:1px solid var(--bd);padding:0 8px;font-size:13px;font-family:inherit}
-.duo{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.duo{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:10px;align-items:stretch}
+.duo3{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.tri{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cb{position:relative}.cb input{width:100%;min-height:30px;border:1px solid var(--bd);padding:0 52px 0 8px;font-size:13px;font-family:inherit}
+.cb .cbx,.cb .cbt{position:absolute;top:0;height:30px;width:24px;border:none;background:transparent;cursor:pointer;color:var(--tx2);font-size:13px}.cb .cbt{right:2px}.cb .cbx{right:26px}
+.cb ul{position:absolute;left:0;right:0;top:32px;max-height:300px;overflow:auto;margin:0;padding:0;list-style:none;background:#fff;border:1px solid var(--bd);box-shadow:0 6px 16px rgba(0,0,0,.18);z-index:30;display:none}
+.cb.on ul{display:block}.cb li{padding:7px 10px;font-size:13px;cursor:pointer;border-bottom:1px solid #eee}.cb li:hover,.cb li.hl{background:#eef3f9}.cb li b{color:var(--az)}.cb li.vac{color:var(--tx3);cursor:default}
+.hb{display:flex;flex-direction:column;gap:5px}.hb .r{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,2fr) auto;gap:8px;align-items:center;font-size:12px}.hb .r span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hb .r i{display:block;height:12px;background:#c83a3a}.hb .r b{font-family:var(--mono)}
+details.nota summary{cursor:pointer;color:var(--az);font-weight:700}
 .duo #mapaUE{height:520px}.duo .tw{max-height:520px}
 tr.sel{cursor:pointer}tr.sel:hover td{background:#e8f0f9!important}tr.sel.on td{background:#d6e6f7!important;font-weight:600}.kp.k4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .kc{border:1px solid var(--bd);padding:6px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -130,7 +138,8 @@ tr.sel{cursor:pointer}tr.sel:hover td{background:#e8f0f9!important}tr.sel.on td{
 .tw{overflow:auto;max-height:460px;border:1px solid #e3e3e3}
 table.t thead th{position:sticky;top:0;z-index:2}
 table.t{border-collapse:collapse;width:100%;font-size:12px}
-table.t th{background:var(--az);color:#fff;text-align:left;padding:7px 8px;font-weight:600;white-space:nowrap}
+table.t th{background:var(--az);color:#fff;text-align:left;padding:7px 8px;font-weight:600;white-space:normal;vertical-align:bottom;line-height:1.2}
+#tw_ue td:first-child,#tw_desp td:first-child{min-width:190px}
 table.t td{border-bottom:1px solid #d9d9d9;padding:6px 8px;vertical-align:top}
 table.t td.n{font-family:var(--mono);text-align:right;white-space:nowrap}
 table.t tr:nth-child(even) td{background:#f4f7fb}
@@ -166,7 +175,7 @@ table.t th .ar{font-size:9px;opacity:.85;margin-left:4px}
   .navm{margin-left:0;flex-shrink:0}
   main{padding:8px 10px 14px}
   .kp,.kp.kf{grid-template-columns:repeat(2,minmax(0,1fr))!important}.kp.k3{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .duo{grid-template-columns:1fr}.duo #mapaUE{height:380px}
+  .duo,.duo3,.tri{grid-template-columns:1fr}.duo #mapaUE{height:380px}
   .chev{flex-direction:column}.chev div,.chev div:first-child{clip-path:none;border-left:4px solid var(--az)}
   .vh{flex-direction:column;align-items:flex-start;gap:4px}
 }
@@ -458,18 +467,30 @@ function construir(){
     if(e.target.closest('[data-leer]')){ comoLeer(); return; }
     var so=e.target.closest('th.so'); if(so){ ordenar(so.getAttribute('data-k'),+so.getAttribute('data-c')); return; }
     if(e.target.closest('[data-tour]')){ tour(0); return; }
+    var cbv=e.target.closest('li[data-cbv]'); if(cbv){ comboElegir(cbv.getAttribute('data-cb'),cbv.getAttribute('data-cbv')); return; }
+    var cbt=e.target.closest('[data-cbt]'); if(cbt){ var idt=cbt.getAttribute('data-cbt'); if($('cb_'+idt).classList.contains('on')) comboCerrar(idt); else { comboLista(idt,''); $(idt).focus(); } return; }
+    var cbx=e.target.closest('[data-cbx]'); if(cbx){ comboElegir(cbx.getAttribute('data-cbx'),''); return; }
     var tr=e.target.closest('tr[data-k="ue"]'); if(tr){ var T=TABLAS.ue, nm=T.filas[+tr.getAttribute('data-i')][0]; ubicarUE(nm); return; }
     var go=e.target.closest('[data-go]'); if(go){ e.preventDefault(); vista(go.getAttribute('data-go')); return; }
     var c=e.target.closest('.card.go'); if(c){ vista(VISTA_IND[c.id.substring(3)]||'panel'); return; }
     var x=e.target.closest('[data-xls]'); if(x){ exportarTabla(x.getAttribute('data-xls')); return; }
   });
   $('main').addEventListener('input',function(e){
-    if(e.target.id!=='fUE') return; var T=TABLAS.ue; if(!T) return; var v=e.target.value.trim();
-    T.filtro=v; $('tw_ue').innerHTML=htmlTabla('ue');
-    var ex=T.filas.filter(function(r){ return r[0].toLowerCase()===v.toLowerCase(); })[0]; if(ex) ubicarUE(ex[0]);
+    if(e.target.id!=='fUE') return; comboLista('fUE',e.target.value); filtrarUE(e.target.value.trim(),false);
   });
+  $('main').addEventListener('focusin',function(e){ if(e.target.id==='fUE') comboLista('fUE',e.target.value); });
+  $('main').addEventListener('keydown',function(e){
+    if(e.target.id!=='fUE') return; var C=S.cb.fUE, li=[].slice.call(document.querySelectorAll('#cb_fUE li[data-cbv]'));
+    if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); if(!$('cb_fUE').classList.contains('on')) comboLista('fUE',e.target.value);
+      li=[].slice.call(document.querySelectorAll('#cb_fUE li[data-cbv]')); C.hl=Math.max(0,Math.min(li.length-1,C.hl+(e.key==='ArrowDown'?1:-1)));
+      li.forEach(function(x,i){ x.classList.toggle('hl',i===C.hl); }); if(li[C.hl]) li[C.hl].scrollIntoView({block:'nearest'}); }
+    else if(e.key==='Enter'){ e.preventDefault(); var x=li[C.hl>=0?C.hl:(li.length>1?1:0)]; if(x) comboElegir('fUE',x.getAttribute('data-cbv')); }
+    else if(e.key==='Escape') comboCerrar('fUE');
+  });
+  document.addEventListener('click',function(e){ if(!e.target.closest('.cb')) Object.keys(S.cb||{}).forEach(comboCerrar); });
   document.querySelector('nav').addEventListener('click',function(e){ var b=e.target.closest('.tab'); if(b) vista(b.getAttribute('data-v')); });
   pintar(S.idx);
+  plegar($('v-panel'));
 }
 
 function estado(g,v){
@@ -639,7 +660,7 @@ function vista(v){
   ['panel','alertas','desp','ue','plan','pres'].forEach(function(k){ var el=$('v-'+k); if(el) el.hidden=(k!==v); });
   Array.prototype.forEach.call(document.querySelectorAll('nav .tab'),function(b){ b.classList.toggle('on',b.getAttribute('data-v')===v); });
   $('navm').style.display = v==='panel' ? '' : 'none';
-  if(v!=='panel'){ var el=$('v-'+v); if(el.dataset.mes!==S.meses[S.idx]){ el.innerHTML=({ alertas:vAlertas, pres:vPres, desp:vDesp, ue:vUE, plan:vPlan }[v])(v); el.dataset.mes=S.meses[S.idx];
+  if(v!=='panel'){ var el=$('v-'+v); if(el.dataset.mes!==S.meses[S.idx]){ el.innerHTML=({ alertas:vAlertas, pres:vPres, desp:vDesp, ue:vUE, plan:vPlan }[v])(v); el.dataset.mes=S.meses[S.idx]; plegar(el);
       if(v==='ue'){ if(!S.ueProv || (!S.ultEnt && !S.entErr)){ Promise.all([cargarProv(),cargarEntregas()]).then(function(){ el.dataset.mes=''; if(!el.hidden) vista('ue'); }); } else dibujarMapaUE(); } } }
   if(location.hash!=='#'+v) history.replaceState(null,'','#'+v);
   window.scrollTo(0,0);
@@ -706,6 +727,16 @@ function vDesp(){
         num(con)+' Formas 8 pendientes tienen fecha prometida en el Kanban; '+num(Math.max(0,(est.vencidos||0)-con))+' atrasadas siguen sin fecha.</span></div>'; })() : '');
   var F=ueFilas(mes).filter(function(r){ return r.x.s>0; });
   F.sort(function(a,b){ return (a.x.o==null?999:a.x.o)-(b.x.o==null?999:b.x.o) || b.x.p-a.x.p; });
+  /* Gráficos de rendimiento: estado de lo pendiente, dónde se pierde el cumplimiento y quién acumula atraso */
+  var alDia=Math.max(0,(est.pendientes||0)-(est.vencidos||0)), conP=est.vencidosConStock||0, sinP=Math.max(0,(est.vencidos||0)-conP);
+  var pierde={alm:0,aba:0}; F.forEach(function(r){ var b=brecha(r.x); if(/almac/i.test(b)) pierde.alm++; else if(b) pierde.aba++; });
+  var top=F.slice().filter(function(r){ return r.x.v>0; }).sort(function(a,b){ return b.x.v-a.x.v; }).slice(0,10), mx=top.length?top[0].x.v:1;
+  h+='<div class="tri">'+
+    dona('Formas 8 pendientes hoy',[{l:'Al día',n:alDia,c:COL.ok[0]},{l:'Atrasadas con producto',n:conP,c:COL.bajo[0]},{l:'Atrasadas sin producto',n:sinP,c:COL.crit[0]}],'Las atrasadas con producto se pueden despachar ya; las sin producto esperan abasto.')+
+    dona('Dónde pierden cumplimiento las unidades',[{l:'Tiempo de salida del almacén',n:pierde.alm,c:'#0C447C'},{l:'Producto incompleto (abasto)',n:pierde.aba,c:'#5b8fc7'}],'Unidades con despachos en '+MESL[+mes.substring(5,7)-1]+', según su mayor brecha.')+
+    '<div class="pn" style="min-width:0"><div class="ph"><h3>Formas 8 atrasadas por unidad · 10 mayores</h3></div><div class="hb">'+
+      top.map(function(r){ return '<div class="r"><span title="'+esc(r.n)+'">'+esc(r.n)+'</span><i style="width:'+Math.max(4,Math.round(100*r.x.v/mx))+'%"></i><b>'+num(r.x.v)+'</b></div>'; }).join('')+
+    '</div><div class="nota">Foto de hoy del Kanban.</div></div></div>';
   cargarPromesas();
   var filas=F.map(function(r){ var x=r.x; return [r.n,x.s,x.on,x.ac,x.fr,x.o,brecha(x),x.p,x.v,promTxt(r.n,x.v)]; });
   var pc=function(id){ return function(v){ return v==null?'—':chip(estado(g[id],v),fmt(v,'%')); }; };
@@ -783,6 +814,34 @@ function cargarEntregas(){
     S.ultEnt=U; }).catch(function(){ S.ultEnt=null; S.entErr=true; });
   return S.entP;
 }
+/* Filtro desplegable con búsqueda predictiva: clic para ver la lista completa, o escribir para
+   acotarla. La lista se arma una vez (nombres en minúsculas precalculados) y solo se filtra. */
+function combo(id,opciones,ph){
+  S.cb=S.cb||{}; S.cb[id]={ ops:opciones, low:opciones.map(function(o){ return o.toLowerCase(); }), hl:-1 };
+  return '<div class="cb" id="cb_'+id+'"><input id="'+id+'" type="text" placeholder="'+esc(ph)+'" autocomplete="off" role="combobox" aria-expanded="false">'+
+    '<button type="button" class="cbx" data-cbx="'+id+'" title="Quitar filtro" aria-label="Quitar filtro">×</button><button type="button" class="cbt" data-cbt="'+id+'" aria-label="Abrir lista">▾</button><ul role="listbox"></ul></div>';
+}
+function comboLista(id,q){
+  var C=S.cb[id], box=$('cb_'+id); if(!C||!box) return; q=(q||'').toLowerCase().trim(); var html='', n=0;
+  html+='<li data-cbv="" data-cb="'+id+'"><b>Todas las unidades</b></li>';
+  for(var i=0;i<C.ops.length && n<200;i++){ var k=C.low[i].indexOf(q); if(q && k<0) continue; n++;
+    var o=C.ops[i], txt=q?esc(o.substring(0,k))+'<b>'+esc(o.substring(k,k+q.length))+'</b>'+esc(o.substring(k+q.length)):esc(o);
+    html+='<li data-cbv="'+esc(o)+'" data-cb="'+id+'">'+txt+'</li>'; }
+  if(!n) html+='<li class="vac">Sin coincidencias</li>';
+  box.querySelector('ul').innerHTML=html; box.classList.add('on'); $(id).setAttribute('aria-expanded','true'); C.hl=-1;
+}
+function comboCerrar(id){ var b=$('cb_'+id); if(b){ b.classList.remove('on'); $(id).setAttribute('aria-expanded','false'); } }
+function comboElegir(id,v){ $(id).value=v; comboCerrar(id); if(id==='fUE') filtrarUE(v,true); }
+function filtrarUE(v,elegido){ var T=TABLAS.ue; if(!T) return; T.filtro=v; $('tw_ue').innerHTML=htmlTabla('ue');
+  if(elegido && v){ var ex=T.filas.filter(function(r){ return r[0]===v; })[0]; if(ex) ubicarUE(ex[0]); } }
+/* Teléfono: las notas y la franja de fuentes se pliegan para que la lectura empiece por los números.
+   En escritorio no cambia nada. */
+function plegar(root){
+  if(window.innerWidth>640 || !root) return;
+  [].slice.call(root.querySelectorAll('div.nota')).forEach(function(n){
+    var d=document.createElement('details'); d.className='nota'; d.innerHTML='<summary>Nota</summary>'; while(n.firstChild) d.appendChild(n.firstChild); n.parentNode.replaceChild(d,n); });
+  var s=root.querySelector('#src'); if(s && !s.closest('details')){ var d2=document.createElement('details'); d2.className='nota'; d2.innerHTML='<summary>Fuentes y fecha de corte</summary>'; s.parentNode.insertBefore(d2,s); d2.appendChild(s); }
+}
 function ubicarUE(nm){
   var T=TABLAS.ue; if(T){ T.sel=nm; $('tw_ue').innerHTML=htmlTabla('ue'); }
   var mk=S.mk&&S.mk[nm];
@@ -795,24 +854,24 @@ function vUE(){
   var nombres={}; R.forEach(function(r){ nombres[r.n]=1; }); Object.keys(tot).forEach(function(n){ nombres[n]=1; });
   var filas=Object.keys(nombres).map(function(n){ var r=R.filter(function(z){ return z.n===n; })[0], x=r?r.x:{}, tt=tot[n]||{};
     var ult=S.ultEnt?(S.ultEnt[n]||''):'', dSin=ult?Math.max(0,Math.round((hoyPTY()-fISO(ult))/864e5)):null;
-    return [n,(S.ueProv||{})[n]||'',tt.f8,tt.urg,tt.mens,x.s||0,x.on,x.fr,x.cf,x.p,ult,dSin]; });
-  filas.sort(function(a,b){ return (a[7]==null?999:a[7])-(b[7]==null?999:b[7]); });
-  var conS=filas.filter(function(r){ return r[5]>0; }).length, bajoFR=filas.filter(function(r){ return r[7]!=null && r[7]<g['9'].meta; }).length;
-  var cfs=filas.map(function(r){ return r[8]; }).filter(function(v){ return v!=null; }), cfm=cfs.length?Math.round(10*cfs.reduce(function(a,b){ return a+b; },0)/cfs.length)/10:null;
-  var nUE=filas.filter(function(r){ return r[7]!=null; }).length;
+    /* columnas visibles: unidad, F8 en curso, despachadas, a tiempo, fill rate, confirmó, pendientes, última entrega, días sin entrega
+       (provincia, urgentes y mensuales van al final: salen en el detalle del mapa, no en la tabla) */
+    return [n,tt.f8,x.s||0,x.on,x.fr,x.cf,x.p,ult,dSin,(S.ueProv||{})[n]||'',tt.urg,tt.mens]; });
+  filas.sort(function(a,b){ return (a[4]==null?999:a[4])-(b[4]==null?999:b[4]); });
+  var conS=filas.filter(function(r){ return r[2]>0; }).length, bajoFR=filas.filter(function(r){ return r[4]!=null && r[4]<g['9'].meta; }).length;
+  var cfs=filas.map(function(r){ return r[5]; }).filter(function(v){ return v!=null; }), cfm=cfs.length?Math.round(10*cfs.reduce(function(a,b){ return a+b; },0)/cfs.length)/10:null;
+  var nUE=filas.filter(function(r){ return r[4]!=null; }).length;
   h+='<div class="kp kf">'+kc('ok','Unidades atendidas',num(conS),'con Formas 8 despachadas en '+MESL[+mes.substring(5,7)-1])+
     kc(bajoFR?'bajo':'ok','Unidades bajo la meta de fill rate',num(bajoFR)+' de '+num(nUE),'con fill rate menor a '+g['9'].meta+'% en '+MESL[+mes.substring(5,7)-1])+
     kc('con','Confirmación de recibido',cfm!=null?fmt(cfm,'%'):'—','promedio de las unidades')+
-    '<div class="kc fil"><label class="l" for="fUE">Buscar unidad ejecutora</label><div class="vs"><input id="fUE" list="lUE" type="search" placeholder="Escriba parte del nombre…" autocomplete="off">'+
-    '<datalist id="lUE">'+filas.map(function(r){ return '<option value="'+esc(r[0])+'">'; }).join('')+'</datalist></div></div></div>';
+    '<div class="kc fil"><label class="l" for="fUE">Unidad ejecutora</label><div class="vs" style="display:block">'+combo('fUE',filas.map(function(r){ return r[0]; }).sort(function(a,b){ return a.localeCompare(b,'es'); }),'Todas las unidades · elija o escriba')+'</div></div></div>';
   h+='<div class="duo"><div class="pn"><div class="ph"><h3>Mapa de nivel de servicio · fill rate de '+esc(mesLabel(mes))+'</h3></div>'+
     '<div id="mapaUE"><div class="load">Cargando mapa…</div></div>'+
     '<div class="mleg"><span><i style="background:'+COL.ok[0]+'"></i>En meta (≥ '+g['9'].meta+'%)</span><span><i style="background:'+COL.bajo[0]+'"></i>Cerca de la meta</span><span><i style="background:'+COL.crit[0]+'"></i>Lejos de la meta</span><span><i style="background:'+COL.con[0]+'"></i>Sin despachos de CEDIS Panamá en el mes</span><span>Clic en un nodo para ver el detalle de la unidad. Letra: H hospital · P policlínica · C CAPPS · U ULAPS. Mancha roja: lejos de la meta; verde: en meta. Despachos de CEDIS Panamá (Kanban): las unidades del interior se atienden desde CEDIS Divisa y Chiriquí.</span></div></div>';
   var pc=function(id){ return function(v){ return v==null?'—':chip(estado(g[id],v),fmt(v,'%')); }; };
-  var cols=[{h:'Unidad ejecutora',t:'txt',w:44},{h:'Provincia',t:'txt',w:14,vacio:'—'},{h:'F8 en curso',t:'num',w:11},{h:'Urgentes (F8)',t:'num',w:11},{h:'Mensuales (F8)',t:'num',w:11},
-    {h:'Despachadas en el mes (F8)',t:'num',w:14},{h:'A tiempo',t:'dec',w:10,html:pc('1a')},{h:'Fill rate',t:'dec',w:10,html:pc('9')},
-    {h:'Confirmó recibido',t:'dec',w:12,html:function(v){ return v==null?'—':esc(fmt(v,'%')); }},{h:'Pendientes (F8)',t:'num',w:12},
-    {h:'Última entrega en bahía',t:'txt',w:14,vacio:S.entErr?'No disponible':(S.ultEnt?'Sin registro':'Consultando…')},{h:'Días sin entrega',t:'num',w:11,vacio:'—'}];
+  var cols=[{h:'Unidad ejecutora',t:'txt',w:44},{h:'F8 en curso',t:'num',w:11},{h:'Despachadas (F8)',t:'num',w:12},{h:'A tiempo',t:'dec',w:10,a:'c',html:pc('1a')},{h:'Fill rate',t:'dec',w:10,a:'c',html:pc('9')},
+    {h:'Confirmó recibido',t:'dec',w:12,a:'c',html:function(v){ return v==null?'—':esc(fmt(v,'%')); }},{h:'Pendientes (F8)',t:'num',w:12},
+    {h:'Última entrega',t:'txt',w:13,a:'c',vacio:S.entErr?'No disponible':(S.ultEnt?'Sin registro':'Consultando…'),html:function(v){ return v?esc(fCorta(v)):''; }},{h:'Días sin entrega',t:'num',w:11,vacio:'—'}];
   h+='<div class="pn"><div class="ph"><h3>Nivel de servicio por unidad · '+esc(mesLabel(mes))+' · clic en una fila para ubicarla</h3><button type="button" data-xls="ue">Excel (todas)</button></div>'+
     tabla('ue',cols,filas)+'<div class="nota">Mismas definiciones que el correo semanal de Nivel de servicio. "F8 en curso" son las Formas 8 activas hoy en el Kanban. "Última entrega en bahía" sale de la Memoria de entregas del Kanban, sin las confirmaciones retroactivas de limpieza. '+num(filas.length)+' unidades. Clic en un encabezado para ordenar.</div></div></div>';
   return h;
@@ -821,6 +880,21 @@ function vUE(){
 /* Planificación: vitales con un CEDIS en cero, cuánto hay en el país y cuándo se acaba */
 /* Tránsitos de OC del renglón hacia los CEDIS que están en cero (transitos_oc.json). Preliminar:
    es el registro de Planificación; CANT_ENTREGADA no se actualiza, se toma el saldo registrado. */
+/* Serie de tiempo en SVG: puntos [{l, v}], meta del indicador g (línea punteada rotulada). */
+function lineas(P,g){
+  if(!P.length) return '<div class="load">Sin datos</div>';
+  var W=440, H=130, L=30, R=10, T=16, B=22, mx=100, n=P.length;
+  var x=function(i){ return L+(n===1?(W-L-R)/2:i*(W-L-R)/(n-1)); }, y=function(v){ return T+(H-T-B)*(1-v/mx); };
+  var pts=P.map(function(p,i){ return x(i).toFixed(1)+','+y(p.v).toFixed(1); }).join(' '), ym=y(g.meta).toFixed(1);
+  var s='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto" role="img" aria-label="Serie mensual">'+
+    [0,50,100].map(function(v){ return '<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="#e3e3e3"/><text x="'+(L-4)+'" y="'+(y(v)+3)+'" font-size="9" text-anchor="end" fill="#6a6a6a">'+v+'%</text>'; }).join('')+
+    '<line x1="'+L+'" x2="'+(W-R)+'" y1="'+ym+'" y2="'+ym+'" stroke="#1c1c1c" stroke-dasharray="4 3"/><text x="'+(W-R)+'" y="'+(ym-4)+'" font-size="10" font-weight="700" text-anchor="end" fill="#1c1c1c">Meta '+g.meta+'%</text>'+
+    '<polyline points="'+pts+'" fill="none" stroke="#0C447C" stroke-width="2"/>'+
+    P.map(function(p,i){ var c=COL[estado(g,p.v)][0]; return '<circle cx="'+x(i)+'" cy="'+y(p.v)+'" r="4" fill="'+c+'" stroke="#fff" stroke-width="1.5"><title>'+esc(p.l)+': '+fmt(p.v,'%')+'</title></circle>'+
+      '<text x="'+x(i)+'" y="'+(y(p.v)-8)+'" font-size="9" text-anchor="middle" fill="#1c1c1c" font-family="Consolas,monospace">'+Math.round(p.v)+'</text>'+
+      '<text x="'+x(i)+'" y="'+(H-8)+'" font-size="10" text-anchor="middle" fill="#3a3a3a">'+esc(p.l)+'</text>'; }).join('')+'</svg>';
+  return s;
+}
 /* Dona SVG con leyenda. partes: [{l, n, c}] */
 function dona(titulo,partes,nota){
   var tot=partes.reduce(function(a,p){ return a+p.n; },0), r=46, C=2*Math.PI*r, acc=0;
@@ -914,19 +988,18 @@ function vPres(){
     Tt.rows.forEach(function(x){ dd0[x.doc||x.id]=1; mDoc+=x.monto||0; if(x.estado==='REVISAR') nRev++; if(x.oc){ conOc++; if(ocRec[oc10(x.oc)]) recibidas++; } });
     nDoc=Object.keys(dd0).length; }
   var nLin=ent&&ent.rows?ent.rows.length:0, recSt=(S.est.recepcion&&S.est.recepcion.stale);
-  h+='<div class="pn"><div class="ph"><h3>El ciclo de pago, de la orden al pago</h3></div><div class="chev">'+
+  var chevP='<div class="pn"><div class="ph"><h3>El ciclo de pago, de la orden al pago</h3></div><div class="chev">'+
     (Tt?paso('1 · Orden de compra',bal(mDoc),num(nDoc)+' documentos · '+num(nRev)+' por revisar · '+(conOc?Math.round(100*recibidas/conOc)+'% ya recibido':'')+' · preliminar','bajo'):paso('1 · Orden de compra','—','Tránsitos de OC por conectar','con'))+
     paso('2 · Recepción',ent?bal(rec):'—',num(nLin)+' líneas en el año'+(recSt?' · desactualizada ('+fCorta(corteE)+')':' · corte '+fCorta(corteE)),recSt?'bajo':'ok')+
     paso('3 · Devengado',pr?bal(pr.ejecutado):'—','GR55 '+(pr?fCorta(pr.corte):'')+' · preliminar','ok')+
     paso('4 · Trámite de pago','—','sin registro: Finanzas','con')+
     paso('5 · Pagado','—','sin registro: Finanzas','con')+'</div>'+
     '<div class="nota">Las etapas sin fuente dependen de que Finanzas registre el trámite de pago.</div></div>';
-  /* barras mensuales de #5 */
-  var ms=I5?Object.keys(I5.serie).sort():[], bars='';
-  ms.forEach(function(m){ var v=I5.serie[m].v, st=estado(g5,v); bars+='<div class="b"><em>'+fmt(v,'%')+'</em><i style="height:'+(v*1.4)+'px;background:'+COL[st][0]+'"></i><span>'+MES[+m.substring(5,7)-1]+'</span></div>'; });
-  var izq='<div class="pn"><div class="ph"><h3>Cumplimiento de entrega de proveedores · '+(ms[0]||'').substring(0,4)+'</h3></div>'+
-    '<div class="bars"><div class="mt" style="bottom:'+(g5.meta*1.4+18)+'px"><span style="position:absolute;right:0;top:-15px;font-size:11px;font-weight:700;background:#fff;padding:0 4px">Meta '+g5.meta+'%</span></div>'+bars+'</div>'+
-    '<div class="nota">Entregas a tiempo ÷ entregas comparables, por mes de recepción. Línea punteada: meta '+g5.meta+'%. '+(corteE?'Último corte: '+fCorta(corteE)+'.':'')+'</div></div>';
+  /* Serie de tiempo de #5: línea mes a mes con su valor y la meta rotulada */
+  var ms=I5?Object.keys(I5.serie).sort():[];
+  var izq='<div class="pn" style="min-width:0"><div class="ph"><h3>Cumplimiento de entrega de proveedores · '+(ms[0]||'').substring(0,4)+'</h3></div>'+
+    lineas(ms.map(function(m){ return { l:MES[+m.substring(5,7)-1], v:I5.serie[m].v }; }),g5)+
+    '<div class="nota">Entregas a tiempo ÷ entregas comparables, por mes de recepción. '+(corteE?'Último corte: '+fCorta(corteE)+'.':'')+'</div></div>';
   /* tabla por proveedor */
   var P={};
   if(ent&&ent.rows) ent.rows.forEach(function(x){ var k=x.prov||'(sin proveedor)'; if(!P[k]) P[k]={ v:0, oc:{}, a:0, n:0, late:[], ult:'' };
@@ -942,7 +1015,7 @@ function vPres(){
     {h:'Pagado',t:'txt',w:12,vacio:'Sin fuente'},{h:'Pendiente',t:'txt',w:12,vacio:'Sin fuente'},{h:'Etapa del trámite',t:'txt',w:16,vacio:'Sin fuente'}];
   var der='<div class="pn"><div class="ph"><h3>Proveedores · recibido y cumplimiento de entrega en el año · mayor valor primero</h3><button type="button" data-xls="prov">Excel (todos)</button></div>'+
     tabla('prov',cols,filas)+'<div class="nota">Atraso típico: mediana de días de las entregas tardías. '+num(filas.length)+' proveedores.</div></div>';
-  return h+izq+der;
+  return h+'<div class="duo3">'+chevP+izq+'</div>'+der;
 }
 
 /* Alertas y compromisos: qué está fuera de meta y la acción que sugieren los datos */
