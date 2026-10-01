@@ -518,6 +518,34 @@ function ueFilas(mes){
   var f=kanMes(mes), u=(f&&f.ue)||{}, tot=(S.src.kanban&&S.src.kanban.ueTotales)||{};
   return Object.keys(u).map(function(n){ var x=u[n], tt=tot[n]||{}; return { n:n, x:x, tt:tt }; });
 }
+/* Fecha prometida por UE: sale del detalle del Kanban (kanban/tablero.json, ~1.8 MB).
+   Se baja SOLO al abrir Despachos, una vez por sesión. fechaComprometida = la que fija
+   el supervisor en el Kanban ("F. prometida"); sin ella, el pedido atrasado no tiene fecha. */
+var KAN_DET='https://torredecontrolcss.github.io/ASIGNACION_F8/kanban/tablero.json';
+function cargarPromesas(){
+  if(S.promEstado) return; S.promEstado='cargando';
+  cargar(KAN_DET).then(function(j){
+    var c=j.cols||[], ix={}; c.forEach(function(k,i){ ix[k]=i; });
+    var hoy=new Date().toLocaleString('sv-SE',{timeZone:'America/Panama'}).substring(0,10), P={};
+    (j.rows||[]).forEach(function(r){
+      if(r[ix.despachado]||r[ix.anulado]) return;
+      if(String(r[ix.grupo]||'').toUpperCase().indexOf('LABORATORIO')>=0) return;
+      var u=r[ix.ue]||'', fc=String(r[ix.fechaComprometida]||'').substring(0,10), fv=String(r[ix.fechaVencimiento]||'').substring(0,10);
+      if(!P[u]) P[u]={ con:0, atrConPromesa:0, prox:'' };
+      if(fc){ P[u].con++; if(fc>=hoy && (!P[u].prox || fc<P[u].prox)) P[u].prox=fc; if(fc<hoy) P[u].atrConPromesa++; }
+    });
+    S.prom=P; S.promEstado='ok';
+  }).catch(function(){ S.promEstado='error'; }).then(function(){
+    var el=$('v-desp'); if(el && !el.hidden){ el.dataset.mes=''; vista('desp'); }
+  });
+}
+function promTxt(n,venc){
+  if(S.promEstado!=='ok') return S.promEstado==='error'?'No disponible':'Consultando…';
+  var p=S.prom[n];
+  if(p && p.prox) return 'Próxima: '+fCorta(p.prox)+(p.con>1?' ('+p.con+' con fecha)':'');
+  if(p && p.con) return p.con+' con fecha ya vencida';
+  return venc?'Sin fecha prometida':'—';
+}
 function brecha(x){ if(x.oa==null||x.ac==null) return ''; return (100-x.oa)>=(100-x.ac)?'Tiempo de salida del almacén':'Producto incompleto (abasto)'; }
 function vDesp(){
   var mes=S.meses[S.idx], f=kanMes(mes), k=S.src.kanban, est=(k&&k.estado)||{};
@@ -530,17 +558,22 @@ function vDesp(){
     kc(estado(g['9'],f['9']),'Fill rate',fmt(f['9'],'%'),'asignado ÷ solicitado · meta ≥ '+g['9'].meta+'%')+
     kc('con','A tiempo y completo (OTIF)',f.otif!=null?fmt(f.otif,'%'):'—','las dos condiciones a la vez')+
     kc('con','Salidas del mes',num(f.salidas),'Formas 8 despachadas · '+mesLabel(mes))+
-    kc(est.vencidos?'bajo':'ok','Pendientes hoy',num(est.pendientes),num(est.vencidos)+' con fecha vencida · '+num(est.vencidosConStock)+' de ellos con producto')+'</div>';
+    kc(est.vencidos?'bajo':'ok','Pendientes hoy',num(est.pendientes),num(est.vencidos)+' con fecha vencida · '+num(est.vencidosConStock)+' de ellos con producto')+'</div>'+
+    (S.promEstado==='ok' ? (function(){ var con=0; Object.keys(S.prom).forEach(function(k){ con+=S.prom[k].con; });
+      return '<div class="pn" style="flex-direction:row;align-items:center;gap:12px"><b style="font-size:13px;color:#0C447C">Compromisos de entrega</b><span style="font-size:13px">'+
+        num(con)+' pedidos pendientes tienen fecha prometida en el Kanban; '+num(Math.max(0,(est.vencidos||0)-con))+' vencidos siguen sin fecha.</span></div>'; })() : '');
   var F=ueFilas(mes).filter(function(r){ return r.x.s>0; });
   F.sort(function(a,b){ return (a.x.o==null?999:a.x.o)-(b.x.o==null?999:b.x.o) || b.x.p-a.x.p; });
-  var filas=F.map(function(r){ var x=r.x; return [r.n,x.s,x.on,x.ac,x.fr,x.o,brecha(x),x.p,x.v,r.tt.ult||'']; });
+  cargarPromesas();
+  var filas=F.map(function(r){ var x=r.x; return [r.n,x.s,x.on,x.ac,x.fr,x.o,brecha(x),x.p,x.v,promTxt(r.n,x.v),r.tt.ult||'']; });
   var pc=function(id){ return function(v){ return v==null?'—':chip(estado(g[id],v),fmt(v,'%')); }; };
   var cols=[{h:'Unidad ejecutora',t:'txt',w:44},{h:'Salidas',t:'num',w:9},{h:'A tiempo',t:'dec',w:10,html:pc('1a')},{h:'Completo',t:'dec',w:10,html:pc('1b')},
     {h:'Fill rate',t:'dec',w:10,html:pc('9')},{h:'OTIF',t:'dec',w:9,html:function(v){ return v==null?'—':esc(fmt(v,'%')); }},
-    {h:'Dónde pierde más',t:'txt',w:28},{h:'Pendientes',t:'num',w:11},{h:'Vencidos',t:'num',w:10},{h:'Último servicio',t:'txt',w:14,vacio:'—'}];
+    {h:'Dónde pierde más',t:'txt',w:28},{h:'Pendientes',t:'num',w:11},{h:'Vencidos',t:'num',w:10},
+    {h:'Cuándo se le cumple',t:'txt',w:24,html:function(v){ return v==='Sin fecha prometida'?'<span style="color:#9b1c1c;font-weight:700">'+esc(v)+'</span>':esc(v); }},{h:'Último servicio',t:'txt',w:14,vacio:'—'}];
   h+='<div class="pn"><div class="ph"><h3>A quién no le he cumplido y por qué · '+esc(mesLabel(mes))+' · peor primero</h3><button type="button" data-xls="desp">Excel (todas)</button></div>'+
     tabla('desp',cols,filas,15)+
-    '<div class="nota">Ordenado por OTIF de menor a mayor. "Dónde pierde más" compara cuánto le falta a la salida a tiempo del almacén y cuánto al producto completo. Pendientes y vencidos son la foto de hoy. '+num(filas.length)+' unidades con salidas en el mes; el Excel trae todas. La fecha comprometida de cumplimiento aún no tiene fuente.</div></div>';
+    '<div class="nota">Ordenado por OTIF de menor a mayor. "Dónde pierde más" compara cuánto le falta a la salida a tiempo del almacén y cuánto al producto completo. Pendientes y vencidos son la foto de hoy. "Cuándo se le cumple" es la fecha prometida que fija el supervisor en el Kanban (F. prometida); un pedido vencido sin fecha prometida no tiene compromiso de entrega. '+num(filas.length)+' unidades con salidas en el mes; el Excel trae todas.</div></div>';
   return h;
 }
 /* Unidades ejecutoras: cómo se atiende a cada una */
