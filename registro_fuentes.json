@@ -75,6 +75,15 @@
       "calculo": "Órdenes de compra y solicitudes de entrega que suben los planificadores (SEGUIRE). Preliminar: no es el compromiso presupuestario de Finanzas."
     },
     {
+      "id": "inventarioUE",
+      "nombre": "Saldos en las unidades ejecutoras (Calculadora de Reposición UE)",
+      "url": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/reposicion_resumen.json",
+      "tipo": "derivado",
+      "indicadores": [],
+      "diasHabilesMax": 1,
+      "calculo": "Por unidad: renglones críticos, pedir ya, pronto y con cobertura, con la misma clasificación de la Calculadora de Reposición UE."
+    },
+    {
       "id": "compromisos",
       "nombre": "Registro de compromisos de la Dirección",
       "url": "https://torredecontrolcss.github.io/SIGUELO_DINALOG/compromisos.json",
