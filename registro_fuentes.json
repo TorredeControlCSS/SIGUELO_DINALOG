@@ -14,7 +14,10 @@
         "10"
       ],
       "diasHabilesMax": 1,
-      "tablero": "https://torredecontrolcss.github.io/Curvas_de_Inventario/"
+      "tablero": {
+        "nombre": "Curvas de Inventario",
+        "url": "https://torredecontrolcss.github.io/Curvas_de_Inventario/"
+      }
     },
     {
       "id": "kanban",
@@ -29,7 +32,10 @@
         "7"
       ],
       "diasHabilesMax": 1,
-      "tablero": "https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html"
+      "tablero": {
+        "nombre": "Tablero Kanban de Despacho F8",
+        "url": "https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html"
+      }
     },
     {
       "id": "recepcion",
@@ -41,7 +47,10 @@
       ],
       "diasHabilesMax": 2,
       "calculo": "Por mes de recepción: filas con cumpl = 'A TIEMPO' ÷ filas con cumpl informado",
-      "tablero": "https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html"
+      "tablero": {
+        "nombre": "Entradas de Mercancía",
+        "url": "https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html"
+      }
     },
     {
       "id": "redistribucion",
@@ -53,7 +62,10 @@
       ],
       "diasHabilesMax": 1,
       "calculo": "kpi.destinosEnCero (traslados sugeridos hacia un CEDIS en cero)",
-      "tablero": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html"
+      "tablero": {
+        "nombre": "Redistribución entre CEDIS",
+        "url": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html"
+      }
     },
     {
       "id": "manual",
@@ -63,7 +75,11 @@
       "indicadores": [
         "4"
       ],
-      "diasHabilesMax": 45
+      "diasHabilesMax": 45,
+      "tablero": {
+        "nombre": "Tablero de Mando · Presupuesto y pagos",
+        "url": "https://torredecontrolcss.github.io/SIGUELO_DINALOG/tablero_mando.html#pres"
+      }
     },
     {
       "id": "transitos",
@@ -72,7 +88,11 @@
       "tipo": "derivado",
       "indicadores": [],
       "diasHabilesMax": 5,
-      "calculo": "Órdenes de compra y solicitudes de entrega que suben los planificadores (SEGUIRE). Preliminar: no es el compromiso presupuestario de Finanzas."
+      "calculo": "Órdenes de compra y solicitudes de entrega que suben los planificadores (SEGUIRE). Preliminar: no es el compromiso presupuestario de Finanzas.",
+      "tablero": {
+        "nombre": "Trazabilidad de OC y Tránsitos",
+        "url": "https://torredecontrolcss.github.io/seguire/transitos.html"
+      }
     },
     {
       "id": "inventarioUE",
@@ -81,7 +101,11 @@
       "tipo": "derivado",
       "indicadores": [],
       "diasHabilesMax": 1,
-      "calculo": "Por unidad: renglones críticos, pedir ya, pronto y con cobertura, con la misma clasificación de la Calculadora de Reposición UE."
+      "calculo": "Por unidad: renglones críticos, pedir ya, pronto y con cobertura, con la misma clasificación de la Calculadora de Reposición UE.",
+      "tablero": {
+        "nombre": "Calculadora de Reposición UE",
+        "url": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/reposicion_ue.html"
+      }
     },
     {
       "id": "compromisos",
@@ -89,7 +113,11 @@
       "url": "https://torredecontrolcss.github.io/SIGUELO_DINALOG/compromisos.json",
       "tipo": "manual",
       "indicadores": [],
-      "diasHabilesMax": 999
+      "diasHabilesMax": 999,
+      "tablero": {
+        "nombre": "Tablero de Mando · Alertas y compromisos",
+        "url": "https://torredecontrolcss.github.io/SIGUELO_DINALOG/tablero_mando.html#alertas"
+      }
     }
   ],
   "indicadores": {
