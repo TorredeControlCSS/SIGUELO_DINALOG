@@ -1,0 +1,12 @@
+{
+  "corte": "2026-10-01",
+  "instrucciones": "Un compromiso por problema. \"clave\" identifica el problema tal como aparece en la vista Alertas y compromisos (columna Clave): ind:<indicador> para un indicador fuera de meta, ren:<renglón>|<CEDIS> para un renglón vital. estado: Abierto, En curso o Cerrado. fecha en formato AAAA-MM-DD. Al editar, actualizar también \"corte\".",
+  "ejemplo": {
+    "clave": "ind:5",
+    "responsable": "Nombre y cargo",
+    "accion": "Qué se hará",
+    "fecha": "2026-10-31",
+    "estado": "Abierto"
+  },
+  "compromisos": []
+}
