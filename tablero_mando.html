@@ -28,13 +28,22 @@ header img{width:44px;height:44px}
 .hr{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .stamp{font-size:12px}.stamp b{font-family:var(--mono);font-weight:600}
 .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.acts button{min-height:30px;padding:0 10px;background:transparent;color:#fff;border:1px solid #fff;font-size:12px;font-weight:600;cursor:pointer}
-.acts button.yv{background:#fff;color:var(--az);border-radius:15px;padding:0 12px}
-.acts button:disabled{opacity:.6;cursor:default}
+.acts{align-items:center}
+.acts .yv{min-height:30px;background:#fff;color:var(--az);border:none;border-radius:15px;padding:0 12px;font-size:12px;font-weight:700;cursor:pointer}
+.menu{position:relative}
+.menu .mn{min-height:30px;padding:0 10px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer}
+.dd{position:absolute;right:0;top:34px;background:#fff;border:1px solid var(--bd);display:none;flex-direction:column;min-width:210px;z-index:40;box-shadow:0 4px 12px rgba(0,0,0,.18)}
+.dd.on{display:flex}
+.dd button{background:#fff;color:var(--tx);border:none;border-bottom:1px solid #e3e3e3;text-align:left;padding:10px 12px;font-size:13px;cursor:pointer;min-height:38px}
+.dd button:hover{background:#eef3f9}
 nav{background:var(--az);padding:0 24px;display:flex;gap:4px;flex-wrap:wrap}
 nav a,nav span{padding:9px 15px;text-decoration:none;font-size:14px;font-weight:600;color:#fff;background:var(--az2);border:1px solid var(--az2)}
 nav .on{background:#fff;color:var(--az);border-color:var(--bd);border-bottom-color:#fff;margin-bottom:-1px}
 nav span.off{opacity:.55;cursor:default}
+.navm{margin-left:auto;display:flex;align-items:center;gap:2px;padding:4px 0}
+.navm .play{min-height:28px;padding:0 10px;margin-right:6px;background:#fff;color:var(--az);border:none;font-size:12px;font-weight:700;cursor:pointer}
+.navm .mb{min-width:36px;min-height:28px;border:1px solid rgba(255,255,255,.55);background:transparent;color:#fff;font-size:12px;font-weight:600;cursor:pointer;padding:0 4px}
+.navm .mb.on{background:#fff;color:var(--az);border-color:#fff}
 main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-direction:column;gap:10px}
 .dec{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:stretch}
 .dec .lbl{background:var(--az);color:#fff;padding:5px 12px;display:flex;flex-direction:column;justify-content:center}
@@ -45,12 +54,7 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 .dc .t b,.dc .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dc .t b{font-size:13px}.dc .t span{font-size:12px}
 .dec .all{display:flex;align-items:center;padding:0 12px;background:#fff;border:1px solid var(--bd);font-size:12px;font-weight:700;color:var(--az);text-decoration:none;white-space:nowrap}
-.tool{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.tool .leg{font-size:11px;color:var(--tx3);flex-grow:1}
-.tool .play{min-height:30px;padding:0 12px;background:var(--az);color:#fff;border:none;font-weight:700;cursor:pointer}
-.months{display:flex;gap:2px}
-.months button{min-width:40px;min-height:30px;border:1px solid var(--bd);font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:var(--tx)}
-.months button.on{background:var(--az);color:#fff}
+.leg{font-size:11px;color:var(--tx3);width:100%}
 .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 .grp{background:#fff;border:1px solid var(--bd);padding:8px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .grp h2{margin:0;font-size:12px;font-weight:700;color:var(--az);letter-spacing:.3px}
@@ -74,7 +78,8 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 .tube .fill{position:absolute;left:0;right:0;bottom:0;transition:height .9s ease,background .5s}
 .tube .mk{position:absolute;left:-6px;right:-6px;height:2px;background:#1c1c1c}
 .bulb{width:30px;height:30px;border-radius:50%;margin-top:-4px;border:1px solid #8a8a8a;transition:background .5s}
-.tsc{font-size:10px;color:var(--tx3);display:flex;flex-direction:column;gap:30px;padding-bottom:28px}
+.tsc{position:relative;width:78px;height:104px;font-size:10px;font-weight:700;color:var(--tx2)}
+.tsc span{position:absolute;left:0;white-space:nowrap}
 .odo{display:flex;flex-direction:column;align-items:center;gap:6px}
 .odo .win{display:flex;gap:3px;background:#1c1c1c;padding:5px 6px;border-radius:4px}
 .odo .d{width:22px;height:30px;overflow:hidden;background:#f4f4f4;font-family:var(--mono);font-size:22px;font-weight:700;text-align:center}
@@ -98,7 +103,7 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1c1c1c;color:#fff;padding:10px 16px;font-size:13px;display:none;z-index:60;max-width:90vw}
 .load{padding:40px;text-align:center;font-size:14px;color:var(--tx2)}
 @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.grp{grid-column:1/-1!important}.cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dec{grid-template-columns:1fr}}
-@media print{nav,.acts,.tool .play,.months,.q{display:none}body{background:#fff}}
+@media print{nav,.acts,.q{display:none}body{background:#fff}}
 </style>
 </head>
 <body>
@@ -109,9 +114,12 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
     <div class="stamp" id="stamp">Cargando fuentes…</div>
     <div class="acts">
       <button class="yv" id="bYarvis" type="button" title="Disponible en la siguiente fase">💬 Consultar a YARVIS ↗</button>
-      <button id="bCap" type="button">Captura</button>
-      <button id="bXls" type="button">Histórico Excel</button>
-      <button id="bPdf" type="button">Histórico PDF</button>
+      <div class="menu"><button class="mn" id="bMenu" type="button" aria-haspopup="true" aria-expanded="false">Descargar ▾</button>
+        <div class="dd" id="dd" role="menu">
+          <button id="bCap" type="button" role="menuitem">Captura de pantalla (PNG)</button>
+          <button id="bXls" type="button" role="menuitem">Histórico de indicadores (Excel)</button>
+          <button id="bPdf" type="button" role="menuitem">Histórico de indicadores (PDF)</button>
+        </div></div>
     </div>
   </div>
 </header>
@@ -122,6 +130,7 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
   <span class="off" title="Vista gerencial en la Fase 2">Unidades ejecutoras</span>
   <a href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html" target="_blank" rel="noopener">Planificación ↗</a>
   <a href="https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html" target="_blank" rel="noopener">Presupuesto y pagos ↗</a>
+  <div class="navm" id="navm"></div>
 </nav>
 <main id="main">
   <div class="load" id="load">Cargando indicadores…</div>
@@ -193,7 +202,7 @@ function prepararIndicadores(){
     if(!kan) return;
     var s=serieKpi(kan,id);
     Object.keys(s).forEach(function(m){ if(!s[m].salidas) s[m].vacio=true; });
-    I[id]={ serie:s, det:(kan.indicadores[id]||{}).detalle, fuente:'kanban', corte:kan.corte, flujo:'salidas' };
+    I[id]={ serie:s, det:(kan.indicadores[id]||{}).detalle, fuente:'kanban', corte:kan.corte, flujo:'salidas', mesDet:kan.mes, hist:kan.historico||{} };
   });
   if(man) I['4']={ serie:serieKpi(man,'4'), det:(man.indicadores['4']||{}).detalle, fuente:'manual', corte:man.corte, arrastre:true };
   var ent=src.recepcion;
@@ -270,7 +279,7 @@ function svgGauge(id,g){
     '<text x="144" y="98" font-size="10" fill="#4a4a4a" text-anchor="middle">'+esc(hi)+'</text></svg>';
 }
 function htmlThermo(id,g){
-  return '<div class="thermo"><div style="display:flex;flex-direction:column;align-items:center"><div class="tube"><div class="fill" id="tf_'+id+'" style="height:0"></div><div class="mk" style="bottom:'+(cl(g.meta/g.max)*100)+'%"></div></div><div class="bulb" id="tb_'+id+'"></div></div><div class="tsc"><span>Máx '+esc(fmt(g.max,g.unidad))+'</span><span>0</span></div></div>';
+  return '<div class="thermo"><div style="display:flex;flex-direction:column;align-items:center"><div class="tube"><div class="fill" id="tf_'+id+'" style="height:0"></div><div class="mk" style="bottom:'+(cl(g.meta/g.max)*100)+'%"></div></div><div class="bulb" id="tb_'+id+'"></div></div><div class="tsc"><span style="bottom:'+(26+cl(g.meta/g.max)*74-6)+'px">Meta '+(g.dir==='up'?'≥ ':'≤ ')+esc(fmt(g.meta,g.unidad))+'</span></div></div>';
 }
 function htmlOdo(id,g){
   var cols=''; for(var i=0;i<10;i++) cols+='<div>'+i+'</div>';
@@ -312,22 +321,26 @@ function decisiones(){
 function construir(){
   var hoy=hoyPTY(), mesHoy=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
   var meses=[]; for(var m=1;m<=hoy.getMonth()+1;m++) meses.push(hoy.getFullYear()+'-'+String(m).padStart(2,'0'));
-  S.meses=meses; S.idx=meses.length-1; S.mesHoy=mesHoy;
+  S.meses=meses; S.mesHoy=mesHoy; S.idx=meses.length-1;
+  /* Si el mes en curso aún no tiene salidas, el panel abre en el último mes con datos. */
+  var k1=valorEn('1a',mesHoy); if(meses.length>1 && k1 && k1.vacio) S.idx=meses.length-2;
   var h='<section class="dec">'+decisiones()+'</section>'+
-    '<div class="tool"><div class="leg">Velocímetro: % con meta · Termómetro: lo que no debe subir · Contador: volumen y días · Tanque: cobertura · Línea negra: meta 2026 · Gris: sin dato</div>'+
-    '<button class="play" id="bPlay" type="button">▶ Recorrer '+hoy.getFullYear()+'</button><div class="months" id="months">'+
-    meses.map(function(m,i){ return '<button type="button" data-i="'+i+'">'+MES[+m.substring(5,7)-1]+'</button>'; }).join('')+'</div></div>'+
+
     '<div class="grid">'+grupo('01',5,5)+'<section class="grp" style="grid-column:span 1"><h2>Lectura del mes</h2><ul class="lect" id="lect"></ul></section>'+
     grupo('02',3,3)+grupo('03',2,2)+grupo('04',1,1)+'</div>'+
-    '<div class="src" id="src">'+S.srcHtml+'</div>';
+    '<div class="src" id="src">'+S.srcHtml+'<div class="leg">Cómo leer: velocímetro, % con meta · termómetro, lo que no debe subir (la línea negra es la meta) · contador, volumen y días · tanque, cobertura · gris, sin dato.</div></div>';
   $('main').innerHTML=h;
+  $('navm').innerHTML='<button class="play" id="bPlay" type="button">▶ Recorrer '+hoy.getFullYear()+'</button>'+
+    meses.map(function(m,i){ return '<button class="mb" type="button" data-i="'+i+'">'+MES[+m.substring(5,7)-1]+'</button>'; }).join('');
+  $('navm').addEventListener('click',function(e){
+    var b=e.target.closest('.mb'); if(b){ parar(); pintar(+b.getAttribute('data-i')); return; }
+    if(e.target.closest('#bPlay')) recorrer();
+  });
   Object.keys(S.reg.indicadores).forEach(function(id){
     var w=$('ow_'+id); if(w) w.dataset.cols=w.getAttribute('data-cols');
   });
   $('main').addEventListener('click',function(e){
     var q=e.target.closest('[data-q]'); if(q){ ayuda(q.getAttribute('data-q')); return; }
-    var b=e.target.closest('#months button'); if(b){ parar(); pintar(+b.getAttribute('data-i')); return; }
-    if(e.target.closest('#bPlay')) recorrer();
   });
   pintar(S.idx);
 }
@@ -348,7 +361,7 @@ function odo(id,v,u){
 }
 function pintar(i){
   S.idx=i; var mes=S.meses[i], ant=mesAnt(mes);
-  Array.prototype.forEach.call(document.querySelectorAll('#months button'),function(b,k){ b.classList.toggle('on',k===i); });
+  Array.prototype.forEach.call(document.querySelectorAll('#navm .mb'),function(b,k){ b.classList.toggle('on',k===i); });
   $('stamp').innerHTML='Actualizado: <b>'+esc(S.mayor||'—')+'</b> hora PTY · Mes en vista: <b>'+esc(mesLabel(mes))+'</b>';
   var resumen={ med:0, ok:0, mejor:null, peor:null };
   Object.keys(S.reg.indicadores).forEach(function(id){
@@ -385,7 +398,14 @@ function pintar(i){
         if(better && (!resumen.mejor||rel>resumen.mejor.r)) resumen.mejor={ r:rel, t:g.nombre+' ('+(d>0?'+':'−')+fmt(Math.abs(d),uGap(g.unidad))+')' };
         if(!better && (!resumen.peor||rel<resumen.peor.r)) resumen.peor={ r:rel, t:g.nombre+' ('+(d>0?'+':'−')+fmt(Math.abs(d),uGap(g.unidad))+')' }; }
     } else dl.textContent='';
-    nt.textContent = mes===S.mesHoy || (x && x.corte && String(x.corte).substring(0,7)===mes) ? (I && I.det ? I.det : '') : '';
+    var det='';
+    if(v!=null && I){
+      if(I.fuente==='kanban'){
+        if(mes===I.mesDet) det=I.det||'';
+        else { var hr=I.hist[mes]; if(hr && hr.salidas) det='Cierre del mes · '+Number(hr.salidas).toLocaleString('en-US')+' salidas'+(hr.otif!=null?' · OTIF conjunto '+hr.otif+'%':''); }
+      } else if(x.corte && I.corte && String(x.corte).substring(0,10)===String(I.corte).substring(0,10)) det=I.det||'';
+    }
+    nt.textContent=det;
     if(e.ok && e.stale && (mes===S.mesHoy || mes===String(e.ref).substring(0,7))){ sw.style.display=''; sw.textContent='Fuente desactualizada · corte '+fCorta(e.ref); } else sw.style.display='none';
     /* instrumentos */
     var f = v!=null ? cl(v/g.max) : 0, b=bandas(g), has=v!=null;
@@ -425,51 +445,92 @@ $('bYarvis').addEventListener('click',function(){ toast('YARVIS estará disponib
 
 /* ── Descargas: librerías bajo demanda (la página abre liviana) ── */
 var LIBS={ h2c:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-  xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  xls:'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js',
   pdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   at:'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js' };
-function lib(k){ return new Promise(function(res,rej){ if(lib[k]) return res(); var s=document.createElement('script'); s.src=LIBS[k]; s.onload=function(){ lib[k]=1; res(); }; s.onerror=function(){ rej(new Error('No se pudo cargar '+k)); }; document.head.appendChild(s); }); }
+var GLOB={ h2c:'html2canvas', xls:'ExcelJS', pdf:'jspdf' };
+function lib(k){ return new Promise(function(res,rej){ if(lib[k] || (GLOB[k] && window[GLOB[k]])) return res(); var s=document.createElement('script'); s.src=LIBS[k]; s.onload=function(){ lib[k]=1; res(); }; s.onerror=function(){ rej(new Error('No se pudo preparar la descarga: revise la conexión y vuelva a intentar.')); }; document.head.appendChild(s); }); }
 function sello(){ return new Date().toLocaleString('sv-SE',{timeZone:'America/Panama'}).substring(0,16); }
-function tablaHistorica(){
-  var ids=['1a','1b','9','2','3','4','5','6','7','8','10'];
-  var meses={}; ids.forEach(function(id){ var I=S.ind[id]; if(I) Object.keys(I.serie).forEach(function(m){ meses[m]=1; }); });
-  var ms=Object.keys(meses).sort();
-  var cab=['Mes'].concat(ids.map(function(id){ var g=S.reg.indicadores[id]; return id+' · '+g.nombre+' ('+g.unidad+')'; }));
-  var filas=ms.map(function(m){ return [mesLabel(m)].concat(ids.map(function(id){ var I=S.ind[id], f=I&&I.serie[m]; return f && !(f.salidas===0) && f.v!=null ? f.v : ''; })); });
-  var metas=['Meta 2026'].concat(ids.map(function(id){ var g=S.reg.indicadores[id]; return (g.dir==='up'?'≥ ':'≤ ')+g.meta; }));
-  return { cab:cab, filas:filas, metas:metas };
+function estFuente(f){ var e=S.est[f.id]||{}; return !e.ok?'No disponible':e.stale?'Desactualizada':'Al día'; }
+/* Tabla del histórico: una fila por indicador, una columna por mes con dato. */
+function tablaHistorica(maxMeses){
+  var ids=['1a','1b','9','2','3','4','5','6','7','8','10'], set={};
+  ids.forEach(function(id){ var I=S.ind[id]; if(I) Object.keys(I.serie).forEach(function(m){ var f=I.serie[m]; if(f && f.v!=null && !f.vacio) set[m]=1; }); });
+  var ms=Object.keys(set).sort(); if(maxMeses && ms.length>maxMeses) ms=ms.slice(ms.length-maxMeses);
+  var cols=[{h:'N°',t:'txt',w:6},{h:'Indicador',t:'txt',w:36},{h:'Objetivo',t:'txt',w:10},{h:'Unidad',t:'txt',w:9},{h:'Meta 2026',t:'txt',w:11}]
+    .concat(ms.map(function(m){ return {h:mesLabel(m),t:'dec',w:11}; }))
+    .concat([{h:'Último corte',t:'txt',w:13},{h:'Fuente',t:'txt',w:34},{h:'Estado de la fuente',t:'txt',w:16}]);
+  var filas=ids.map(function(id){
+    var g=S.reg.indicadores[id], I=S.ind[id], f=S.reg.fuentes.filter(function(x){ return x.indicadores.indexOf(id)>=0; })[0];
+    return [id,g.nombre,g.objetivo,g.unidad,(g.dir==='up'?'≥ ':'≤ ')+g.meta+(g.notaMeta?' (prov.)':'')]
+      .concat(ms.map(function(m){ var x=I&&I.serie[m]; return x && x.v!=null && !x.vacio ? x.v : ''; }))
+      .concat([I&&I.corte?String(I.corte).substring(0,10):'', f?f.nombre:'', f?estFuente(f):'']);
+  });
+  return { cols:cols, filas:filas, meses:ms };
 }
+function logoBin(){ return fetch(LOGO).then(function(r){ return r.arrayBuffer(); }).then(function(b){ var s=''; new Uint8Array(b).forEach(function(x){ s+=String.fromCharCode(x); }); return btoa(s); }).catch(function(){ return null; }); }
+function cerrarMenu(){ $('dd').classList.remove('on'); $('bMenu').setAttribute('aria-expanded','false'); }
+$('bMenu').addEventListener('click',function(e){ e.stopPropagation(); var o=$('dd').classList.toggle('on'); $('bMenu').setAttribute('aria-expanded',o?'true':'false'); });
+document.addEventListener('click',function(e){ if(!e.target.closest('.menu')) cerrarMenu(); });
+
+/* Excel institucional: mismo formato que los demás tableros (ExcelJS, logo, encabezado azul, filtros). */
 $('bXls').addEventListener('click',function(){
-  if(!S.reg) return; toast('Generando Excel…');
-  lib('xlsx').then(function(){
-    var T=tablaHistorica(), X=window.XLSX;
-    var aoa=[['Caja de Seguro Social · Dirección Nacional de Logística'],['Tablero de Mando de la Dirección · Histórico de indicadores'],['Generado: '+sello()+' hora PTY'],[],T.cab,T.metas].concat(T.filas);
-    var ws=X.utils.aoa_to_sheet(aoa); ws['!cols']=[{wch:12}].concat(T.cab.slice(1).map(function(){ return {wch:18}; }));
-    var f2=[['Fuente','Indicadores','Corte','Estado']].concat(S.reg.fuentes.map(function(f){ var e=S.est[f.id]||{}; return [f.nombre,f.indicadores.join(', '),e.ref||'—',!e.ok?'No disponible':e.stale?'Desactualizada':'Al día']; }));
-    var wb=X.utils.book_new(); X.utils.book_append_sheet(wb,ws,'Histórico'); X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(f2),'Fuentes');
-    X.writeFile(wb,'Tablero_Mando_Historico_'+sello().substring(0,10)+'.xlsx');
+  cerrarMenu(); if(!S.reg) return; toast('Preparando Excel…');
+  Promise.all([lib('xls'), logoBin()]).then(function(r){
+    var T=tablaHistorica(0), nC=T.cols.length, ExcelJS=window.ExcelJS;
+    var meta=[['Fuentes', S.reg.fuentes.length+' publicaciones del ecosistema DINALOG (ver columnas Fuente y Estado)'],
+              ['Nota','Cada mes muestra el valor de cierre; el mes en curso, el último corte. Las celdas vacías son meses sin dato publicado.']];
+    var wb=new ExcelJS.Workbook(); wb.creator='Dirección Nacional de Logística';
+    var ws=wb.addWorksheet('Indicadores',{views:[{state:'frozen',ySplit:7+meta.length,xSplit:2}]});
+    if(r[1]){ var idI=wb.addImage({base64:r[1],extension:'png'}); ws.addImage(idI,{tl:{col:0,row:0},ext:{width:58,height:58}}); }
+    var linea=function(f,txt,o){ ws.mergeCells(f,2,f,Math.max(2,nC)); var c=ws.getCell(f,2); c.value=txt; c.font=Object.assign({name:'Calibri',size:11},o||{}); };
+    linea(1,'CAJA DE SEGURO SOCIAL',{bold:true,size:13,color:{argb:'FF0C447C'}});
+    linea(2,'Dirección Nacional de Logística · Tablero de Mando de la Dirección',{color:{argb:'FF1E5A9E'}});
+    linea(3,'Histórico de indicadores del Plan Estratégico',{bold:true,size:12});
+    var f=5;
+    [['Generado',new Date().toLocaleString('es-PA',{timeZone:'America/Panama'})+' (hora de Panamá)']].concat(meta).forEach(function(kv){
+      ws.getCell(f,1).value=kv[0]; ws.getCell(f,1).font={bold:true,size:10,color:{argb:'FF5F6B78'}};
+      ws.mergeCells(f,2,f,Math.max(2,nC)); ws.getCell(f,2).value=kv[1]; ws.getCell(f,2).font={size:10}; f++; });
+    f++;
+    var hr=ws.getRow(f);
+    T.cols.forEach(function(c,i){ var x=hr.getCell(i+1); x.value=c.h; x.font={bold:true,color:{argb:'FFFFFFFF'},size:10};
+      x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0C447C'}}; x.alignment={vertical:'middle',horizontal:c.t==='txt'?'left':'right',wrapText:true}; });
+    hr.height=30; ws.autoFilter={from:{row:f,column:1},to:{row:f,column:nC}};
+    T.filas.forEach(function(rw,j){ var row=ws.getRow(f+1+j); rw.forEach(function(v,i){ var x=row.getCell(i+1), tp=T.cols[i].t;
+      x.value=(v===''||v==null)?null:(tp==='txt'?String(v):(isFinite(v)?Number(v):String(v)));
+      if(tp==='dec') x.numFmt='0.0#'; x.font={name:tp==='txt'?'Calibri':'Consolas',size:10};
+      if(j%2) x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF4F7FB'}}; }); });
+    T.cols.forEach(function(c,i){ ws.getColumn(i+1).width=c.w||14; });
+    return wb.xlsx.writeBuffer();
+  }).then(function(buf){
+    var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    a.download='Tablero_Mando_Indicadores_'+sello().substring(0,10)+'.xlsx'; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); toast('Excel descargado.');
   }).catch(function(e){ toast(e.message); });
 });
-function logoData(){ return fetch(LOGO).then(function(r){ return r.blob(); }).then(function(b){ return new Promise(function(res){ var fr=new FileReader(); fr.onload=function(){ res(fr.result); }; fr.readAsDataURL(b); }); }).catch(function(){ return null; }); }
 $('bPdf').addEventListener('click',function(){
-  if(!S.reg) return; toast('Generando PDF…');
-  Promise.all([lib('pdf').then(function(){ return lib('at'); }), logoData()]).then(function(r){
-    var img=r[1], T=tablaHistorica(), doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'letter'});
+  cerrarMenu(); if(!S.reg) return; toast('Preparando PDF…');
+  Promise.all([lib('pdf').then(function(){ return lib('at'); }), logoBin()]).then(function(r){
+    var T=tablaHistorica(10), doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'letter'});
     doc.setFillColor(12,68,124); doc.rect(0,0,792,62,'F');
-    if(img) doc.addImage(img,'PNG',24,9,44,44);
+    if(r[1]) doc.addImage('data:image/png;base64,'+r[1],'PNG',24,9,44,44);
     doc.setTextColor(255,255,255); doc.setFontSize(15); doc.text('Tablero de Mando de la Dirección · Histórico de indicadores',78,30);
     doc.setFontSize(9); doc.text('Caja de Seguro Social · Dirección Nacional de Logística · Generado '+sello()+' hora PTY',78,46);
-    doc.autoTable({ startY:76, head:[T.cab], body:[T.metas].concat(T.filas), styles:{fontSize:7,cellPadding:3}, headStyles:{fillColor:[12,68,124],fontSize:7},
-      didParseCell:function(d){ if(d.section==='body'&&d.row.index===0){ d.cell.styles.fontStyle='bold'; d.cell.styles.fillColor=[236,236,236]; } } });
+    var cab=T.cols.map(function(c){ return c.h; }).slice(0,T.cols.length-2);
+    var body=T.filas.map(function(r){ return r.slice(0,r.length-2); });
+    doc.autoTable({ startY:76, head:[cab], body:body, styles:{fontSize:7,cellPadding:3}, headStyles:{fillColor:[12,68,124],fontSize:7},
+      alternateRowStyles:{fillColor:[244,247,251]}, columnStyles:{1:{cellWidth:120}} });
     var y=doc.lastAutoTable.finalY+14; doc.setTextColor(60,60,60); doc.setFontSize(8);
-    S.reg.fuentes.forEach(function(f){ var e=S.est[f.id]||{}; doc.text('· '+f.nombre+' — corte '+(e.ref||'—')+' — '+(!e.ok?'No disponible':e.stale?'Desactualizada':'Al día'),24,y); y+=11; });
-    doc.save('Tablero_Mando_Historico_'+sello().substring(0,10)+'.pdf');
+    doc.text('Fuentes:',24,y); y+=11;
+    S.reg.fuentes.forEach(function(fu){ var e=S.est[fu.id]||{}; doc.text('· '+fu.nombre+' — corte '+(e.ref||'—')+' — '+estFuente(fu),24,y); y+=11; });
+    if(T.meses.length>=10) doc.text('Se muestran los últimos 10 meses con dato; el Excel trae el histórico completo.',24,y+4);
+    doc.save('Tablero_Mando_Indicadores_'+sello().substring(0,10)+'.pdf'); toast('PDF descargado.');
   }).catch(function(e){ toast(e.message); });
 });
 $('bCap').addEventListener('click',function(){
-  toast('Generando captura…');
+  cerrarMenu(); toast('Preparando captura…');
   lib('h2c').then(function(){ return window.html2canvas(document.body,{useCORS:true,scale:2,backgroundColor:'#ececec'}); })
-  .then(function(cv){ var a=document.createElement('a'); a.href=cv.toDataURL('image/png'); a.download='Tablero_Mando_'+sello().replace(/[: ]/g,'-')+'.png'; a.click(); })
+  .then(function(cv){ var a=document.createElement('a'); a.href=cv.toDataURL('image/png'); a.download='Tablero_Mando_'+sello().replace(/[: ]/g,'-')+'.png'; a.click(); toast('Captura descargada.'); })
   .catch(function(e){ toast(e.message); });
 });
 
