@@ -418,7 +418,7 @@ function entrar(pin,silencioso){
     if(!j.ok) throw new Error(j.error||'PIN no válido.');
     S.pin=pin; S.nombre=j.nombre||'';
     try{ if($('rec').checked||silencioso) localStorage.setItem('yv_pin',pin); else localStorage.removeItem('yv_pin'); }catch(e){}
-    $('entrada').style.display='none'; $('app').classList.add('on'); $('bHist').hidden=false; $('salir').hidden=false; $('salir').title='Salir ('+S.nombre+')'; ajustarAlto(); nuevaConv(); cargarLista(); cargarHoy(); $('salir2').hidden=false; $('q').focus(); ofrecerInstalar();
+    $('entrada').style.display='none'; $('app').classList.add('on'); $('bHist').hidden=false; $('salir').hidden=false; $('salir').title='Salir ('+S.nombre+')'; ajustarAlto(); nuevaConv(); cargarLista(); cargarHoy(); $('salir2').hidden=false; $('q').focus();
   }).catch(function(e){
     try{ localStorage.removeItem('yv_pin'); }catch(x){}
     $('entrada').style.display='flex'; $('app').classList.remove('on');
@@ -486,9 +486,12 @@ $('gInst').addEventListener('click',function(){ if(aviso) lanzarPrompt(); });
 $('instalar').addEventListener('click',function(){ if(aviso){ lanzarPrompt(); return; } abrirGuia(false); });
 /* Aviso automático: si Yarvis no está instalada, lo ofrece una vez al entrar; si el usuario dice
    "Ahora no", vuelve a ofrecerlo en 7 días. */
+var ofrecido=false;
 function ofrecerInstalar(){
-  if(instalada) return; var ult=0; try{ ult=+(localStorage.getItem('yv_inst_aviso')||0); }catch(e){}
-  if(Date.now()-ult<7*864e5) return;
+  /* ?instalar=1 en el enlace lo muestra siempre (sirve para probar o para enviarlo a alguien) */
+  var forzar=/[?&]instalar=1/.test(location.search);
+  if(instalada||ofrecido) return; var ult=0; try{ ult=+(localStorage.getItem('yv_inst_aviso')||0); }catch(e){}
+  if(!forzar&&Date.now()-ult<7*864e5) return; ofrecido=true;
   setTimeout(function(){ if(instalada||$('guia').classList.contains('on')) return; abrirGuia(true); try{ localStorage.setItem('yv_inst_aviso',String(Date.now())); }catch(e){} },1500);
 }
 $('gCerrar').addEventListener('click',function(){ $('guia').classList.remove('on'); });
@@ -496,6 +499,8 @@ $('guia').addEventListener('click',function(e){ if(e.target.id==='guia') $('guia
 document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ $('guia').classList.remove('on'); cerrarLado(); } });
 
 /* ── arranque ── */
+/* la invitación a instalar aparece al abrir el enlace, antes o después de escribir el PIN */
+ofrecerInstalar();
 var guardado=null; try{ guardado=localStorage.getItem('yv_pin'); }catch(e){}
 if(guardado){ $('rec').checked=true; entrar(guardado,true); } else $('pin').focus();
 })();
