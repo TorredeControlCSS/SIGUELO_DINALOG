@@ -4,18 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0C447C">
-<title>YARVIS · Asistente Virtual · Dirección Nacional de Logística</title>
+<title>Yarvis · Asistente Virtual · Dirección Nacional de Logística</title>
 <link rel="icon" href="favicon.ico">
 <link rel="manifest" href="yarvis.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="YARVIS">
+<meta name="apple-mobile-web-app-title" content="Yarvis">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 :root{--az:#0C447C;--az2:#0a3866;--azP:#e3edf8;--azP2:#d4e3f4;--bd:#c9d3df;--tx:#1c1c1c;--tx2:#4a4a4a;--tx3:#6a6a6a;--bg:#eef1f5;
   --okP:#d6ecd6;--ok:#1d5a27;--amP:#fbe0bd;--am:#7a4a00;--rjP:#f5cccc;--rj:#9b1c1c;--mono:Consolas,"Courier New",monospace;--sans:"Segoe UI",Calibri,Arial,sans-serif}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{height:100%;margin:0}
 body{font-family:var(--sans);color:var(--tx);background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 button{font-family:inherit}
@@ -42,7 +43,9 @@ header p{margin:0;font-size:12px;color:#cfe0f3}
 .caja .ent{width:100%;background:var(--az);color:#fff;border:0;padding:12px;font-size:15px;font-weight:700;cursor:pointer}
 .caja .err{color:var(--rj);font-size:13px;min-height:18px;margin-top:10px}
 
-#chat{flex:1;display:none;flex-direction:column;min-height:0}
+#app{flex:1;display:none;min-height:0}
+#app.on{display:flex}
+#chat{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
 #hilo{flex:1;overflow-y:auto;padding:14px 12px 8px;-webkit-overflow-scrolling:touch}
 .ancho{max-width:900px;margin:0 auto}
 .vacio h2{font-size:18px;margin:4px 0 4px;color:var(--az)}
@@ -101,23 +104,30 @@ table.t tr:nth-child(even) td{background:#f8fafc}
 #env[disabled]{opacity:.45;cursor:default}
 .pie{font-size:11px;color:var(--tx3);text-align:center;margin-top:5px;line-height:1.35}
 
-/* panel lateral: conversaciones anteriores */
-#hist{position:fixed;inset:0;background:rgba(10,30,55,.45);display:none;z-index:30}
-#hist.on{display:block}
-#hist .pan{position:absolute;top:0;bottom:0;left:0;width:min(360px,88vw);background:#fff;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
-#hist .cab{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--azP)}
-#hist .cab b{color:var(--az);font-size:15px}
-#hist .cab button{background:transparent;border:0;color:var(--az);cursor:pointer;padding:4px}
-#hist ul{list-style:none;margin:0;padding:6px;overflow:auto;flex:1}
-#hist li{display:flex;align-items:center;gap:6px;border-radius:3px}
-#hist li.act{background:var(--azP)}
-#hist li button.ab{flex:1;text-align:left;background:transparent;border:0;padding:10px;cursor:pointer;min-width:0}
-#hist li button.ab b{display:block;font-size:13.5px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#hist li button.ab small{font-size:11.5px;color:var(--tx3)}
-#hist li button.del{background:transparent;border:0;color:var(--tx3);cursor:pointer;padding:8px}
-#hist li button.del:hover{color:var(--rj)}
-#hist .vac{padding:16px;font-size:13px;color:var(--tx3)}
-
+/* panel de conversaciones: fijo a la izquierda en pantallas anchas; desplegable bajo el encabezado en el teléfono */
+#lado{width:280px;flex-shrink:0;background:#fff;border-right:1px solid var(--bd);display:flex;flex-direction:column;min-height:0}
+#lado .cab{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--azP)}
+#lado .cab b{color:var(--az);font-size:14.5px}
+#lado .cab button{background:transparent;border:0;color:var(--az);cursor:pointer;padding:4px;display:none}
+#lado ul{list-style:none;margin:0;padding:6px;overflow:auto;flex:1}
+#lado li{display:flex;align-items:center;gap:4px;border-radius:3px}
+#lado li.act{background:var(--azP)}
+#lado li button.ab{flex:1;text-align:left;background:transparent;border:0;padding:9px 10px;cursor:pointer;min-width:0}
+#lado li button.ab b{display:block;font-size:13px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lado li button.ab small{font-size:11px;color:var(--tx3)}
+#lado li button.del{background:transparent;border:0;color:var(--tx3);cursor:pointer;padding:8px;opacity:.7}
+#lado li button.del:hover{color:var(--rj);opacity:1}
+#lado .vac{padding:14px;font-size:13px;color:var(--tx3)}
+#velo{display:none}
+@media (min-width:1000px){ #bHist{display:none!important} }
+@media (max-width:999px){
+  #lado{position:fixed;left:0;bottom:0;top:var(--hh,56px);width:min(320px,86vw);z-index:30;transform:translateX(-102%);transition:transform .2s ease;box-shadow:0 0 0 rgba(0,0,0,0)}
+  #lado.on{transform:none;box-shadow:4px 0 18px rgba(0,0,0,.18)}
+  #lado .cab button{display:block}
+  #velo{position:fixed;left:0;right:0;bottom:0;top:var(--hh,56px);background:rgba(10,30,55,.35);z-index:29}
+  #velo.on{display:block}
+}
+@media (prefers-reduced-motion:reduce){#lado{transition:none}}
 #guia{position:fixed;inset:0;background:rgba(10,30,55,.55);display:none;align-items:flex-end;justify-content:center;z-index:40}
 #guia.on{display:flex}
 #guia .pan{background:#fff;width:100%;max-width:520px;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));max-height:90vh;overflow:auto}
@@ -146,16 +156,16 @@ table.t tr:nth-child(even) td{background:#f8fafc}
 </svg>
 <header>
   <img src="icons/icon-192.png" alt="Caja de Seguro Social">
-  <div class="t"><h1>YARVIS</h1><p>Asistente Virtual</p></div>
+  <div class="t"><h1>Yarvis</h1><p>Asistente Virtual</p></div>
   <button class="hb" id="bHist" type="button" title="Conversaciones anteriores" hidden><svg class="i"><use href="#ic-hist"/></svg><span>Historial</span></button>
   <button class="hb" id="nueva" type="button" title="Nueva conversación" hidden><svg class="i"><use href="#ic-nueva"/></svg><span>Nueva</span></button>
-  <button class="hb" id="instalar" type="button" title="Instalar YARVIS como aplicación" hidden><svg class="i"><use href="#ic-inst"/></svg><span>Instalar</span></button>
+  <button class="hb" id="instalar" type="button" title="Instalar Yarvis como aplicación" hidden><svg class="i"><use href="#ic-inst"/></svg><span>Instalar</span></button>
   <a class="hb" href="tablero_mando.html" title="Tablero de Mando"><svg class="i"><use href="#ic-tab"/></svg><span>Tablero</span></a>
 </header>
 
 <section id="entrada" aria-labelledby="tE">
   <div class="caja">
-    <h2 id="tE">Entrar a YARVIS</h2>
+    <h2 id="tE">Entrar a Yarvis</h2>
     <p>Responde con los datos publicados por los sistemas de la Dirección y cita la fuente y el corte de cada cifra. Escriba su PIN.</p>
     <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" aria-label="PIN">
     <label><input id="rec" type="checkbox"> Recordar en este dispositivo</label>
@@ -164,22 +174,24 @@ table.t tr:nth-child(even) td{background:#f8fafc}
   </div>
 </section>
 
-<section id="chat" aria-label="Conversación con YARVIS">
+<div id="app">
+<aside id="lado" aria-label="Conversaciones">
+  <div class="cab"><b>Conversaciones</b><button type="button" id="hCerrar" aria-label="Cerrar"><svg class="i"><use href="#ic-x"/></svg></button></div>
+  <ul id="hLista"><li class="vac">Cargando…</li></ul>
+</aside>
+<div id="velo"></div>
+<section id="chat" aria-label="Conversación con Yarvis">
   <div id="hilo" aria-live="polite"><div class="ancho" id="lista"></div></div>
   <div id="barra"><div class="ancho">
     <button id="mic" type="button" title="Dictar la pregunta" aria-label="Dictar la pregunta" hidden><svg class="i"><use href="#ic-mic"/></svg></button>
     <textarea id="q" rows="1" placeholder="Escriba su pregunta" aria-label="Pregunta"></textarea>
     <button id="env" type="button">Enviar</button>
-  </div><div class="pie ancho">YARVIS usa solo los datos publicados del ecosistema y, si un dato no existe, lo dice. YARVIS puede cometer errores: verifique las cifras importantes en el Tablero de Mando.</div></div>
+  </div><div class="pie ancho">Yarvis usa solo los datos publicados del ecosistema y, si un dato no existe, lo dice. Yarvis puede cometer errores: verifique las cifras importantes en el Tablero de Mando.</div></div>
 </section>
-
-<div id="hist" aria-hidden="true"><div class="pan" role="dialog" aria-labelledby="hT">
-  <div class="cab"><b id="hT">Conversaciones anteriores</b><button type="button" id="hCerrar" aria-label="Cerrar"><svg class="i"><use href="#ic-x"/></svg></button></div>
-  <ul id="hLista"></ul>
-</div></div>
+</div>
 
 <div id="guia" role="dialog" aria-modal="true" aria-labelledby="gT"><div class="pan">
-  <h2 id="gT">Instalar YARVIS</h2><p class="s">Así queda como una aplicación en su pantalla de inicio, con su ícono.</p>
+  <h2 id="gT">Instalar Yarvis</h2><p class="s">Así queda como una aplicación en su pantalla de inicio, con su ícono.</p>
   <ol id="gPasos"></ol>
   <button class="cer" type="button" id="gCerrar">Entendido</button>
 </div></div>
@@ -205,30 +217,33 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ retu
 function ic(n){ return '<svg class="i"><use href="#ic-'+n+'"/></svg>'; }
 function num(v){ return v==null||v===''?'':(typeof v==='number'?v.toLocaleString('en-US',{ maximumFractionDigits:2 }):String(v)); }
 
-/* ── historial en este dispositivo ── */
-function clave(){ return 'yv_conv_'+(S.nombre||'x').toUpperCase().replace(/[^A-Z]/g,''); }
-function leerConvs(){ try{ return JSON.parse(localStorage.getItem(clave())||'[]'); }catch(e){ return []; } }
-function guardarConvs(L){ try{ localStorage.setItem(clave(),JSON.stringify(L.slice(0,30))); }catch(e){ /* sin espacio: se recortan las más antiguas */ try{ localStorage.setItem(clave(),JSON.stringify(L.slice(0,10))); }catch(x){} } }
-function guardarActual(){
-  if(!S.conv||!S.conv.m.length) return;
-  var L=leerConvs().filter(function(c){ return c.id!==S.conv.id; }); S.conv.f=new Date().toISOString(); L.unshift(S.conv); guardarConvs(L);
+/* ── conversaciones guardadas en el servidor: las mismas en la computadora y en el teléfono ── */
+function fechaCorta(iso){ var d=new Date(iso); if(isNaN(d)) return ''; return d.toLocaleDateString('es-PA',{ day:'numeric', month:'short' })+' · '+d.toLocaleTimeString('es-PA',{ hour:'numeric', minute:'2-digit' }); }
+function cargarLista(){
+  return llamar({ pin:S.pin, accion:'conversaciones' }).then(function(j){ S.lista=(j&&j.ok&&j.lista)||[]; pintarLista(); })
+    .catch(function(){ $('hLista').innerHTML='<li class="vac">No se pudo cargar el historial. Revise su conexión.</li>'; });
 }
-function fechaCorta(iso){ var d=new Date(iso); return d.toLocaleDateString('es-PA',{ day:'numeric', month:'short' })+' · '+d.toLocaleTimeString('es-PA',{ hour:'numeric', minute:'2-digit' }); }
-function pintarHist(){
-  var L=leerConvs();
-  $('hLista').innerHTML=L.length?L.map(function(c){ return '<li'+(S.conv&&S.conv.id===c.id?' class="act"':'')+'><button class="ab" type="button" data-abrir="'+c.id+'"><b>'+esc(c.t)+'</b><small>'+esc(fechaCorta(c.f))+' · '+c.m.length+' pregunta'+(c.m.length===1?'':'s')+'</small></button>'+
-    '<button class="del" type="button" data-borrar="'+c.id+'" title="Borrar" aria-label="Borrar conversación">'+ic('del')+'</button></li>'; }).join(''):'<li class="vac">Todavía no hay conversaciones guardadas en este dispositivo.</li>';
+function pintarLista(){
+  var L=(S.lista||[]).slice(), act=S.conv&&S.conv.id;
+  $('hLista').innerHTML=L.length?L.map(function(c){ return '<li'+(c.id===act?' class="act"':'')+'><button class="ab" type="button" data-abrir="'+esc(c.id)+'"><b>'+esc(c.t)+'</b><small>'+esc(fechaCorta(c.f))+' · '+c.n+' pregunta'+(c.n===1?'':'s')+'</small></button>'+
+    '<button class="del" type="button" data-borrar="'+esc(c.id)+'" title="Quitar del historial" aria-label="Quitar del historial">'+ic('del')+'</button></li>'; }).join(''):'<li class="vac">Aquí aparecerán sus conversaciones, en cualquier dispositivo donde entre con su PIN.</li>';
 }
-$('bHist').addEventListener('click',function(){ pintarHist(); $('hist').classList.add('on'); $('hist').setAttribute('aria-hidden','false'); });
-function cerrarHist(){ $('hist').classList.remove('on'); $('hist').setAttribute('aria-hidden','true'); }
-$('hCerrar').addEventListener('click',cerrarHist);
-$('hist').addEventListener('click',function(e){
-  if(e.target.id==='hist'){ cerrarHist(); return; }
+function abrirLado(){ ajustarAlto(); $('lado').classList.add('on'); $('velo').classList.add('on'); }
+function cerrarLado(){ $('lado').classList.remove('on'); $('velo').classList.remove('on'); }
+function ajustarAlto(){ document.documentElement.style.setProperty('--hh',document.querySelector('header').offsetHeight+'px'); }
+window.addEventListener('resize',ajustarAlto);
+$('bHist').addEventListener('click',function(){ if($('lado').classList.contains('on')) cerrarLado(); else abrirLado(); });
+$('hCerrar').addEventListener('click',cerrarLado); $('velo').addEventListener('click',cerrarLado);
+$('lado').addEventListener('click',function(e){
   var a=e.target.closest('[data-abrir]'), b=e.target.closest('[data-borrar]');
-  if(b){ guardarConvs(leerConvs().filter(function(c){ return c.id!==b.getAttribute('data-borrar'); })); if(S.conv&&S.conv.id===b.getAttribute('data-borrar')) nuevaConv(); pintarHist(); return; }
-  if(a){ var c=leerConvs().filter(function(x){ return x.id===a.getAttribute('data-abrir'); })[0]; if(c){ S.conv=c; $('lista').innerHTML=''; c.m.forEach(function(m){ pintarPar(m); }); $('nueva').hidden=false; } cerrarHist(); }
+  if(b){ var idb=b.getAttribute('data-borrar'); S.lista=(S.lista||[]).filter(function(c){ return c.id!==idb; }); if(S.conv&&S.conv.id===idb) nuevaConv(); pintarLista();
+    llamar({ pin:S.pin, accion:'borrar', id:idb }).catch(function(){}); return; }
+  if(a){ var id=a.getAttribute('data-abrir'); if(S.conv&&S.conv.id===id){ cerrarLado(); return; }
+    var info=(S.lista||[]).filter(function(c){ return c.id===id; })[0]||{ t:'' };
+    S.conv={ id:id, t:info.t, m:[] }; S.tablas={}; $('lista').innerHTML='<div class="msg yv"><div class="b"><div class="pensando"><i></i><i></i><i></i></div></div></div>'; $('nueva').hidden=false; pintarLista(); cerrarLado();
+    llamar({ pin:S.pin, accion:'conversacion', id:id }).then(function(j){ if(!S.conv||S.conv.id!==id) return; $('lista').innerHTML=''; S.conv.m=(j&&j.mensajes)||[]; S.conv.m.forEach(pintarPar); abajo(); })
+      .catch(function(){ $('lista').innerHTML='<div class="msg yv error"><div class="b">No se pudo abrir la conversación. Revise su conexión.</div></div>'; }); }
 });
-
 /* ── formato de la respuesta ── */
 function formato(t){
   var lineas=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').split(/\n/), h='', enLista=false;
@@ -268,7 +283,7 @@ function bloqueSerie(s){
 }
 function cuerpoRespuesta(j){
   var fts=(j.fuentes||[]).map(function(f){ var des=f.estado==='desactualizada'; return '<span'+(des?' class="des"':'')+'>'+esc(f.nombre)+(f.corte?' · corte '+esc(f.corte):'')+(des?' · desactualizada':'')+'</span>'; }).join('');
-  return '<div class="b"><div class="quien">YARVIS</div>'+formato(j.respuesta)+(j.aviso?'<div class="aviso">'+esc(j.aviso)+'</div>':'')+
+  return '<div class="b"><div class="quien">Yarvis</div>'+formato(j.respuesta)+(j.aviso?'<div class="aviso">'+esc(j.aviso)+'</div>':'')+
     (j.tabla&&j.tabla.filas?bloqueTabla(j.tabla):'')+(j.serie&&j.serie.puntos?bloqueSerie(j.serie):'')+
     detalle(j)+(fts?'<div class="fts">'+fts+'</div>':'')+'</div>';
 }
@@ -301,11 +316,11 @@ function cargarExcelJS(){ return window.ExcelJS?Promise.resolve():new Promise(fu
 function excel(k){
   var T=S.tablas[k];
   cargarExcelJS().then(function(){ return fetch('icons/icon-192.png').then(function(r){ return r.arrayBuffer(); }).catch(function(){ return null; }); }).then(function(logo){
-    var wb=new ExcelJS.Workbook(), ws=wb.addWorksheet('YARVIS'), nc=T.columnas.length;
+    var wb=new ExcelJS.Workbook(), ws=wb.addWorksheet('Yarvis'), nc=T.columnas.length;
     if(logo){ var id=wb.addImage({ buffer:logo, extension:'png' }); ws.addImage(id,{ tl:{ col:0, row:0 }, ext:{ width:52, height:52 } }); }
     ws.getRow(1).height=22; ws.getRow(2).height=18; ws.getRow(3).height=18;
     var t1=ws.getCell('B1'); t1.value='CAJA DE SEGURO SOCIAL'; t1.font={ bold:true, size:14, color:{ argb:'FF0C447C' } };
-    ws.getCell('B2').value='Dirección Nacional de Logística · YARVIS, Asistente Virtual'; ws.getCell('B2').font={ size:11, color:{ argb:'FF4A4A4A' } };
+    ws.getCell('B2').value='Dirección Nacional de Logística · Yarvis, Asistente Virtual'; ws.getCell('B2').font={ size:11, color:{ argb:'FF4A4A4A' } };
     ws.getCell('B3').value=T.titulo; ws.getCell('B3').font={ bold:true, size:12 };
     ws.getCell('B4').value=(T.fuente||'')+' · generado '+new Date().toLocaleString('es-PA'); ws.getCell('B4').font={ italic:true, size:9, color:{ argb:'FF6A6A6A' } };
     var hr=ws.getRow(6); T.columnas.forEach(function(c,i){ var cell=hr.getCell(i+1); cell.value=c.h; cell.font={ bold:true, color:{ argb:'FFFFFFFF' } };
@@ -329,7 +344,7 @@ function vacio(){
     '<div class="sug">'+SUGERIDAS.map(function(s){ return '<button type="button" data-s="'+esc(s)+'">'+esc(s)+'</button>'; }).join('')+'</div></div>';
   $('nueva').hidden=true;
 }
-function nuevaConv(){ guardarActual(); S.conv={ id:'c'+Date.now(), t:'', f:new Date().toISOString(), m:[] }; S.tablas={}; vacio(); }
+function nuevaConv(){ S.conv={ id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), t:'', m:[] }; S.tablas={}; vacio(); pintarLista(); }
 $('nueva').addEventListener('click',function(){ nuevaConv(); $('q').focus(); });
 function llamar(cuerpo){
   return fetch(URL_YARVIS,{ method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(cuerpo) })
@@ -339,16 +354,18 @@ function preguntar(texto){
   texto=String(texto||'').trim(); if(!texto||S.ocupado) return;
   if($('lista').querySelector('.vacio')) $('lista').innerHTML='';
   $('nueva').hidden=false; agregar('<div class="b">'+esc(texto)+'</div>','yo');
-  var esp=agregar('<div class="b"><div class="quien">YARVIS</div><div class="pensando" aria-label="Consultando"><i></i><i></i><i></i></div></div>','yv'); abajo();
+  var esp=agregar('<div class="b"><div class="quien">Yarvis</div><div class="pensando" aria-label="Consultando"><i></i><i></i><i></i></div></div>','yv'); abajo();
   S.ocupado=true; $('env').disabled=true; $('q').value=''; ajustar();
   var hist=S.conv.m.slice(-6).map(function(m){ return { p:m.p, r:m.j.respuesta }; });
-  llamar({ pin:S.pin, pregunta:texto, historial:hist }).then(function(j){
-    if(!j.ok){ esp.className='msg yv error'; esp.innerHTML='<div class="b">'+esc(j.error||'YARVIS no pudo responder.')+'</div>'; if(/PIN/i.test(j.error||'')){ try{ localStorage.removeItem('yv_pin'); }catch(e){} } return; }
+  llamar({ pin:S.pin, pregunta:texto, historial:hist, conversacion:S.conv.id }).then(function(j){
+    if(!j.ok){ esp.className='msg yv error'; esp.innerHTML='<div class="b">'+esc(j.error||'Yarvis no pudo responder.')+'</div>'; if(/PIN/i.test(j.error||'')){ try{ localStorage.removeItem('yv_pin'); }catch(e){} } return; }
     var m={ p:texto, j:{ respuesta:j.respuesta, fuentes:j.fuentes, aviso:j.aviso, tabla:j.tabla, serie:j.serie, vista:j.vista } };
     esp.innerHTML=cuerpoRespuesta(m.j);
-    if(!S.conv.m.length) S.conv.t=texto.slice(0,80); S.conv.m.push(m); guardarActual();
+    if(!S.conv.m.length) S.conv.t=texto.slice(0,80); S.conv.m.push(m);
+    /* la conversación sube al primer lugar de la lista, con su número de preguntas */
+    S.lista=(S.lista||[]).filter(function(c){ return c.id!==S.conv.id; }); S.lista.unshift({ id:S.conv.id, t:S.conv.t, f:new Date().toISOString(), n:S.conv.m.length }); pintarLista();
     esp.scrollIntoView({ block:'start', behavior:'smooth' });
-  }).catch(function(){ esp.className='msg yv error'; esp.innerHTML='<div class="b">No hay conexión con YARVIS. Revise su internet y vuelva a enviar la pregunta.</div>'; abajo(); })
+  }).catch(function(){ esp.className='msg yv error'; esp.innerHTML='<div class="b">No hay conexión con Yarvis. Revise su internet y vuelva a enviar la pregunta.</div>'; abajo(); })
   .then(function(){ S.ocupado=false; $('env').disabled=false; });
 }
 $('env').addEventListener('click',function(){ preguntar($('q').value); });
@@ -363,11 +380,11 @@ function entrar(pin,silencioso){
     if(!j.ok) throw new Error(j.error||'PIN no válido.');
     S.pin=pin; S.nombre=j.nombre||'';
     try{ if($('rec').checked||silencioso) localStorage.setItem('yv_pin',pin); else localStorage.removeItem('yv_pin'); }catch(e){}
-    $('entrada').style.display='none'; $('chat').style.display='flex'; $('bHist').hidden=false; nuevaConv(); $('q').focus();
+    $('entrada').style.display='none'; $('app').classList.add('on'); $('bHist').hidden=false; ajustarAlto(); nuevaConv(); cargarLista(); $('q').focus();
   }).catch(function(e){
     try{ localStorage.removeItem('yv_pin'); }catch(x){}
-    $('entrada').style.display='flex'; $('chat').style.display='none';
-    if(!silencioso) $('errE').textContent=/HTTP|fetch|Failed/i.test(e.message)?'No hay conexión con YARVIS. Revise su internet e intente de nuevo.':e.message;
+    $('entrada').style.display='flex'; $('app').classList.remove('on');
+    if(!silencioso) $('errE').textContent=/HTTP|fetch|Failed/i.test(e.message)?'No hay conexión con Yarvis. Revise su internet e intente de nuevo.':e.message;
   }).then(function(){ $('entrar').disabled=false; $('entrar').textContent='Entrar'; });
 }
 $('entrar').addEventListener('click',function(){ var p=$('pin').value.trim(); if(!/^\d{4,8}$/.test(p)){ $('errE').textContent='El PIN tiene de 4 a 8 dígitos.'; return; } entrar(p,false); });
@@ -388,10 +405,10 @@ window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); a
 window.addEventListener('appinstalled',function(){ instalada=true; $('instalar').hidden=true; $('guia').classList.remove('on'); });
 function pasos(){
   if(esIOS && !/safari/i.test(ua.replace(/crios|fxios|edgios/i,'X'))) return ['Abra esta misma página en <b>Safari</b>. En iPhone solo Safari puede instalar aplicaciones desde una página.','Luego toque <b>Compartir</b> y <b>Agregar a pantalla de inicio</b>.'];
-  if(esIOS) return ['Toque el botón <b>Compartir</b> en la barra inferior de Safari (el cuadro con la flecha hacia arriba).','Baje en la lista y toque <b>Agregar a pantalla de inicio</b>.','Toque <b>Agregar</b>, arriba a la derecha. El ícono de YARVIS aparece en su pantalla de inicio.'];
+  if(esIOS) return ['Toque el botón <b>Compartir</b> en la barra inferior de Safari (el cuadro con la flecha hacia arriba).','Baje en la lista y toque <b>Agregar a pantalla de inicio</b>.','Toque <b>Agregar</b>, arriba a la derecha. El ícono de Yarvis aparece en su pantalla de inicio.'];
   if(esSamsung) return ['Toque el menú (tres líneas), abajo a la derecha.','Toque <b>Agregar página a</b> y luego <b>Pantalla de inicio</b>.','Confirme con <b>Agregar</b>.'];
   if(esAndroid) return ['Toque el menú (tres puntos), arriba a la derecha de Chrome.','Toque <b>Instalar aplicación</b> o <b>Agregar a la pantalla principal</b>.','Confirme con <b>Instalar</b>.'];
-  return ['En Chrome o Edge, toque el ícono de instalar al final de la barra de direcciones.','Si no aparece, abra el menú (tres puntos) y elija <b>Instalar YARVIS</b>.','Confirme con <b>Instalar</b>.'];
+  return ['En Chrome o Edge, toque el ícono de instalar al final de la barra de direcciones.','Si no aparece, abra el menú (tres puntos) y elija <b>Instalar Yarvis</b>.','Confirme con <b>Instalar</b>.'];
 }
 $('instalar').addEventListener('click',function(){
   if(aviso){ aviso.prompt(); aviso.userChoice.then(function(r){ aviso=null; if(r&&r.outcome==='accepted') $('instalar').hidden=true; }); return; }
@@ -399,7 +416,7 @@ $('instalar').addEventListener('click',function(){
 });
 $('gCerrar').addEventListener('click',function(){ $('guia').classList.remove('on'); });
 $('guia').addEventListener('click',function(e){ if(e.target.id==='guia') $('guia').classList.remove('on'); });
-document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ $('guia').classList.remove('on'); cerrarHist(); } });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ $('guia').classList.remove('on'); cerrarLado(); } });
 
 /* ── arranque ── */
 var guardado=null; try{ guardado=localStorage.getItem('yv_pin'); }catch(e){}
