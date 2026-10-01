@@ -346,7 +346,7 @@ function decisiones(){
     return '<a class="dc" href="#alertas" data-go="alertas" title="'+esc(x.renglon)+'"><div class="n">Hoy</div><div class="t"><b>'+esc(nom)+'</b><span>'+esc(x.destino)+' en cero · mover '+x.mover.toLocaleString('en-US')+' u desde '+esc(x.origenes.join(' y '))+'</span></div></a>';
   }).join('');
   while((top.match(/class="dc"/g)||[]).length<3) top+='<div></div>';
-  return '<div class="lbl"><b>Requieren su decisión</b><span>'+L.length.toLocaleString('en-US')+' vitales con un CEDIS en cero · corte '+esc(fCorta(red.kpi&&red.kpi.corte))+'</span></div>'+top+
+  return '<div class="lbl"><b>Requieren su decisión</b><span>'+L.length.toLocaleString('en-US')+' casos de vitales con un CEDIS en cero · corte '+esc(fCorta(red.kpi&&red.kpi.corte))+'</span></div>'+top+
     '<a class="all" href="#alertas" data-go="alertas">Ver todas →</a>';
 }
 
@@ -502,7 +502,7 @@ function vista(v){
   ['panel','alertas','desp','ue','plan','pres'].forEach(function(k){ var el=$('v-'+k); if(el) el.hidden=(k!==v); });
   Array.prototype.forEach.call(document.querySelectorAll('nav .tab'),function(b){ b.classList.toggle('on',b.getAttribute('data-v')===v); });
   $('navm').style.display = v==='panel' ? '' : 'none';
-  if(v!=='panel'){ var el=$('v-'+v); if(el.dataset.mes!==S.meses[S.idx]){ el.innerHTML=({ alertas:vAlertas, pres:vPres, desp:vDesp, ue:vUE, plan:vPend }[v])(v); el.dataset.mes=S.meses[S.idx]; } }
+  if(v!=='panel'){ var el=$('v-'+v); if(el.dataset.mes!==S.meses[S.idx]){ el.innerHTML=({ alertas:vAlertas, pres:vPres, desp:vDesp, ue:vUE, plan:vPlan }[v])(v); el.dataset.mes=S.meses[S.idx]; } }
   if(location.hash!=='#'+v) history.replaceState(null,'','#'+v);
   window.scrollTo(0,0);
 }
@@ -603,6 +603,42 @@ function vUE(){
   return h;
 }
 
+/* Planificación: vitales con un CEDIS en cero, cuánto hay en el país y cuándo se acaba */
+function vPlan(){
+  var red=S.src.redistribucion, dic=S.dic, k=red&&red.kpi, g=S.reg.indicadores, mes=S.meses[S.idx];
+  var h=cabecera('plan','Planificación','Cómo está el abastecimiento de los vitales, cuánto hay, cuándo se acaba y qué mover hoy.');
+  if(!red||!red.f) return h+'<div class="pn"><div class="ph"><h3>Fuente no disponible</h3></div><div style="font-size:13px">No se pudo leer la Redistribución entre CEDIS.</div></div>';
+  var x2=valorEn('2',mes), x3=valorEn('3',mes);
+  var vit=function(c){ return dic && dic.r && dic.r[c] && dic.r[c].vit===1; };
+  var G={};
+  red.f.forEach(function(x){ if(!(x.urgente && x.destinoEnCero && (dic?vit(x.cod):true))) return;
+    if(!G[x.cod]) G[x.cod]={ cod:x.cod, renglon:x.renglon, ceros:[], mover:0, origenes:[], nac:x.nacional||{} };
+    var r=G[x.cod]; if(r.ceros.indexOf(x.destino)<0) r.ceros.push(x.destino); r.mover+=Number(x.mover)||0; if(r.origenes.indexOf(x.origen)<0) r.origenes.push(x.origen); });
+  var corte=fISO(k.corte), L=Object.keys(G).map(function(c){ return G[c]; });
+  L.sort(function(a,b){ return (a.nac.meses==null?99:a.nac.meses)-(b.nac.meses==null?99:b.nac.meses) || (b.nac.demandaMes||0)-(a.nac.demandaMes||0); });
+  var filas=L.map(function(r){ var m=r.nac.meses, fin='';
+    if(m!=null && corte){ var d=new Date(corte); d.setDate(d.getDate()+Math.round(m*30.4)); fin=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    return [r.cod,String(r.renglon||'').split(',').slice(0,2).join(','),r.ceros.join(', '),r.nac.saldo,r.nac.demandaMes,m,fin,r.mover,r.origenes.join(' y ')]; });
+  h+='<div class="kp">'+
+    kc(x2?estado(g['2'],x2.v):'con','Desabasto · CEDIS Panamá',x2?fmt(x2.v,'%'):'—','meta ≤ '+g['2'].meta+'% · corte '+(x2?fCorta(x2.corte):'—'))+
+    kc(x3?estado(g['3'],x3.v):'con','Cobertura · CEDIS Panamá',x3?fmt(x3.v,'m'):'—','mediana · meta ≥ '+g['3'].meta+' m')+
+    kc(L.length?'crit':'ok','Vitales con un CEDIS en cero',num(L.length),'renglones · '+num(L.reduce(function(a,r){ return a+r.ceros.length; },0))+' casos renglón y CEDIS')+
+    kc('con','Traslados sugeridos',num(k.totalTraslados),num(k.urgentes)+' urgentes · '+num(k.unidadesUrgentes)+' u')+
+    kc(k.invExceso?'bajo':'ok','Renglones en exceso',num(k.invExceso),'más de '+k.mesesExceso+' meses de inventario')+
+    kc('con','Corte de la fuente',fCorta(k.corte),'Redistribución entre CEDIS · F8 al '+fCorta(k.corteF8))+'</div>';
+  var cols=[{h:'Renglón',t:'txt',w:12},{h:'Descripción',t:'txt',w:44},{h:'CEDIS en cero',t:'txt',w:22},
+    {h:'Inventario en el país',t:'num',w:16},{h:'Demanda del país / mes',t:'num',w:16},
+    {h:'Cobertura nacional (m)',t:'dec',w:12,html:function(v){ return v==null?'—':chip(v<1?'crit':v<3?'bajo':'ok',fmt(v,'m')); }},
+    {h:'Se acaba aprox. (sin OC)',t:'txt',w:16,html:function(v){ return v?esc(fCorta(v)+' '+v.substring(0,4)):'—'; }},
+    {h:'Mover hoy (u)',t:'num',w:14},{h:'Desde',t:'txt',w:26}];
+  h+='<div class="pn"><div class="ph"><h3>Vitales con un CEDIS en cero · cuánto hay en el país y cuándo se acaba · menor cobertura primero</h3><button type="button" data-xls="plan">Excel (todos)</button></div>'+
+    tabla('plan',cols,filas,20)+
+    '<div class="nota">Inventario, demanda y cobertura nacionales de la Redistribución entre CEDIS (demanda: Formas 8, media móvil de 90 días). "Se acaba" proyecta la cobertura nacional desde el corte sin contar órdenes de compra en camino. Se muestran 20 de '+num(filas.length)+'; el Excel trae todos.</div></div>';
+  h+='<div class="pn"><div class="ph"><h3>Quiebre contra la orden de compra y cuánto pedir · por conectar</h3></div>'+
+    '<div style="font-size:13px">Para saber si la OC llega antes del quiebre y cuánto pedir, el simulador de reposición tiene que publicar sus alertas en un JSON, igual que las demás fuentes. Cuando exista, esta sección mostrará por renglón vital: OC en camino, fecha de llegada, días de hueco y cantidad sugerida.</div></div>';
+  return h;
+}
+
 /* Presupuesto y pagos */
 function vPres(){
   var man=S.src.manual, ent=S.src.recepcion, pr=man&&man.presupuesto, I5=S.ind['5'];
@@ -675,7 +711,7 @@ function vAlertas(){
     {h:'Responsable',t:'txt',w:22,vacio:'Por asignar'},{h:'Acción',t:'txt',w:36,vacio:'Traslado sugerido'},{h:'Resuelto el',t:'txt',w:12,vacio:'Sin fecha'},{h:'Estado',t:'txt',w:12,vacio:'Abierto'}];
   var nComp=Object.keys(comp).length, red=S.src.redistribucion;
   h+='<div class="kp">'+kc(filasI.length?'crit':'ok','Indicadores fuera de meta',String(filasI.length),'en '+MESL[+mes.substring(5,7)-1])+
-    kc(L.length?'crit':'ok','Vitales con un CEDIS en cero',num(L.length),'traslado posible · corte '+fCorta(red&&red.kpi&&red.kpi.corte))+
+    kc(L.length?'crit':'ok','Casos de vitales con un CEDIS en cero',num(L.length),'renglón y CEDIS · traslado posible · corte '+fCorta(red&&red.kpi&&red.kpi.corte))+
     kc(nComp?'ok':'bajo','Compromisos registrados',String(nComp),cj?'compromisos.json · corte '+fCorta(cj.corte):'Registro no disponible')+'<div></div><div></div><div></div></div>';
   h+='<div class="pn"><div class="ph"><h3>Indicadores fuera de meta · '+esc(mesLabel(mes))+'</h3><button type="button" data-xls="ind">Excel</button></div>'+tabla('ind',colsI,filasI)+'</div>';
   h+='<div class="pn"><div class="ph"><h3>Vitales con un CEDIS en cero · ordenados por demanda del CEDIS sin inventario</h3><button type="button" data-xls="ren">Excel (todos)</button></div>'+tabla('ren',colsR,filasR,25)+
@@ -684,7 +720,7 @@ function vAlertas(){
 }
 function exportarTabla(key){
   var T=TABLAS[key]; if(!T) return;
-  var nom={ desp:['Despachos_por_unidad','Despachos por unidad ejecutora'], ue:['Nivel_servicio_por_unidad','Nivel de servicio por unidad ejecutora'], prov:['Proveedores_recibido','Proveedores: recibido y cumplimiento de entrega'], ind:['Indicadores_fuera_de_meta','Indicadores fuera de meta'], ren:['Vitales_CEDIS_en_cero','Renglones vitales con un CEDIS en cero'] }[key];
+  var nom={ plan:['Vitales_CEDIS_en_cero_planificacion','Vitales con un CEDIS en cero: inventario y cobertura nacional'], desp:['Despachos_por_unidad','Despachos por unidad ejecutora'], ue:['Nivel_servicio_por_unidad','Nivel de servicio por unidad ejecutora'], prov:['Proveedores_recibido','Proveedores: recibido y cumplimiento de entrega'], ind:['Indicadores_fuera_de_meta','Indicadores fuera de meta'], ren:['Vitales_CEDIS_en_cero','Renglones vitales con un CEDIS en cero'] }[key];
   var filas=T.filas.map(function(r){ return r.map(function(v,i){ var c=T.cols[i]; if(key==='ind'&&i===5) return v==='crit'?'Crítico':'Bajo meta'; return (v===''||v==null)?(c.vacio||''):v; }); });
   xlsInstitucional(nom[0],nom[1],[],T.cols.map(function(c){ return { h:c.h, t:c.t, w:c.w }; }),filas);
 }
