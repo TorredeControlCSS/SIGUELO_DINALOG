@@ -1,0 +1,439 @@
+{
+ "fuente": "Mi Farma Digital (TorredeControlCSS/mifarmadigital, data.json · inst): coordenadas de cada unidad ejecutora",
+ "generado": "2026-10-01",
+ "nota": "Nombre de la unidad tal como aparece en el Kanban -> coordenadas. Sin coordenadas confiables: ULAPS LAS TABLAS (en el origen apunta a Bocas del Toro) y Policlínica Dr. Rodrigo Hidalgo González (no está en el origen). Editar aquí para agregar o corregir.",
+ "ue": {
+  "C. H. M. DR. ARNULFO ARIAS MADRID": {
+   "lat": 8.981047,
+   "lng": -79.534905,
+   "tipo": "Hospital",
+   "nombre": "Complejo Hospitalario Dr. Arnulfo Arias Madrid"
+  },
+  "CAPPS DE CAPIRA": {
+   "lat": 8.75816,
+   "lng": -79.884125,
+   "tipo": "Policlínica",
+   "nombre": "CAPPS Capira"
+  },
+  "CAPPS DE GUARARE": {
+   "lat": 7.82302,
+   "lng": -80.279441,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Guararé"
+  },
+  "CAPPS DE PEDASI": {
+   "lat": 7.543685,
+   "lng": -80.027799,
+   "tipo": "CAPPS",
+   "nombre": "PEDASI"
+  },
+  "CAPPS DE TONOSI": {
+   "lat": 7.407939,
+   "lng": -80.439919,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Tonosí"
+  },
+  "CAPPS EL TECAL": {
+   "lat": 8.910129,
+   "lng": -79.711869,
+   "tipo": "ULAPS",
+   "nombre": "CAPPS El Tecal"
+  },
+  "CAPPS LA PINTADA": {
+   "lat": 8.596545,
+   "lng": -80.44646,
+   "tipo": "CAPPS",
+   "nombre": "LA PINTADA"
+  },
+  "CAPPS LAS ACACIAS (PLAZA TOCUMEN)": {
+   "lat": 9.060946,
+   "lng": -79.422881,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Las Acacias (Plaza Tocumen)"
+  },
+  "CAPPS LOS POZOS": {
+   "lat": 7.787884,
+   "lng": -80.643814,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS de Los Pozos"
+  },
+  "CAPPS MACARACAS": {
+   "lat": 7.736689,
+   "lng": -80.5477,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Macaracas"
+  },
+  "CAPPS MAÑANITAS (LOS NOGALES)": {
+   "lat": 9.077264,
+   "lng": -79.411337,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Los Nogales (Mañanitas)"
+  },
+  "CAPPS OCU": {
+   "lat": 7.94531,
+   "lng": -80.777739,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Ocú"
+  },
+  "CAPPS PEDREGAL": {
+   "lat": 9.068715,
+   "lng": -79.420324,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Pedregal"
+  },
+  "CAPPS PESE": {
+   "lat": 7.790451,
+   "lng": -80.652469,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Pesé"
+  },
+  "CAPPS SANTA MARIA": {
+   "lat": 8.114514,
+   "lng": -80.667864,
+   "tipo": "CAPPS",
+   "nombre": "SANTA MARIA"
+  },
+  "CAPPS TORRIJOS CARTER": {
+   "lat": 9.07774,
+   "lng": -79.490912,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Torrijos Carter"
+  },
+  "CAPPS VACAMONTE": {
+   "lat": 8.864562,
+   "lng": -79.672627,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Vacamonte"
+  },
+  "CAPPS ZAPOTILLO": {
+   "lat": 8.031443,
+   "lng": -81.43216,
+   "tipo": "CAPPS",
+   "nombre": "CAPPS Zapotillo"
+  },
+  "CIUDAD DE LA SALUD": {
+   "lat": 9.07873,
+   "lng": -79.400235,
+   "tipo": "Hospital",
+   "nombre": "CIUDAD DE LA SALUD"
+  },
+  "COORDINACION LOS SANTOS": {
+   "lat": 7.769905,
+   "lng": -80.276533,
+   "tipo": "Hospital",
+   "nombre": "Los Santos"
+  },
+  "DR. BLAS GÓMEZ CHETRO (ARRAIJÁN)": {
+   "lat": 8.953158,
+   "lng": -79.655265,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Blas Gómez Chetro (Arraiján)"
+  },
+  "ESPECIALIDADES PEDIATRICAS (HEPOTH)": {
+   "lat": 9.001085,
+   "lng": -79.517996,
+   "tipo": "Hospital",
+   "nombre": "ESPECIALIDADES PEDIATRICAS (HEPOTH)"
+  },
+  "GUSTAVO A. ROSS": {
+   "lat": 8.430395,
+   "lng": -82.426801,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Especializada Dr. Gustavo Adolfo Ross (David)"
+  },
+  "HOSP G N COLLADO": {
+   "lat": 7.975318,
+   "lng": -80.420207,
+   "tipo": "Hospital",
+   "nombre": "Hospital Dr. Gustavo Nelson Collado (Chitré)"
+  },
+  "HOSP H ESPERANZA": {
+   "lat": 8.888731,
+   "lng": -79.626384,
+   "tipo": "Hospital",
+   "nombre": "Hospital Hogar de La Esperanza (Veracruz)"
+  },
+  "HOSP RAF HERNANDEZ": {
+   "lat": 8.43181,
+   "lng": -82.452335,
+   "tipo": "Hospital",
+   "nombre": "Hospital Regional Dr. Rafael Hernández L. (David)"
+  },
+  "HOSP. ALMIRANTE": {
+   "lat": 9.289518,
+   "lng": -82.408195,
+   "tipo": "Hospital",
+   "nombre": "Hospital de Almirante"
+  },
+  "HOSP. CHIRIQUI G": {
+   "lat": 8.939753,
+   "lng": -82.142376,
+   "tipo": "Hospital",
+   "nombre": "Hospital de Chiriquí Grande"
+  },
+  "HOSP. D. ARROCHA": {
+   "lat": 8.276812,
+   "lng": -82.860421,
+   "tipo": "Hospital",
+   "nombre": "Hospital Dr. Dionisio Arrocha (Puerto Armuelles)"
+  },
+  "HOSP. DE CHEPO": {
+   "lat": 9.16061,
+   "lng": -79.095403,
+   "tipo": "Hospital",
+   "nombre": "Hospital Regional de Chepo"
+  },
+  "HOSP. DRA. SUSANA JONES CANO": {
+   "lat": 9.037849,
+   "lng": -79.483217,
+   "tipo": "Hospital",
+   "nombre": "Hospital Susana Jones Cano (Villa Lucre)"
+  },
+  "HOSP. E. ABADIA": {
+   "lat": 8.015335,
+   "lng": -81.316671,
+   "tipo": "Hospital",
+   "nombre": "Hospital Dr. Ezequiel Abadía (Soná)"
+  },
+  "HOSP. IRMA DE LOURDES TZANETATOS": {
+   "lat": 9.094515,
+   "lng": -79.391586,
+   "tipo": "Hospital",
+   "nombre": "Hospital Irma de Lourdes Tzanetatos (24 de diciembre)"
+  },
+  "HOSP. MANUEL AMADOR G.": {
+   "lat": 9.357757,
+   "lng": -79.892702,
+   "tipo": "Hospital",
+   "nombre": "Complejo Hospitalario Dr. Manuel Amador Guerrero"
+  },
+  "HOSP.CHANGUINOLA": {
+   "lat": 9.448859,
+   "lng": -82.515617,
+   "tipo": "Hospital",
+   "nombre": "Hospital de Changuinola"
+  },
+  "POL E BALLADARES": {
+   "lat": 8.776089,
+   "lng": -82.430492,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Básica Dr. Ernesto Perez Balladares (Boquete)"
+  },
+  "POL MANUEL ROJAS": {
+   "lat": 8.254345,
+   "lng": -80.538748,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Manuel De Jesús Rojas (Aguadulce)"
+  },
+  "POL R R DE DIEGO": {
+   "lat": 7.968013,
+   "lng": -80.437214,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Roberto Ramírez De Diego (Chitré)"
+  },
+  "POL S. JUAN NATA": {
+   "lat": 8.342226,
+   "lng": -80.521188,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica San Juan De Dios (Natá)"
+  },
+  "POL. ALEJANDRO DE LA GUARDIA (BETHANIA)": {
+   "lat": 9.021825,
+   "lng": -79.52537,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Don Alejandro De La Guardia Hijo (Betania)"
+  },
+  "POL. CARLOS N. BRIN (SAN FRANCISCO)": {
+   "lat": 8.997459,
+   "lng": -79.51057,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Carlos N. Brin (San Francisco)"
+  },
+  "POL. DE CAÑITA": {
+   "lat": 9.220017,
+   "lng": -78.889723,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica de Cañitas"
+  },
+  "POL. DE NUEVO SAN JUAN": {
+   "lat": 9.260761,
+   "lng": -79.681347,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Hospital de Nuevo San Juan"
+  },
+  "POL. DE SABANITAS": {
+   "lat": 9.347196,
+   "lng": -79.806056,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Hospital de Sabanitas"
+  },
+  "POL. DIVALA": {
+   "lat": 8.411951,
+   "lng": -82.712078,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Básica de Divalá"
+  },
+  "POL. GENEROSO GUARDIA (STA. LIBRADA)": {
+   "lat": 9.072385,
+   "lng": -79.504727,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Don Generoso Guardia (Santa Librada)"
+  },
+  "POL. GUABITO": {
+   "lat": 9.497631,
+   "lng": -82.60782,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica de Guabito"
+  },
+  "POL. HORACIO DIAZ GOMEZ (SANTIAGO)": {
+   "lat": 8.108122,
+   "lng": -80.979114,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Horacio Díaz Gómez (Santiago)"
+  },
+  "POL. HUGO SPADAFORA": {
+   "lat": 9.351191,
+   "lng": -79.858494,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Hugo Spadafora"
+  },
+  "POL. JOAQUIN J. VALLARINO (JUAN DIAZ)": {
+   "lat": 9.054963,
+   "lng": -79.434635,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Don Joaquín José Vallarino (Juan Díaz)"
+  },
+  "POL. JUAN VEGA M. (SAN CARLOS)": {
+   "lat": 8.472735,
+   "lng": -79.955099,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Juan Vega Méndez (San Carlos)"
+  },
+  "POL. M. CARDENAS": {
+   "lat": 7.786283,
+   "lng": -80.269599,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Miguel Cárdenas Barahona (Las Tablas)"
+  },
+  "POL. MANUEL FERRER VALDES (PEDIATRICA)": {
+   "lat": 8.962451,
+   "lng": -79.538304,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Manuel Ferrer Valdés (Calle 25, Calidonia)"
+  },
+  "POL. MANUEL MARIA VALDES (SAN MIGUELITO)": {
+   "lat": 9.038129,
+   "lng": -79.495142,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Lic. Manuel María Valdés (San Miguelito)"
+  },
+  "POL. P. ESPINOSA": {
+   "lat": 8.521005,
+   "lng": -82.637114,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Especializada Dr. Pablo Espinosa (Bugaba)"
+  },
+  "POL. P. OCAÑA": {
+   "lat": 8.490985,
+   "lng": -80.358875,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Manuel Paulino Ocaña (Penonomé)"
+  },
+  "POL. PRESIDENTE REMON (CALLE 17)": {
+   "lat": 8.956525,
+   "lng": -79.541519,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Presidente Remón (Calle 17)"
+  },
+  "POL. SANTIAGO BARRAZA (CHORRERA)": {
+   "lat": 8.890577,
+   "lng": -79.760481,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Santiago Barraza (Chorrera)"
+  },
+  "POLICLINICA BASICA SAN ANTONIO-08-105": {
+   "lat": 9.060535,
+   "lng": -79.445091,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dra. Cecilia Guerra (San Antonio)"
+  },
+  "POLICLINICA DE SAN ANTONIO": {
+   "lat": 9.060535,
+   "lng": -79.445091,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dra. Cecilia Guerra (San Antonio)"
+  },
+  "POLICLINICA SAN ANTONIO": {
+   "lat": 9.060535,
+   "lng": -79.445091,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dra. Cecilia Guerra (San Antonio)"
+  },
+  "RAFAEL ESTEVEZ": {
+   "lat": 8.245122,
+   "lng": -80.557934,
+   "tipo": "Hospital",
+   "nombre": "Hospital Regional Dr. Rafael Estévez (Aguadulce)"
+  },
+  "SAN JUAN DE DIOS (VILLA DE LOS SANTOS)": {
+   "lat": 7.954667,
+   "lng": -80.383762,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica San Juan de Dios (La Villa)"
+  },
+  "ULAPS - LAS CUMBRES (DR. EDILBERTO CULIOLIS)": {
+   "lat": 9.079908,
+   "lng": -79.527119,
+   "tipo": "Policlínica",
+   "nombre": "Policlínica Dr. Edilberto Culiolis (Las Cumbres)"
+  },
+  "ULAPS - SAN CRISTOBAL (PROF. CARLOS VELARDE)": {
+   "lat": 9.028263,
+   "lng": -79.491118,
+   "tipo": "ULAPS",
+   "nombre": "ULAPS Prof. Carlos Velarde (San Cristóbal)"
+  },
+  "ULAPS DOLEGA": {
+   "lat": 8.558487,
+   "lng": -82.410632,
+   "tipo": "ULAPS",
+   "nombre": "ULAPS de Dolega"
+  },
+  "ULAPS MAXIMO HERRERA (HIPODROMO)": {
+   "lat": 9.037214,
+   "lng": -79.466615,
+   "tipo": "ULAPS",
+   "nombre": "ULAPS Máximo Herrera (Hipódromo)"
+  },
+  "ULAPS PORTOBELO": {
+   "lat": 9.553346,
+   "lng": -79.651709,
+   "tipo": "ULAPS",
+   "nombre": "ULAPS Portobelo"
+  },
+  "ULAPS SAN JOSE": {
+   "lat": 8.535165,
+   "lng": -79.923786,
+   "tipo": "ULAPS",
+   "nombre": "ULAPS San José"
+  },
+  "ULAPS VISTA ALEGRE (ARRAIJAN)": {
+   "lat": 8.925529,
+   "lng": -79.698241,
+   "tipo": "ULAPS",
+   "nombre": "ULAPS Vista Alegre"
+  },
+  "ULAPS VOLCAN": {
+   "lat": 8.785464,
+   "lng": -82.647509,
+   "tipo": "ULAPS",
+   "nombre": "ULAPS Volcán"
+  },
+  "ULAPS- GUADALUPE": {
+   "lat": 8.865363,
+   "lng": -79.809967,
+   "tipo": "ULAPS",
+   "nombre": "ULAPS Guadalupe"
+  }
+ }
+}
