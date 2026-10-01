@@ -141,7 +141,9 @@ table.t tr:nth-child(even) td{background:var(--card2)}
 #guia li{counter-increment:n;display:flex;gap:12px;align-items:flex-start;padding:10px 0;font-size:15px;line-height:1.4}
 #guia li::before{content:counter(n);flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--azP);color:var(--az);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}
 #guia li b{color:var(--az)}
-#guia .cer{width:100%;margin-top:14px;background:var(--az);color:#fff;border:0;padding:12px;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer}
+#guia .gb{display:flex;gap:8px;margin-top:14px}
+#guia .cer.sec{background:var(--card);color:var(--az);border:1px solid var(--bd)}
+#guia .cer{width:100%;margin-top:0;background:var(--az);color:#fff;border:0;padding:12px;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer}
 
 /* tamaño de letra elegido por el usuario (Ajustes): agranda todo el contenido, no el encabezado */
 #app,#entrada{zoom:var(--z)}
@@ -180,7 +182,7 @@ table.t tr:nth-child(even) td{background:var(--card2)}
 </svg>
 <header>
   <img src="icons/icon-192.png" alt="Caja de Seguro Social">
-  <div class="t"><h1>Yarvis</h1><p>Asistente Virtual de la Dirección Nacional de Logística</p></div>
+  <div class="t"><h1>Yarvis</h1><p>Asistente Virtual</p></div>
   <button class="hb" id="bHist" type="button" title="Conversaciones anteriores" hidden><svg class="i"><use href="#ic-hist"/></svg><span>Historial</span></button>
   <button class="hb" id="nueva" type="button" title="Nueva conversación" hidden><svg class="i"><use href="#ic-nueva"/></svg><span>Nueva</span></button>
   <button class="hb" id="instalar" type="button" title="Instalar Yarvis como aplicación" hidden><svg class="i"><use href="#ic-inst"/></svg><span>Instalar</span></button>
@@ -224,9 +226,9 @@ table.t tr:nth-child(even) td{background:var(--card2)}
   <button class="sal" type="button" id="salir2" hidden><svg class="i"><use href="#ic-salir"/></svg>Salir de Yarvis</button>
 </div>
 <div id="guia" role="dialog" aria-modal="true" aria-labelledby="gT"><div class="pan">
-  <h2 id="gT">Instalar Yarvis</h2><p class="s">Así queda como una aplicación en su pantalla de inicio, con su ícono.</p>
+  <h2 id="gT">Instalar Yarvis</h2><p class="s" id="gS">Así queda como una aplicación en su pantalla de inicio, con su ícono.</p>
   <ol id="gPasos"></ol>
-  <button class="cer" type="button" id="gCerrar">Entendido</button>
+  <div class="gb"><button class="cer" type="button" id="gInst" hidden>Instalar ahora</button><button class="cer sec" type="button" id="gCerrar">Entendido</button></div>
 </div></div>
 
 <script>
@@ -416,7 +418,7 @@ function entrar(pin,silencioso){
     if(!j.ok) throw new Error(j.error||'PIN no válido.');
     S.pin=pin; S.nombre=j.nombre||'';
     try{ if($('rec').checked||silencioso) localStorage.setItem('yv_pin',pin); else localStorage.removeItem('yv_pin'); }catch(e){}
-    $('entrada').style.display='none'; $('app').classList.add('on'); $('bHist').hidden=false; $('salir').hidden=false; $('salir').title='Salir ('+S.nombre+')'; ajustarAlto(); nuevaConv(); cargarLista(); cargarHoy(); $('salir2').hidden=false; $('q').focus();
+    $('entrada').style.display='none'; $('app').classList.add('on'); $('bHist').hidden=false; $('salir').hidden=false; $('salir').title='Salir ('+S.nombre+')'; ajustarAlto(); nuevaConv(); cargarLista(); cargarHoy(); $('salir2').hidden=false; $('q').focus(); ofrecerInstalar();
   }).catch(function(e){
     try{ localStorage.removeItem('yv_pin'); }catch(x){}
     $('entrada').style.display='flex'; $('app').classList.remove('on');
@@ -471,10 +473,24 @@ function pasos(){
   if(esAndroid) return ['Toque el menú (tres puntos), arriba a la derecha de Chrome.','Toque <b>Instalar aplicación</b> o <b>Agregar a la pantalla principal</b>.','Confirme con <b>Instalar</b>.'];
   return ['En Chrome o Edge, toque el ícono de instalar al final de la barra de direcciones.','Si no aparece, abra el menú (tres puntos) y elija <b>Instalar Yarvis</b>.','Confirme con <b>Instalar</b>.'];
 }
-$('instalar').addEventListener('click',function(){
-  if(aviso){ aviso.prompt(); aviso.userChoice.then(function(r){ aviso=null; if(r&&r.outcome==='accepted') $('instalar').hidden=true; }); return; }
-  $('gPasos').innerHTML=pasos().map(function(t){ return '<li><div>'+t+'</div></li>'; }).join(''); $('guia').classList.add('on'); $('gCerrar').focus();
-});
+function lanzarPrompt(){ aviso.prompt(); aviso.userChoice.then(function(r){ aviso=null; if(r&&r.outcome==='accepted'){ $('instalar').hidden=true; } $('guia').classList.remove('on'); }); }
+function abrirGuia(auto){
+  var movil=esIOS||esAndroid;
+  $('gT').textContent=auto?(movil?'Instale Yarvis en su teléfono':'Instale Yarvis en su computadora'):'Instalar Yarvis';
+  $('gS').textContent=auto?'Queda como una aplicación, con su ícono en la pantalla de inicio: se abre con un toque, sin buscar el enlace.':'Así queda como una aplicación en su pantalla de inicio, con su ícono.';
+  if(aviso){ $('gPasos').innerHTML=''; $('gInst').hidden=false; $('gCerrar').textContent='Ahora no'; }
+  else { $('gPasos').innerHTML=pasos().map(function(t){ return '<li><div>'+t+'</div></li>'; }).join(''); $('gInst').hidden=true; $('gCerrar').textContent=auto?'Ahora no':'Entendido'; }
+  $('guia').classList.add('on'); (aviso?$('gInst'):$('gCerrar')).focus();
+}
+$('gInst').addEventListener('click',function(){ if(aviso) lanzarPrompt(); });
+$('instalar').addEventListener('click',function(){ if(aviso){ lanzarPrompt(); return; } abrirGuia(false); });
+/* Aviso automático: si Yarvis no está instalada, lo ofrece una vez al entrar; si el usuario dice
+   "Ahora no", vuelve a ofrecerlo en 7 días. */
+function ofrecerInstalar(){
+  if(instalada) return; var ult=0; try{ ult=+(localStorage.getItem('yv_inst_aviso')||0); }catch(e){}
+  if(Date.now()-ult<7*864e5) return;
+  setTimeout(function(){ if(instalada||$('guia').classList.contains('on')) return; abrirGuia(true); try{ localStorage.setItem('yv_inst_aviso',String(Date.now())); }catch(e){} },1500);
+}
 $('gCerrar').addEventListener('click',function(){ $('guia').classList.remove('on'); });
 $('guia').addEventListener('click',function(e){ if(e.target.id==='guia') $('guia').classList.remove('on'); });
 document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ $('guia').classList.remove('on'); cerrarLado(); } });
