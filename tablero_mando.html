@@ -218,7 +218,7 @@ nav .tabs{display:flex;gap:4px;min-width:0}
   <div class="hr">
     <div class="stamp" id="stamp">Cargando fuentes…</div>
     <div class="acts">
-      <button class="yv" id="bYarvis" type="button" title="Disponible en la siguiente fase">💬 Consultar a YARVIS ↗</button>
+      <button class="yv" id="bYarvis" type="button" title="Abrir el asistente de la Dirección">💬 Consultar a YARVIS ↗</button>
       <div class="menu" id="menuDesc" style="display:none"><button class="mn" id="bMenu" type="button" aria-haspopup="true" aria-expanded="false">Descargar ▾</button>
         <div class="dd" id="dd" role="menu">
           <button id="bCap" type="button" role="menuitem">Captura de pantalla (PNG)</button>
@@ -592,7 +592,7 @@ var TOUR=[
   ['nav','Vistas de detalle','Alertas y compromisos, Despachos, Unidades ejecutoras, Planificación y Presupuesto y pagos: cada una responde una pregunta de la Dirección.'],
   ['#slotAcc','Descargas','Captura de la pantalla y el histórico de indicadores en Excel o PDF, con formato institucional.'],
   ['#src','Fuentes','De dónde sale cada cifra y su fecha de corte.'],
-  ['#bYarvis','YARVIS','El asistente que responderá preguntas sobre estos indicadores. Disponible en la siguiente fase.']
+  ['#bYarvis','YARVIS','El asistente de la Dirección: responde en lenguaje natural sobre los indicadores, cada unidad ejecutora y cada renglón, con la fuente y el corte de cada cifra.']
 ];
 function tour(i){
   var ov=$('tourOv'); if(!ov){ ov=document.createElement('div'); ov.id='tourOv'; ov.innerHTML='<div id="tourBox" role="dialog" aria-live="polite"><b id="tourT"></b><p id="tourX"></p><div class="tn"><span id="tourN"></span><button type="button" id="tourP">Anterior</button><button type="button" id="tourS">Siguiente</button><button type="button" id="tourC">Cerrar</button></div></div>'; document.body.appendChild(ov);
@@ -622,7 +622,7 @@ function ayuda(id){
 $('mX').addEventListener('click',function(){ $('ov').classList.remove('on'); });
 $('ov').addEventListener('click',function(e){ if(e.target.id==='ov') $('ov').classList.remove('on'); });
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') $('ov').classList.remove('on'); });
-$('bYarvis').addEventListener('click',function(){ toast('YARVIS estará disponible en la siguiente fase.'); });
+$('bYarvis').addEventListener('click',function(){ window.open('yarvis.html','_blank','noopener'); });
 
 /* ══ VISTAS DE DETALLE ════════════════════════════════════════════════════ */
 var VISTA_IND={ '1a':'desp','1b':'desp','9':'desp','6':'desp','7':'desp','2':'plan','3':'plan','8':'plan','10':'plan','4':'pres','5':'pres' };
