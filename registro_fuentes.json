@@ -1,5 +1,5 @@
 {
-  "versions": 1,
+  "version": 1,
   "actualizado": "2026-10-01",
   "descripcion": "Registro único de fuentes y metas del Tablero de Mando de la Dirección. Las metas viven SOLO aquí. YARVIS leerá este mismo archivo.",
   "fuentes": [
