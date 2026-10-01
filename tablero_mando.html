@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero de Mando de la Dirección · DINALOG</title>
+<link rel="icon" href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/favicon.ico">
+<!--
+  TABLERO DE MANDO DE LA DIRECCIÓN · Panel ejecutivo · v1 · 01-oct-2026
+  Lee SOLO archivos estáticos publicados en GitHub Pages. No llama a ningún Apps Script.
+  1. registro_fuentes.json (este repo): fuentes, metas e instrumentos de los 11 indicadores.
+  2. Cada fuente del registro: kpi_inventario.json, kanban/kpi_kanban.json,
+     entradas_recepcion.json (#5 se calcula aquí), redistribucion_cedis.json (#8 y decisiones),
+     kpi_manual.json (#4).
+  3. renglones_dic.json (marca VITAL) para la franja "Requieren su decisión".
+  Las metas se cambian en registro_fuentes.json, nunca en este archivo.
+-->
+<style>
+:root{--az:#0C447C;--az2:#1E5A9E;--bg:#ececec;--bd:#a8a8a8;--tx:#1c1c1c;--tx2:#3a3a3a;--tx3:#4a4a4a;
+  --ok:#3f9a4a;--okt:#1d5a27;--okb:#eef7ee;--am:#d99a2b;--amt:#7a4a00;--amb:#fdf3e3;--rj:#c83a3a;--rjt:#9b1c1c;--rjb:#fbeaea;
+  --gr:#b8b8b8;--grb:#f2f2f2;--mono:Consolas,'Courier New',monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:var(--tx)}
+a{color:var(--az)}
+header{background:var(--az);color:#fff;padding:10px 24px;display:flex;align-items:center;gap:14px}
+header img{width:44px;height:44px}
+.ht{flex-grow:1}.ht h1{margin:0;font-size:20px}.ht div{font-size:12px}
+.hr{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.stamp{font-size:12px}.stamp b{font-family:var(--mono);font-weight:600}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.acts button{min-height:30px;padding:0 10px;background:transparent;color:#fff;border:1px solid #fff;font-size:12px;font-weight:600;cursor:pointer}
+.acts button.yv{background:#fff;color:var(--az);border-radius:15px;padding:0 12px}
+.acts button:disabled{opacity:.6;cursor:default}
+nav{background:var(--az);padding:0 24px;display:flex;gap:4px;flex-wrap:wrap}
+nav a,nav span{padding:9px 15px;text-decoration:none;font-size:14px;font-weight:600;color:#fff;background:var(--az2);border:1px solid var(--az2)}
+nav .on{background:#fff;color:var(--az);border-color:var(--bd);border-bottom-color:#fff;margin-bottom:-1px}
+nav span.off{opacity:.55;cursor:default}
+main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-direction:column;gap:10px}
+.dec{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr)) auto;gap:8px;align-items:stretch}
+.dec .lbl{background:var(--az);color:#fff;padding:5px 12px;display:flex;flex-direction:column;justify-content:center}
+.dec .lbl b{font-size:12px;letter-spacing:.3px}.dec .lbl span{font-size:11px}
+.dc{text-decoration:none;color:var(--tx);background:var(--rjb);border:1px solid var(--bd);padding:5px 10px;display:flex;gap:10px;align-items:center;min-width:0}
+.dc .n{font-size:18px;font-weight:700;font-family:var(--mono);color:var(--rjt);white-space:nowrap}
+.dc .t{display:flex;flex-direction:column;min-width:0}
+.dc .t b,.dc .t span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc .t b{font-size:13px}.dc .t span{font-size:12px}
+.dec .all{display:flex;align-items:center;padding:0 12px;background:#fff;border:1px solid var(--bd);font-size:12px;font-weight:700;color:var(--az);text-decoration:none;white-space:nowrap}
+.tool{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tool .leg{font-size:11px;color:var(--tx3);flex-grow:1}
+.tool .play{min-height:30px;padding:0 12px;background:var(--az);color:#fff;border:none;font-weight:700;cursor:pointer}
+.months{display:flex;gap:2px}
+.months button{min-width:40px;min-height:30px;border:1px solid var(--bd);font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:var(--tx)}
+.months button.on{background:var(--az);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.grp{background:#fff;border:1px solid var(--bd);padding:8px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.grp h2{margin:0;font-size:12px;font-weight:700;color:var(--az);letter-spacing:.3px}
+.cards{display:grid;gap:8px}
+.card{border:1px solid var(--bd);padding:8px 10px;display:flex;flex-direction:column;gap:4px;min-width:0;transition:background .5s}
+.card .hd{display:flex;align-items:center;gap:6px}
+.lamp{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:background .5s}
+.card .nm{font-size:12px;font-weight:700;line-height:1.2;flex-grow:1}
+.q{width:24px;height:24px;flex-shrink:0;border-radius:50%;border:1px solid var(--az);background:#fff;color:var(--az);font-weight:700;font-size:13px;cursor:pointer;padding:0}
+.ins{height:96px;display:flex;align-items:center;justify-content:center}
+.vr{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.val{font-family:var(--mono);font-size:22px;font-weight:700}
+.val.sm{font-size:13px}
+.fec{font-size:11px;color:var(--tx3);text-align:right}
+.mt{font-size:11px;color:var(--tx2)}.gap{font-size:12px;font-weight:600}.dl{font-size:12px;font-weight:700}
+.nt{font-size:11px;color:var(--tx3)}
+.stale{font-size:11px;font-weight:700;color:var(--amt);background:#fbe0bd;padding:1px 6px;align-self:flex-start}
+.lect{font-size:13px;line-height:1.45;margin:0;padding-left:16px;display:flex;flex-direction:column;gap:6px}
+.thermo{display:flex;align-items:flex-end;gap:10px}
+.tube{position:relative;width:16px;height:74px;background:#fff;border:1px solid #8a8a8a;border-bottom:none;border-radius:8px 8px 0 0}
+.tube .fill{position:absolute;left:0;right:0;bottom:0;transition:height .9s ease,background .5s}
+.tube .mk{position:absolute;left:-6px;right:-6px;height:2px;background:#1c1c1c}
+.bulb{width:30px;height:30px;border-radius:50%;margin-top:-4px;border:1px solid #8a8a8a;transition:background .5s}
+.tsc{font-size:10px;color:var(--tx3);display:flex;flex-direction:column;gap:30px;padding-bottom:28px}
+.odo{display:flex;flex-direction:column;align-items:center;gap:6px}
+.odo .win{display:flex;gap:3px;background:#1c1c1c;padding:5px 6px;border-radius:4px}
+.odo .d{width:22px;height:30px;overflow:hidden;background:#f4f4f4;font-family:var(--mono);font-size:22px;font-weight:700;text-align:center}
+.odo .d div{transition:transform .9s ease}.odo .d div div{height:30px;line-height:30px}
+.odo .p{width:10px;height:30px;line-height:30px;color:#f4f4f4;font-family:var(--mono);font-size:22px;font-weight:700;text-align:center}
+.odo .u{font-size:11px;font-weight:700;color:var(--tx2)}
+.needle{transition:transform .9s cubic-bezier(.3,1.4,.5,1)}
+.src{background:#fff;border:1px solid var(--bd);padding:6px 12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px}
+.src b{color:var(--az)}
+.chip{display:inline-block;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px}
+.c-ok{background:#d6ecd6;color:var(--okt)}.c-st{background:#fbe0bd;color:var(--amt)}.c-er{background:#f5cccc;color:var(--rjt)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+.ov.on{display:flex}
+.mod{background:#fff;border:1px solid var(--bd);max-width:520px;width:100%}
+.mod .mh{background:var(--az);color:#fff;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.mod .mh b{flex-grow:1;font-size:15px}
+.mod .mh button{min-width:32px;min-height:32px;background:transparent;color:#fff;border:1px solid #fff;cursor:pointer;font-size:16px}
+.mod .mb{padding:14px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.45}
+.mod .k{font-size:11px;font-weight:700;color:var(--az)}
+.mod .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;border-top:1px solid #cfcfcf;padding-top:10px;font-size:12px}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1c1c1c;color:#fff;padding:10px 16px;font-size:13px;display:none;z-index:60;max-width:90vw}
+.load{padding:40px;text-align:center;font-size:14px;color:var(--tx2)}
+@media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.grp{grid-column:1/-1!important}.cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dec{grid-template-columns:1fr}}
+@media print{nav,.acts,.tool .play,.months,.q{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<header>
+  <img src="https://raw.githubusercontent.com/TorredeControlCSS/REPOSICION_UE_CSS/main/icons/icon-192.png" alt="Logo CSS" crossorigin="anonymous">
+  <div class="ht"><h1>Tablero de Mando de la Dirección</h1><div>Dirección Nacional de Logística · CEDIS Panamá · Indicadores del Plan Estratégico</div></div>
+  <div class="hr">
+    <div class="stamp" id="stamp">Cargando fuentes…</div>
+    <div class="acts">
+      <button class="yv" id="bYarvis" type="button" title="Disponible en la siguiente fase">💬 Consultar a YARVIS ↗</button>
+      <button id="bCap" type="button">Captura</button>
+      <button id="bXls" type="button">Histórico Excel</button>
+      <button id="bPdf" type="button">Histórico PDF</button>
+    </div>
+  </div>
+</header>
+<nav>
+  <span class="on">Panel ejecutivo</span>
+  <a href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html" target="_blank" rel="noopener">Alertas y compromisos ↗</a>
+  <a href="https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html" target="_blank" rel="noopener">Despachos ↗</a>
+  <span class="off" title="Vista gerencial en la Fase 2">Unidades ejecutoras</span>
+  <a href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html" target="_blank" rel="noopener">Planificación ↗</a>
+  <a href="https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html" target="_blank" rel="noopener">Presupuesto y pagos ↗</a>
+</nav>
+<main id="main">
+  <div class="load" id="load">Cargando indicadores…</div>
+</main>
+<div class="ov" id="ov"><div class="mod" role="dialog" aria-modal="true">
+  <div class="mh"><b id="mT"></b><button type="button" id="mX" aria-label="Cerrar">×</button></div>
+  <div class="mb">
+    <div><div class="k">Qué mide</div><div id="mD"></div></div>
+    <div><div class="k">Cómo se calcula</div><div id="mC"></div></div>
+    <div class="g3"><div><b>Meta</b><div id="mM"></div></div><div><b>Fuente</b><div id="mS"></div></div><div><b>Se actualiza</b><div id="mF"></div></div></div>
+  </div>
+</div></div>
+<div id="toast"></div>
+<script>
+(function(){
+'use strict';
+var REG_URL = 'registro_fuentes.json';
+var DIC_URL = 'https://torredecontrolcss.github.io/REPOSICION_UE_CSS/renglones_dic.json';
+var LOGO = 'https://raw.githubusercontent.com/TorredeControlCSS/REPOSICION_UE_CSS/main/icons/icon-192.png';
+var MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+var MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var OBJ = { '01':'Objetivo 01 · Disponibilidad del insumo', '02':'Objetivo 02 · Presupuesto y proveedores', '03':'Objetivo 03 · Productividad', '04':'Objetivo 04 · Gobernanza' };
+var ORDEN = { '01':['1a','1b','9','2','3'], '02':['4','5','6'], '03':['7','8'], '04':['10'] };
+var DEF = {
+  '1a':['Pedidos (Formas 8) despachados dentro de su fecha de entrega.','Despachos a tiempo ÷ despachos elegibles del mes. Laboratorio se cuenta aparte.','Cada publicación del Kanban'],
+  '1b':['Pedidos despachados con el 100% de lo solicitado.','Despachos completos ÷ despachos elegibles del mes. Incluye los faltantes por desabasto.','Cada publicación del Kanban'],
+  '9':['Qué parte de la cantidad solicitada por las unidades ejecutoras se asignó.','Unidades asignadas ÷ unidades solicitadas en el mes.','Cada publicación del Kanban'],
+  '2':['Renglones agotados en CEDIS Panamá.','Renglones en estado AGOTADO (inventario proyectado en cero o menos) ÷ renglones del Reporte de Abastecimiento.','Cada corte de inventario'],
+  '3':['Cuántos meses alcanza el inventario de CEDIS Panamá al ritmo de consumo.','Mediana de los meses de cobertura de los renglones con demanda.','Cada corte de inventario'],
+  '4':['Presupuesto ejecutado sobre el presupuesto modificado.','(Devengado + pagado) ÷ presupuesto modificado, según el GR55 de SAP-SAFIRO.','Carga manual mensual'],
+  '5':['Entregas de proveedores recibidas dentro de su fecha de entrega.','Entregas a tiempo ÷ entregas comparables, por mes de recepción.','Cada carga de recepción'],
+  '6':['Días que tarda el ciclo de atención de un pedido.','Mediana de días del ciclo de los pedidos del mes, según el Kanban. Aún no separa pedido mensual y urgencia.','Cada publicación del Kanban'],
+  '7':['Formas 8 que salen del almacén por día hábil.','Salidas del mes ÷ días hábiles transcurridos.','Cada publicación del Kanban'],
+  '8':['Traslados que llevarían un renglón a un CEDIS que hoy está en cero.','Traslados sugeridos hacia un CEDIS en cero (Redistribución entre CEDIS).','Cada carga de saldos'],
+  '10':['Valor del inventario de CEDIS Panamá que vence en los próximos 90 días.','Valor de lotes que vencen en 0 a 90 días ÷ valor total. Misma regla del Reporte de Vencimientos: excluye vencidos e incumple FMD.','Cada corte de inventario']
+};
+var COL = { ok:['#3f9a4a','#1d5a27','#eef7ee'], bajo:['#d99a2b','#7a4a00','#fdf3e3'], crit:['#c83a3a','#9b1c1c','#fbeaea'], con:['#b8b8b8','#5a5a5a','#f2f2f2'] };
+var BAND = { R:'#e3a5a5', A:'#f0cf8f', G:'#a9d4a9', X:'#dadada' };
+
+var S = { reg:null, src:{}, est:{}, ind:{}, meses:[], idx:0, cards:{}, timer:null, dic:null, red:null };
+
+function $(id){ return document.getElementById(id); }
+function toast(m){ var t=$('toast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(function(){ t.style.display='none'; },4200); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function hoyPTY(){ var d=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Panama'})); d.setHours(0,0,0,0); return d; }
+function fISO(s){ var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(s||'')); return m ? new Date(+m[1],+m[2]-1,+m[3]) : null; }
+function fCorta(s){ var d=fISO(s); return d ? (d.getDate()+'-'+MES[d.getMonth()].toLowerCase()) : ''; }
+function diasHabiles(desde, hasta){ var n=0, d=new Date(desde); d.setDate(d.getDate()+1); while(d<=hasta){ var w=d.getDay(); if(w>=1&&w<=5) n++; d.setDate(d.getDate()+1); } return n; }
+function fmt(x,u){ if(x==null||isNaN(x)) return '—'; var r=Math.round(x*100)/100; var s=Math.abs(r)>=100?Math.round(r).toLocaleString('en-US'):String(r); return s+(u==='%'?'%':(u?' '+u:'')); }
+function uGap(u){ return u==='%'?'pts':u; }
+
+function cargar(url){
+  var u = url + (url.indexOf('?')<0?'?':'&') + 't=' + Date.now();
+  function uno(){ return fetch(u,{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }); }
+  return uno().catch(function(){ return new Promise(function(res){ setTimeout(res,1500); }).then(uno); });
+}
+
+/* ── Serie mensual de cada indicador: { 'YYYY-MM': {v, corte, vacio} } ── */
+function serieKpi(j, id){
+  var out={}, h=(j&&j.historico)||{};
+  Object.keys(h).forEach(function(m){ var f=h[m]; if(f && f[id]!==undefined) out[m]={ v:f[id], corte:f.corte, salidas:f.salidas }; });
+  return out;
+}
+function prepararIndicadores(){
+  var I={}, src=S.src;
+  var inv=src.inventario, kan=src.kanban, man=src.manual;
+  ['2','3','10'].forEach(function(id){ if(inv) I[id]={ serie:serieKpi(inv,id), det:(inv.indicadores[id]||{}).detalle, fuente:'inventario', corte:inv.corte, foto:true }; });
+  ['1a','1b','9','6','7'].forEach(function(id){
+    if(!kan) return;
+    var s=serieKpi(kan,id);
+    Object.keys(s).forEach(function(m){ if(!s[m].salidas) s[m].vacio=true; });
+    I[id]={ serie:s, det:(kan.indicadores[id]||{}).detalle, fuente:'kanban', corte:kan.corte, flujo:'salidas' };
+  });
+  if(man) I['4']={ serie:serieKpi(man,'4'), det:(man.indicadores['4']||{}).detalle, fuente:'manual', corte:man.corte, arrastre:true };
+  var ent=src.recepcion;
+  if(ent && ent.rows){
+    var pm={}, ta=0, tt=0;
+    ent.rows.forEach(function(x){ if(!x.cumpl) return; var m=x.periodo; if(!pm[m]) pm[m]=[0,0]; pm[m][1]++; tt++; if(x.cumpl==='A TIEMPO'){ pm[m][0]++; ta++; } });
+    var s={}, corte=(ent._meta&&ent._meta.corte)||'';
+    Object.keys(pm).forEach(function(m){ s[m]={ v:Math.round(1000*pm[m][0]/pm[m][1])/10, corte:(corte.substring(0,7)===m?corte:m+'-cierre') }; });
+    I['5']={ serie:s, det:'Acumulado del año: '+(tt?Math.round(1000*ta/tt)/10:'—')+'% ('+ta.toLocaleString('en-US')+' de '+tt.toLocaleString('en-US')+' entregas)', fuente:'recepcion', corte:corte, flujo:'entregas de proveedores registradas' };
+  }
+  var red=src.redistribucion;
+  if(red && red.kpi){
+    var c=red.kpi.corte||''; var s8={}; s8[c.substring(0,7)]={ v:red.kpi.destinosEnCero, corte:c };
+    I['8']={ serie:s8, det:red.kpi.renglonesTraslado.toLocaleString('en-US')+' renglones en traslado · '+red.kpi.totalTraslados.toLocaleString('en-US')+' traslados sugeridos', fuente:'redistribucion', corte:c, foto:true };
+  }
+  S.ind=I;
+}
+function valorEn(id, mes){
+  var I=S.ind[id]; if(!I) return null;
+  var f=I.serie[mes];
+  if(f) return { v:f.v, corte:f.corte, vacio:!!f.vacio };
+  if(I.foto && mes===S.mesHoy){ var kf=Object.keys(I.serie).filter(function(m){ return m<=mes; }).sort(); if(kf.length){ var q=I.serie[kf[kf.length-1]]; return { v:q.v, corte:q.corte }; } }
+  if(I.flujo && mes===S.mesHoy) return { v:null, vacio:true };
+  if(I.arrastre){ var ks=Object.keys(I.serie).filter(function(m){ return m<=mes; }).sort(); if(ks.length){ var k=ks[ks.length-1]; if(mesesEntre(k,mes)>3) return null; return { v:I.serie[k].v, corte:I.serie[k].corte, arrastre:k }; } }
+  return null;
+}
+function mesesEntre(a,b){ return (+b.substring(0,4)-+a.substring(0,4))*12+(+b.substring(5,7)-+a.substring(5,7)); }
+function mesAnt(m){ var y=+m.substring(0,4), n=+m.substring(5,7)-1; if(n<1){ n=12; y--; } return y+'-'+(n<10?'0':'')+n; }
+function mesLabel(m){ return MES[+m.substring(5,7)-1]+' '+m.substring(0,4); }
+
+/* ── Estado de cada fuente ── */
+function evaluarFuentes(){
+  var hoy=hoyPTY(), html=[], mayor='';
+  S.reg.fuentes.forEach(function(f){
+    var j=S.src[f.id], e={ ok:!!j };
+    if(j){
+      var ref = f.id==='kanban' ? String(j.generado||'').substring(0,10)
+              : f.id==='recepcion' ? ((j._meta&&j._meta.corte)||'')
+              : f.id==='redistribucion' ? ((j.kpi&&j.kpi.corte)||'')
+              : (j.corte||'');
+      var d=fISO(ref); e.ref=ref; e.dh = d ? diasHabiles(d,hoy) : 99; e.stale = e.dh > f.diasHabilesMax;
+      var g='';
+      if(f.id==='redistribucion' && j.generado){ g=new Date(j.generado).toLocaleString('sv-SE',{timeZone:'America/Panama'}); }
+      else if(f.id==='recepcion'){ g=(j._meta&&j._meta.generado)||''; }
+      else if(f.tipo!=='manual'){ g=String(j.generado||''); }
+      g=String(g).substring(0,16);
+      if(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(g) && g>mayor) mayor=g;
+    }
+    S.est[f.id]=e;
+    var chip = !e.ok ? '<span class="chip c-er">No disponible</span>' : e.stale ? '<span class="chip c-st">Desactualizada</span>' : '<span class="chip c-ok">Al día</span>';
+    html.push('<span><b>'+esc(f.nombre)+'</b> · corte '+esc(e.ok?fCorta(e.ref):'—')+chip+'</span>');
+  });
+  S.srcHtml=html.join('');
+  S.mayor=mayor;
+}
+
+/* ── Instrumentos ── */
+var CX=80, CY=82, R=60;
+function pt(f,rr){ var t=Math.PI*(1-f); return [(CX+rr*Math.cos(t)).toFixed(1),(CY-rr*Math.sin(t)).toFixed(1)]; }
+function arc(f1,f2){ var a=pt(f1,R), b=pt(f2,R); return 'M '+a[0]+' '+a[1]+' A '+R+' '+R+' 0 0 1 '+b[0]+' '+b[1]; }
+function cl(x){ return Math.max(0,Math.min(1,x)); }
+function bandas(g){ var b1=cl((g.dir==='up'?0.8*g.meta:g.meta)/g.max), b2=cl((g.dir==='up'?g.meta:1.25*g.meta)/g.max); return [b1,b2]; }
+function svgGauge(id,g){
+  var b=bandas(g), fm=cl(g.meta/g.max), m1=pt(fm,R-12), m2=pt(fm,R+10);
+  var lo=g.instrumento==='fuel'?'Vacío':'0', hi=g.instrumento==='fuel'?'Lleno':fmt(g.max,g.unidad);
+  return '<svg width="160" height="100" viewBox="0 0 160 100" aria-label="Velocímetro">'+
+    '<path id="a1_'+id+'" d="'+arc(0,b[0])+'" fill="none" stroke-width="14"/>'+
+    '<path id="a2_'+id+'" d="'+arc(b[0],b[1])+'" fill="none" stroke-width="14"/>'+
+    '<path id="a3_'+id+'" d="'+arc(b[1],1)+'" fill="none" stroke-width="14"/>'+
+    '<line x1="'+m1[0]+'" y1="'+m1[1]+'" x2="'+m2[0]+'" y2="'+m2[1]+'" stroke="#1c1c1c" stroke-width="3"/>'+
+    '<g class="needle" id="nd_'+id+'" style="transform-origin:80px 82px;transform:rotate(-90deg)"><line x1="80" y1="82" x2="80" y2="30" stroke="#1c1c1c" stroke-width="3" stroke-linecap="round"/></g>'+
+    '<circle cx="80" cy="82" r="6" fill="#1c1c1c"/>'+
+    '<text x="16" y="98" font-size="10" fill="#4a4a4a" text-anchor="middle">'+esc(lo)+'</text>'+
+    '<text x="144" y="98" font-size="10" fill="#4a4a4a" text-anchor="middle">'+esc(hi)+'</text></svg>';
+}
+function htmlThermo(id,g){
+  return '<div class="thermo"><div style="display:flex;flex-direction:column;align-items:center"><div class="tube"><div class="fill" id="tf_'+id+'" style="height:0"></div><div class="mk" style="bottom:'+(cl(g.meta/g.max)*100)+'%"></div></div><div class="bulb" id="tb_'+id+'"></div></div><div class="tsc"><span>Máx '+esc(fmt(g.max,g.unidad))+'</span><span>0</span></div></div>';
+}
+function htmlOdo(id,g){
+  var cols=''; for(var i=0;i<10;i++) cols+='<div>'+i+'</div>';
+  return '<div class="odo"><div class="win" id="ow_'+id+'" data-cols="'+esc(cols)+'"></div><div class="u">'+esc(g.unidad)+'</div></div>';
+}
+function card(id){
+  var g=S.reg.indicadores[id];
+  var ins = (g.instrumento==='gauge'||g.instrumento==='fuel') ? svgGauge(id,g) : g.instrumento==='thermo' ? htmlThermo(id,g) : htmlOdo(id,g);
+  return '<div class="card" id="cd_'+id+'"><div class="hd"><div class="lamp" id="lp_'+id+'"></div><div class="nm">'+esc(id+' · '+g.nombre)+'</div><button class="q" type="button" data-q="'+id+'" aria-label="Qué mide este indicador">?</button></div>'+
+    '<div class="ins">'+ins+'</div>'+
+    '<div class="vr"><div class="val" id="vl_'+id+'">—</div><div class="fec" id="fc_'+id+'"></div></div>'+
+    '<div class="mt">Meta '+(g.dir==='up'?'≥ ':'≤ ')+esc(fmt(g.meta,g.unidad))+(g.notaMeta?' · provisional':'')+'</div>'+
+    '<div class="gap" id="gp_'+id+'"></div><div class="dl" id="dl_'+id+'"></div><div class="nt" id="nt_'+id+'"></div><div class="stale" id="st_'+id+'" style="display:none"></div></div>';
+}
+function grupo(o,span,cols){
+  return '<section class="grp" style="grid-column:span '+span+'"><h2>'+esc(OBJ[o])+'</h2><div class="cards" style="grid-template-columns:repeat('+cols+',minmax(0,1fr))">'+ORDEN[o].map(card).join('')+'</div></section>';
+}
+
+/* ── Franja de decisiones: renglones VITALES con un CEDIS en cero y traslado posible ── */
+function decisiones(){
+  var red=S.src.redistribucion, dic=S.dic;
+  if(!red||!red.f) return '<div class="lbl"><b>Requieren su decisión</b><span>Fuente de alertas no disponible</span></div>';
+  var vit=function(c){ return dic && dic.r && dic.r[c] && dic.r[c].vit===1; };
+  var G={};
+  red.f.forEach(function(x){ if(!(x.urgente && x.destinoEnCero && (dic ? vit(x.cod) : true))) return;
+    var k=x.cod+'|'+x.destino; if(!G[k]) G[k]={ cod:x.cod, renglon:x.renglon, destino:x.destino, consumo:x.consumoDestino||0, mover:0, origenes:[] };
+    G[k].mover+=Number(x.mover)||0; if(G[k].origenes.indexOf(x.origen)<0) G[k].origenes.push(x.origen); });
+  var L=Object.keys(G).map(function(k){ return G[k]; });
+  L.sort(function(a,b){ return b.consumo-a.consumo; });
+  var top=L.slice(0,3).map(function(x){
+    var nom=String(x.renglon||x.cod).split(',')[0];
+    return '<a class="dc" href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html" target="_blank" rel="noopener" title="'+esc(x.renglon)+'"><div class="n">Hoy</div><div class="t"><b>'+esc(nom)+'</b><span>'+esc(x.destino)+' en cero · mover '+x.mover.toLocaleString('en-US')+' u desde '+esc(x.origenes.join(' y '))+'</span></div></a>';
+  }).join('');
+  while((top.match(/class="dc"/g)||[]).length<3) top+='<div></div>';
+  return '<div class="lbl"><b>Requieren su decisión</b><span>'+L.length.toLocaleString('en-US')+' vitales con un CEDIS en cero · corte '+esc(fCorta(red.kpi&&red.kpi.corte))+'</span></div>'+top+
+    '<a class="all" href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html" target="_blank" rel="noopener">Ver todas →</a>';
+}
+
+function construir(){
+  var hoy=hoyPTY(), mesHoy=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
+  var meses=[]; for(var m=1;m<=hoy.getMonth()+1;m++) meses.push(hoy.getFullYear()+'-'+String(m).padStart(2,'0'));
+  S.meses=meses; S.idx=meses.length-1; S.mesHoy=mesHoy;
+  var h='<section class="dec">'+decisiones()+'</section>'+
+    '<div class="tool"><div class="leg">Velocímetro: % con meta · Termómetro: lo que no debe subir · Contador: volumen y días · Tanque: cobertura · Línea negra: meta 2026 · Gris: sin dato</div>'+
+    '<button class="play" id="bPlay" type="button">▶ Recorrer '+hoy.getFullYear()+'</button><div class="months" id="months">'+
+    meses.map(function(m,i){ return '<button type="button" data-i="'+i+'">'+MES[+m.substring(5,7)-1]+'</button>'; }).join('')+'</div></div>'+
+    '<div class="grid">'+grupo('01',5,5)+'<section class="grp" style="grid-column:span 1"><h2>Lectura del mes</h2><ul class="lect" id="lect"></ul></section>'+
+    grupo('02',3,3)+grupo('03',2,2)+grupo('04',1,1)+'</div>'+
+    '<div class="src" id="src">'+S.srcHtml+'</div>';
+  $('main').innerHTML=h;
+  Object.keys(S.reg.indicadores).forEach(function(id){
+    var w=$('ow_'+id); if(w) w.dataset.cols=w.getAttribute('data-cols');
+  });
+  $('main').addEventListener('click',function(e){
+    var q=e.target.closest('[data-q]'); if(q){ ayuda(q.getAttribute('data-q')); return; }
+    var b=e.target.closest('#months button'); if(b){ parar(); pintar(+b.getAttribute('data-i')); return; }
+    if(e.target.closest('#bPlay')) recorrer();
+  });
+  pintar(S.idx);
+}
+
+function estado(g,v){
+  if(v==null) return 'con';
+  var good=g.dir==='up'?v>=g.meta:v<=g.meta; if(good) return 'ok';
+  var near=g.dir==='up'?v>=0.8*g.meta:v<=1.25*g.meta; return near?'bajo':'crit';
+}
+function odo(id,v,u){
+  var w=$('ow_'+id); if(!w) return;
+  var s = v==null ? '--' : (Math.round(v*10)/10).toFixed(v%1?1:0).padStart(u==='d'?2:4,'0');
+  var sig=s.replace(/\d/g,'9');
+  if(w.dataset.sig!==sig){ w.dataset.sig=sig;
+    var cols=w.dataset.cols||''; w.innerHTML=s.split('').map(function(ch){ return /\d/.test(ch)?'<div class="d"><div>'+cols+'</div></div>':'<div class="p">'+esc(ch)+'</div>'; }).join('');
+  }
+  s.split('').forEach(function(ch,i){ var n=w.childNodes[i]; if(n && n.firstChild && /\d/.test(ch)) n.firstChild.style.transform='translateY(-'+(+ch*30)+'px)'; });
+}
+function pintar(i){
+  S.idx=i; var mes=S.meses[i], ant=mesAnt(mes);
+  Array.prototype.forEach.call(document.querySelectorAll('#months button'),function(b,k){ b.classList.toggle('on',k===i); });
+  $('stamp').innerHTML='Actualizado: <b>'+esc(S.mayor||'—')+'</b> hora PTY · Mes en vista: <b>'+esc(mesLabel(mes))+'</b>';
+  var resumen={ med:0, ok:0, mejor:null, peor:null };
+  Object.keys(S.reg.indicadores).forEach(function(id){
+    var g=S.reg.indicadores[id], I=S.ind[id], x=valorEn(id,mes), p=valorEn(id,ant);
+    var fuenteId=null; S.reg.fuentes.forEach(function(f){ if(f.indicadores.indexOf(id)>=0) fuenteId=f.id; });
+    var e=S.est[fuenteId]||{};
+    var v = x && !x.vacio ? x.v : null;
+    var st = estado(g,v), c=COL[st];
+    $('cd_'+id).style.background=c[2]; $('lp_'+id).style.background=c[0];
+    var vl=$('vl_'+id), fc=$('fc_'+id), gp=$('gp_'+id), dl=$('dl_'+id), nt=$('nt_'+id), sw=$('st_'+id);
+    if(v!=null){
+      vl.className='val'; vl.style.color=c[1]; vl.textContent=fmt(v,g.unidad);
+      fc.textContent = x.arrastre ? mesLabel(x.arrastre) : (x.corte && /\d{4}-\d{2}-\d{2}/.test(x.corte) ? fCorta(x.corte) : mesLabel(mes));
+      var gap=g.dir==='up'?g.meta-v:v-g.meta;
+      gp.textContent = gap>0 ? 'Faltan '+fmt(gap,uGap(g.unidad))+' para la meta' : 'En meta · margen '+fmt(-gap,uGap(g.unidad));
+      resumen.med++; if(st==='ok') resumen.ok++;
+    } else {
+      vl.className='val sm'; vl.style.color=c[1];
+      if(x && x.vacio){
+        vl.textContent='Sin '+((I&&I.flujo)||'salidas')+' aún en '+MESL[+mes.substring(5,7)-1];
+        var pv=p&&!p.vacio?p.v:null; gp.textContent = pv!=null ? 'Cierre de '+MESL[+ant.substring(5,7)-1]+': '+fmt(pv,g.unidad) : '';
+      } else { vl.textContent = I ? 'Sin dato en '+MES[+mes.substring(5,7)-1] : 'Fuente no disponible'; gp.textContent=''; }
+      fc.textContent='';
+    }
+    var pv2 = p && !p.vacio ? p.v : null;
+    if(id==='4' && v!=null && x.arrastre){ var yy=(+x.arrastre.substring(0,4)-1)+x.arrastre.substring(4); var py=I.serie[yy]; pv2=py?py.v:null; }
+    if(p && x && p.corte && x.corte===p.corte && !(id==='4' && x.arrastre)) pv2=null;
+    if(v!=null && pv2!=null){
+      var d=v-pv2, better=g.dir==='up'?d>0:d<0, same=Math.abs(d)<0.05;
+      var etq = id==='4' && x.arrastre ? 'mismo mes del año anterior' : MES[+ant.substring(5,7)-1];
+      dl.textContent = same ? '= igual que '+etq : (d>0?'▲ +':'▼ −')+fmt(Math.abs(d),uGap(g.unidad))+' vs '+etq;
+      dl.style.color = same?'#4a4a4a':(better?'#1d5a27':'#9b1c1c');
+      if(!same && id!=='4'){ var rel=(better?1:-1)*Math.abs(d)/(g.max||1);
+        if(better && (!resumen.mejor||rel>resumen.mejor.r)) resumen.mejor={ r:rel, t:g.nombre+' ('+(d>0?'+':'−')+fmt(Math.abs(d),uGap(g.unidad))+')' };
+        if(!better && (!resumen.peor||rel<resumen.peor.r)) resumen.peor={ r:rel, t:g.nombre+' ('+(d>0?'+':'−')+fmt(Math.abs(d),uGap(g.unidad))+')' }; }
+    } else dl.textContent='';
+    nt.textContent = mes===S.mesHoy || (x && x.corte && String(x.corte).substring(0,7)===mes) ? (I && I.det ? I.det : '') : '';
+    if(e.ok && e.stale && (mes===S.mesHoy || mes===String(e.ref).substring(0,7))){ sw.style.display=''; sw.textContent='Fuente desactualizada · corte '+fCorta(e.ref); } else sw.style.display='none';
+    /* instrumentos */
+    var f = v!=null ? cl(v/g.max) : 0, b=bandas(g), has=v!=null;
+    if(g.instrumento==='gauge'||g.instrumento==='fuel'){
+      $('a1_'+id).setAttribute('stroke', has?(g.dir==='up'?BAND.R:BAND.G):BAND.X);
+      $('a2_'+id).setAttribute('stroke', has?BAND.A:BAND.X);
+      $('a3_'+id).setAttribute('stroke', has?(g.dir==='up'?BAND.G:BAND.R):BAND.X);
+      $('nd_'+id).style.transform='rotate('+(-90+180*f)+'deg)';
+    } else if(g.instrumento==='thermo'){
+      $('tf_'+id).style.height=(f*100)+'%'; $('tf_'+id).style.background=has?c[0]:'#cfcfcf'; $('tb_'+id).style.background=has?c[0]:'#cfcfcf';
+    } else odo(id, has?v:null, g.unidad);
+  });
+  var L=[];
+  L.push('<li>En meta: <b>'+resumen.ok+' de '+resumen.med+'</b> indicadores con dato en '+MESL[+mes.substring(5,7)-1]+'.</li>');
+  if(resumen.mejor) L.push('<li>Mejor avance: <b>'+esc(resumen.mejor.t)+'</b>.</li>');
+  if(resumen.peor) L.push('<li>Mayor retroceso: <b>'+esc(resumen.peor.t)+'</b>.</li>');
+  var vie=S.reg.fuentes.filter(function(f){ var e=S.est[f.id]; return e&&e.ok&&e.stale; }).map(function(f){ return f.nombre.split(' · ')[0]+' ('+fCorta(S.est[f.id].ref)+')'; });
+  if(vie.length) L.push('<li>Fuente desactualizada: <b>'+esc(vie.join(', '))+'</b>.</li>');
+  $('lect').innerHTML=L.join('');
+}
+function parar(){ if(S.timer){ clearInterval(S.timer); S.timer=null; $('bPlay').textContent='▶ Recorrer '+S.meses[0].substring(0,4); } }
+function recorrer(){
+  if(S.timer){ parar(); return; }
+  $('bPlay').textContent='Detener'; pintar(0);
+  S.timer=setInterval(function(){ if(S.idx>=S.meses.length-1){ parar(); return; } pintar(S.idx+1); },1000);
+}
+function ayuda(id){
+  var g=S.reg.indicadores[id], d=DEF[id]||['','',''], f=S.reg.fuentes.filter(function(x){ return x.indicadores.indexOf(id)>=0; })[0];
+  $('mT').textContent=id+' · '+g.nombre; $('mD').textContent=d[0]; $('mC').textContent=d[1];
+  $('mM').textContent=(g.dir==='up'?'≥ ':'≤ ')+fmt(g.meta,g.unidad)+(g.notaMeta?' · '+g.notaMeta:'');
+  $('mS').textContent=f?f.nombre:'—'; $('mF').textContent=d[2]; $('ov').classList.add('on');
+}
+$('mX').addEventListener('click',function(){ $('ov').classList.remove('on'); });
+$('ov').addEventListener('click',function(e){ if(e.target.id==='ov') $('ov').classList.remove('on'); });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') $('ov').classList.remove('on'); });
+$('bYarvis').addEventListener('click',function(){ toast('YARVIS estará disponible en la siguiente fase.'); });
+
+/* ── Descargas: librerías bajo demanda (la página abre liviana) ── */
+var LIBS={ h2c:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  pdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  at:'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js' };
+function lib(k){ return new Promise(function(res,rej){ if(lib[k]) return res(); var s=document.createElement('script'); s.src=LIBS[k]; s.onload=function(){ lib[k]=1; res(); }; s.onerror=function(){ rej(new Error('No se pudo cargar '+k)); }; document.head.appendChild(s); }); }
+function sello(){ return new Date().toLocaleString('sv-SE',{timeZone:'America/Panama'}).substring(0,16); }
+function tablaHistorica(){
+  var ids=['1a','1b','9','2','3','4','5','6','7','8','10'];
+  var meses={}; ids.forEach(function(id){ var I=S.ind[id]; if(I) Object.keys(I.serie).forEach(function(m){ meses[m]=1; }); });
+  var ms=Object.keys(meses).sort();
+  var cab=['Mes'].concat(ids.map(function(id){ var g=S.reg.indicadores[id]; return id+' · '+g.nombre+' ('+g.unidad+')'; }));
+  var filas=ms.map(function(m){ return [mesLabel(m)].concat(ids.map(function(id){ var I=S.ind[id], f=I&&I.serie[m]; return f && !(f.salidas===0) && f.v!=null ? f.v : ''; })); });
+  var metas=['Meta 2026'].concat(ids.map(function(id){ var g=S.reg.indicadores[id]; return (g.dir==='up'?'≥ ':'≤ ')+g.meta; }));
+  return { cab:cab, filas:filas, metas:metas };
+}
+$('bXls').addEventListener('click',function(){
+  if(!S.reg) return; toast('Generando Excel…');
+  lib('xlsx').then(function(){
+    var T=tablaHistorica(), X=window.XLSX;
+    var aoa=[['Caja de Seguro Social · Dirección Nacional de Logística'],['Tablero de Mando de la Dirección · Histórico de indicadores'],['Generado: '+sello()+' hora PTY'],[],T.cab,T.metas].concat(T.filas);
+    var ws=X.utils.aoa_to_sheet(aoa); ws['!cols']=[{wch:12}].concat(T.cab.slice(1).map(function(){ return {wch:18}; }));
+    var f2=[['Fuente','Indicadores','Corte','Estado']].concat(S.reg.fuentes.map(function(f){ var e=S.est[f.id]||{}; return [f.nombre,f.indicadores.join(', '),e.ref||'—',!e.ok?'No disponible':e.stale?'Desactualizada':'Al día']; }));
+    var wb=X.utils.book_new(); X.utils.book_append_sheet(wb,ws,'Histórico'); X.utils.book_append_sheet(wb,X.utils.aoa_to_sheet(f2),'Fuentes');
+    X.writeFile(wb,'Tablero_Mando_Historico_'+sello().substring(0,10)+'.xlsx');
+  }).catch(function(e){ toast(e.message); });
+});
+function logoData(){ return fetch(LOGO).then(function(r){ return r.blob(); }).then(function(b){ return new Promise(function(res){ var fr=new FileReader(); fr.onload=function(){ res(fr.result); }; fr.readAsDataURL(b); }); }).catch(function(){ return null; }); }
+$('bPdf').addEventListener('click',function(){
+  if(!S.reg) return; toast('Generando PDF…');
+  Promise.all([lib('pdf').then(function(){ return lib('at'); }), logoData()]).then(function(r){
+    var img=r[1], T=tablaHistorica(), doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'letter'});
+    doc.setFillColor(12,68,124); doc.rect(0,0,792,62,'F');
+    if(img) doc.addImage(img,'PNG',24,9,44,44);
+    doc.setTextColor(255,255,255); doc.setFontSize(15); doc.text('Tablero de Mando de la Dirección · Histórico de indicadores',78,30);
+    doc.setFontSize(9); doc.text('Caja de Seguro Social · Dirección Nacional de Logística · Generado '+sello()+' hora PTY',78,46);
+    doc.autoTable({ startY:76, head:[T.cab], body:[T.metas].concat(T.filas), styles:{fontSize:7,cellPadding:3}, headStyles:{fillColor:[12,68,124],fontSize:7},
+      didParseCell:function(d){ if(d.section==='body'&&d.row.index===0){ d.cell.styles.fontStyle='bold'; d.cell.styles.fillColor=[236,236,236]; } } });
+    var y=doc.lastAutoTable.finalY+14; doc.setTextColor(60,60,60); doc.setFontSize(8);
+    S.reg.fuentes.forEach(function(f){ var e=S.est[f.id]||{}; doc.text('· '+f.nombre+' — corte '+(e.ref||'—')+' — '+(!e.ok?'No disponible':e.stale?'Desactualizada':'Al día'),24,y); y+=11; });
+    doc.save('Tablero_Mando_Historico_'+sello().substring(0,10)+'.pdf');
+  }).catch(function(e){ toast(e.message); });
+});
+$('bCap').addEventListener('click',function(){
+  toast('Generando captura…');
+  lib('h2c').then(function(){ return window.html2canvas(document.body,{useCORS:true,scale:2,backgroundColor:'#ececec'}); })
+  .then(function(cv){ var a=document.createElement('a'); a.href=cv.toDataURL('image/png'); a.download='Tablero_Mando_'+sello().replace(/[: ]/g,'-')+'.png'; a.click(); })
+  .catch(function(e){ toast(e.message); });
+});
+
+/* ── Arranque ── */
+cargar(REG_URL).then(function(reg){
+  S.reg=reg;
+  var jobs=reg.fuentes.map(function(f){ return cargar(f.url).then(function(j){ S.src[f.id]=j; }).catch(function(){ S.src[f.id]=null; }); });
+  jobs.push(cargar(DIC_URL).then(function(j){ S.dic=j; }).catch(function(){ S.dic=null; }));
+  return Promise.all(jobs);
+}).then(function(){
+  prepararIndicadores(); evaluarFuentes(); construir();
+}).catch(function(e){
+  $('main').innerHTML='<div class="load">No se pudo leer el registro de fuentes ('+esc(e.message)+'). Revise la conexión y recargue la página.</div>';
+});
+})();
+</script>
+</body>
+</html>
