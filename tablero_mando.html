@@ -37,7 +37,7 @@ header img{width:44px;height:44px}
 .dd button{background:#fff;color:var(--tx);border:none;border-bottom:1px solid #e3e3e3;text-align:left;padding:10px 12px;font-size:13px;cursor:pointer;min-height:38px}
 .dd button:hover{background:#eef3f9}
 nav{background:var(--az);padding:0 24px;display:flex;gap:4px;flex-wrap:wrap}
-nav a,nav span{padding:9px 15px;text-decoration:none;font-size:14px;font-weight:600;color:#fff;background:var(--az2);border:1px solid var(--az2)}
+nav .tab{padding:9px 15px;font-family:inherit;font-size:14px;font-weight:600;color:#fff;background:var(--az2);border:1px solid var(--az2);cursor:pointer}
 nav .on{background:#fff;color:var(--az);border-color:var(--bd);border-bottom-color:#fff;margin-bottom:-1px}
 nav span.off{opacity:.55;cursor:default}
 .navm{margin-left:auto;display:flex;align-items:center;gap:2px;padding:4px 0}
@@ -100,6 +100,37 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 .mod .mb{padding:14px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.45}
 .mod .k{font-size:11px;font-weight:700;color:var(--az)}
 .mod .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;border-top:1px solid #cfcfcf;padding-top:10px;font-size:12px}
+/* vistas de detalle */
+.vw{display:flex;flex-direction:column;gap:10px}
+.vh{background:#fff;border:1px solid var(--bd);padding:10px 14px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.vh h2{margin:0;font-size:18px;color:var(--az)}.vh p{margin:0;font-size:13px;color:var(--tx2);flex-grow:1}
+.vh a{font-size:12px;font-weight:700}
+.kp{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.kc{border:1px solid var(--bd);padding:8px 10px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.kc .l{font-size:12px;font-weight:700;color:var(--tx2)}.kc .v{font-family:var(--mono);font-size:20px;font-weight:700}.kc .s{font-size:11px;color:var(--tx3)}
+.pn{background:#fff;border:1px solid var(--bd);padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.pn .ph{display:flex;align-items:center;gap:10px}.pn .ph h3{margin:0;font-size:13px;font-weight:700;color:var(--az);flex-grow:1}
+.pn .ph button{min-height:28px;padding:0 10px;background:#fff;color:var(--az);border:1px solid var(--az);font-size:12px;font-weight:600;cursor:pointer}
+.pn .nota{font-size:11px;color:var(--tx3)}
+.tw{overflow-x:auto}
+table.t{border-collapse:collapse;width:100%;font-size:12px}
+table.t th{background:var(--az);color:#fff;text-align:left;padding:7px 8px;font-weight:600;white-space:nowrap}
+table.t td{border-bottom:1px solid #d9d9d9;padding:6px 8px;vertical-align:top}
+table.t td.n{font-family:var(--mono);text-align:right;white-space:nowrap}
+table.t tr:nth-child(even) td{background:#f4f7fb}
+.sf{color:var(--tx3);font-style:italic}
+.ch{display:inline-block;padding:1px 7px;font-size:11px;font-weight:700;white-space:nowrap}
+.chev{display:flex;gap:4px}
+.chev div{flex:1;padding:10px 24px;min-height:70px;display:flex;flex-direction:column;gap:3px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%,16px 50%)}
+.chev div:first-child{clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%)}
+.chev b{font-size:13px}.chev span{font-size:11px}
+.bars{display:flex;align-items:flex-end;gap:6px;height:170px;border-bottom:1px solid var(--bd);padding:0 4px;position:relative}
+.bars .b{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bars .b i{display:block;width:70%;max-width:36px}
+.bars .b em{font-style:normal;font-size:11px;font-weight:700;font-family:var(--mono)}.bars .b span{font-size:11px;font-weight:600}
+.bars .mt{position:absolute;left:0;right:0;border-top:2px dashed #1c1c1c}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.8fr);gap:10px}
+.card.go{cursor:pointer}.card.go:hover{outline:2px solid var(--az2)}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1c1c1c;color:#fff;padding:10px 16px;font-size:13px;display:none;z-index:60;max-width:90vw}
 .load{padding:40px;text-align:center;font-size:14px;color:var(--tx2)}
 @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.grp{grid-column:1/-1!important}.cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dec{grid-template-columns:1fr}}
@@ -124,12 +155,12 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
   </div>
 </header>
 <nav>
-  <span class="on">Panel ejecutivo</span>
-  <a href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html" target="_blank" rel="noopener">Alertas y compromisos ↗</a>
-  <a href="https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html" target="_blank" rel="noopener">Despachos ↗</a>
-  <span class="off" title="Vista gerencial en la Fase 2">Unidades ejecutoras</span>
-  <a href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html" target="_blank" rel="noopener">Planificación ↗</a>
-  <a href="https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html" target="_blank" rel="noopener">Presupuesto y pagos ↗</a>
+  <button type="button" class="tab on" data-v="panel">Panel ejecutivo</button>
+  <button type="button" class="tab" data-v="alertas">Alertas y compromisos</button>
+  <button type="button" class="tab" data-v="desp">Despachos</button>
+  <button type="button" class="tab" data-v="ue">Unidades ejecutoras</button>
+  <button type="button" class="tab" data-v="plan">Planificación</button>
+  <button type="button" class="tab" data-v="pres">Presupuesto y pagos</button>
   <div class="navm" id="navm"></div>
 </nav>
 <main id="main">
@@ -288,7 +319,7 @@ function htmlOdo(id,g){
 function card(id){
   var g=S.reg.indicadores[id];
   var ins = (g.instrumento==='gauge'||g.instrumento==='fuel') ? svgGauge(id,g) : g.instrumento==='thermo' ? htmlThermo(id,g) : htmlOdo(id,g);
-  return '<div class="card" id="cd_'+id+'"><div class="hd"><div class="lamp" id="lp_'+id+'"></div><div class="nm">'+esc(id+' · '+g.nombre)+'</div><button class="q" type="button" data-q="'+id+'" aria-label="Qué mide este indicador">?</button></div>'+
+  return '<div class="card go" id="cd_'+id+'" title="Ver el detalle"><div class="hd"><div class="lamp" id="lp_'+id+'"></div><div class="nm">'+esc(id+' · '+g.nombre)+'</div><button class="q" type="button" data-q="'+id+'" aria-label="Qué mide este indicador">?</button></div>'+
     '<div class="ins">'+ins+'</div>'+
     '<div class="vr"><div class="val" id="vl_'+id+'">—</div><div class="fec" id="fc_'+id+'"></div></div>'+
     '<div class="mt">Meta '+(g.dir==='up'?'≥ ':'≤ ')+esc(fmt(g.meta,g.unidad))+(g.notaMeta?' · provisional':'')+'</div>'+
@@ -308,14 +339,14 @@ function decisiones(){
     var k=x.cod+'|'+x.destino; if(!G[k]) G[k]={ cod:x.cod, renglon:x.renglon, destino:x.destino, consumo:x.consumoDestino||0, mover:0, origenes:[] };
     G[k].mover+=Number(x.mover)||0; if(G[k].origenes.indexOf(x.origen)<0) G[k].origenes.push(x.origen); });
   var L=Object.keys(G).map(function(k){ return G[k]; });
-  L.sort(function(a,b){ return b.consumo-a.consumo; });
+  L.sort(function(a,b){ return b.consumo-a.consumo; }); S.vitales=L;
   var top=L.slice(0,3).map(function(x){
     var nom=String(x.renglon||x.cod).split(',')[0];
-    return '<a class="dc" href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html" target="_blank" rel="noopener" title="'+esc(x.renglon)+'"><div class="n">Hoy</div><div class="t"><b>'+esc(nom)+'</b><span>'+esc(x.destino)+' en cero · mover '+x.mover.toLocaleString('en-US')+' u desde '+esc(x.origenes.join(' y '))+'</span></div></a>';
+    return '<a class="dc" href="#alertas" data-go="alertas" title="'+esc(x.renglon)+'"><div class="n">Hoy</div><div class="t"><b>'+esc(nom)+'</b><span>'+esc(x.destino)+' en cero · mover '+x.mover.toLocaleString('en-US')+' u desde '+esc(x.origenes.join(' y '))+'</span></div></a>';
   }).join('');
   while((top.match(/class="dc"/g)||[]).length<3) top+='<div></div>';
   return '<div class="lbl"><b>Requieren su decisión</b><span>'+L.length.toLocaleString('en-US')+' vitales con un CEDIS en cero · corte '+esc(fCorta(red.kpi&&red.kpi.corte))+'</span></div>'+top+
-    '<a class="all" href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html" target="_blank" rel="noopener">Ver todas →</a>';
+    '<a class="all" href="#alertas" data-go="alertas">Ver todas →</a>';
 }
 
 function construir(){
@@ -329,7 +360,7 @@ function construir(){
     '<div class="grid">'+grupo('01',5,5)+'<section class="grp" style="grid-column:span 1"><h2>Lectura del mes</h2><ul class="lect" id="lect"></ul></section>'+
     grupo('02',3,3)+grupo('03',2,2)+grupo('04',1,1)+'</div>'+
     '<div class="src" id="src">'+S.srcHtml+'<div class="leg">Cómo leer: velocímetro, % con meta · termómetro, lo que no debe subir (la línea negra es la meta) · contador, volumen y días · tanque, cobertura · gris, sin dato.</div></div>';
-  $('main').innerHTML=h;
+  $('main').innerHTML='<div id="v-panel">'+h+'</div><div id="v-alertas" class="vw" hidden></div><div id="v-desp" class="vw" hidden></div><div id="v-ue" class="vw" hidden></div><div id="v-plan" class="vw" hidden></div><div id="v-pres" class="vw" hidden></div>';
   $('navm').innerHTML='<button class="play" id="bPlay" type="button">▶ Recorrer '+hoy.getFullYear()+'</button>'+
     meses.map(function(m,i){ return '<button class="mb" type="button" data-i="'+i+'">'+MES[+m.substring(5,7)-1]+'</button>'; }).join('');
   $('navm').addEventListener('click',function(e){
@@ -341,7 +372,11 @@ function construir(){
   });
   $('main').addEventListener('click',function(e){
     var q=e.target.closest('[data-q]'); if(q){ ayuda(q.getAttribute('data-q')); return; }
+    var go=e.target.closest('[data-go]'); if(go){ e.preventDefault(); vista(go.getAttribute('data-go')); return; }
+    var c=e.target.closest('.card.go'); if(c){ vista(VISTA_IND[c.id.substring(3)]||'panel'); return; }
+    var x=e.target.closest('[data-xls]'); if(x){ exportarTabla(x.getAttribute('data-xls')); return; }
   });
+  document.querySelector('nav').addEventListener('click',function(e){ var b=e.target.closest('.tab'); if(b) vista(b.getAttribute('data-v')); });
   pintar(S.idx);
 }
 
@@ -443,6 +478,183 @@ $('ov').addEventListener('click',function(e){ if(e.target.id==='ov') $('ov').cla
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') $('ov').classList.remove('on'); });
 $('bYarvis').addEventListener('click',function(){ toast('YARVIS estará disponible en la siguiente fase.'); });
 
+/* ══ VISTAS DE DETALLE ════════════════════════════════════════════════════ */
+var VISTA_IND={ '1a':'desp','1b':'desp','9':'desp','6':'desp','7':'desp','2':'plan','3':'plan','8':'plan','10':'plan','4':'pres','5':'pres' };
+var DETALLE={ alertas:'https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html',
+  desp:'https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html', ue:'https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html',
+  plan:'https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html', pres:'https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html' };
+var TABLAS={};
+function bal(x){ return 'B/. '+(Math.abs(x)>=1e6 ? (Math.round(x/1e5)/10).toLocaleString('en-US')+' MM' : Math.round(x).toLocaleString('en-US')); }
+function num(x){ return Number(x||0).toLocaleString('en-US'); }
+function kc(est,l,v,s){ var c=COL[est]||COL.con; return '<div class="kc" style="background:'+c[2]+'"><div class="l">'+esc(l)+'</div><div class="v" style="color:'+c[1]+'">'+v+'</div><div class="s">'+esc(s)+'</div></div>'; }
+function chip(est,txt){ var m={ ok:['#d6ecd6','#1d5a27'], bajo:['#fbe0bd','#7a4a00'], crit:['#f5cccc','#9b1c1c'], con:['#dcdcdc','#2e2e2e'] }[est]; return '<span class="ch" style="background:'+m[0]+';color:'+m[1]+'">'+esc(txt)+'</span>'; }
+function cabecera(v,titulo,pregunta){ return '<div class="vh"><h2>'+esc(titulo)+'</h2><p>'+esc(pregunta)+'</p><a href="'+DETALLE[v]+'" target="_blank" rel="noopener">Ver detalle en el tablero operativo ↗</a></div>'; }
+function tabla(key,cols,filas,maxFilas){
+  TABLAS[key]={ cols:cols, filas:filas };
+  var fs=maxFilas?filas.slice(0,maxFilas):filas;
+  return '<div class="tw"><table class="t"><thead><tr>'+cols.map(function(c){ return '<th>'+esc(c.h)+'</th>'; }).join('')+'</tr></thead><tbody>'+
+    fs.map(function(r){ return '<tr>'+r.map(function(v,i){ var c=cols[i]; var h=(c.html&&c.html(v,r))||(v===''||v==null?'<span class="sf">'+esc(c.vacio||'')+'</span>':esc(c.t==='num'?num(v):c.t==='dec'?fmt(v,''):v)); return '<td'+(c.t&&c.t!=='txt'?' class="n"':'')+'>'+h+'</td>'; }).join('')+'</tr>'; }).join('')+
+    '</tbody></table></div>';
+}
+function vista(v){
+  parar();
+  ['panel','alertas','desp','ue','plan','pres'].forEach(function(k){ var el=$('v-'+k); if(el) el.hidden=(k!==v); });
+  Array.prototype.forEach.call(document.querySelectorAll('nav .tab'),function(b){ b.classList.toggle('on',b.getAttribute('data-v')===v); });
+  $('navm').style.display = v==='panel' ? '' : 'none';
+  if(v!=='panel'){ var el=$('v-'+v); if(el.dataset.mes!==S.meses[S.idx]){ el.innerHTML=({ alertas:vAlertas, pres:vPres, desp:vDesp, ue:vUE, plan:vPend }[v])(v); el.dataset.mes=S.meses[S.idx]; } }
+  if(location.hash!=='#'+v) history.replaceState(null,'','#'+v);
+  window.scrollTo(0,0);
+}
+function vPend(v){
+  var t={ desp:['Despachos','Si se cumplió con los despachos pedidos, a quién no, por qué y cuándo se le cumple.','Esta vista necesita que el Kanban publique sus indicadores por unidad ejecutora en kpi_kanban.json. Es el siguiente cambio del plan.'],
+          ue:['Unidades ejecutoras','Cómo se atiende a cada unidad ejecutora, en qué no se le cumple y qué se le está comunicando.','Usa los mismos indicadores por unidad ejecutora del Kanban. Llega junto con Despachos.'],
+          plan:['Planificación','Cómo está el abastecimiento de los vitales, cuánto hay, cuándo se acaba y cuánto pedir.','Los vitales con un CEDIS en cero ya están en Alertas y compromisos. El quiebre contra la OC necesita que el simulador publique sus alertas.'] }[v];
+  return cabecera(v,t[0],t[1])+'<div class="pn"><div class="ph"><h3>Vista en construcción</h3></div><div style="font-size:13px">'+esc(t[2])+'</div></div>';
+}
+
+/* Despachos: global del mes y unidades ejecutoras peor primero */
+function kanMes(mes){ var k=S.src.kanban; return k&&k.historico?k.historico[mes]:null; }
+function ueFilas(mes){
+  var f=kanMes(mes), u=(f&&f.ue)||{}, tot=(S.src.kanban&&S.src.kanban.ueTotales)||{};
+  return Object.keys(u).map(function(n){ var x=u[n], tt=tot[n]||{}; return { n:n, x:x, tt:tt }; });
+}
+function brecha(x){ if(x.oa==null||x.ac==null) return ''; return (100-x.oa)>=(100-x.ac)?'Tiempo de salida del almacén':'Producto incompleto (abasto)'; }
+function vDesp(){
+  var mes=S.meses[S.idx], f=kanMes(mes), k=S.src.kanban, est=(k&&k.estado)||{};
+  var h=cabecera('desp','Despachos','Si se cumplió con los despachos pedidos, a quién no, por qué y cuándo se le cumple.');
+  if(!f||!f.salidas){ var pm=mesAnt(mes); h+='<div class="pn"><div class="ph"><h3>'+esc(mesLabel(mes))+'</h3></div><div style="font-size:13px">Sin salidas registradas aún en '+esc(MESL[+mes.substring(5,7)-1])+'. Seleccione '+esc(MESL[+pm.substring(5,7)-1])+' en el panel ejecutivo para ver el cierre del mes anterior.</div></div>'; return h; }
+  var g=S.reg.indicadores;
+  h+='<div class="kp">'+
+    kc(estado(g['1a'],f['1a']),'A tiempo',fmt(f['1a'],'%'),'meta ≥ '+g['1a'].meta+'% (provisional)')+
+    kc(estado(g['1b'],f['1b']),'Completo',fmt(f['1b'],'%'),'meta ≥ '+g['1b'].meta+'% (provisional)')+
+    kc(estado(g['9'],f['9']),'Fill rate',fmt(f['9'],'%'),'asignado ÷ solicitado · meta ≥ '+g['9'].meta+'%')+
+    kc('con','A tiempo y completo (OTIF)',f.otif!=null?fmt(f.otif,'%'):'—','las dos condiciones a la vez')+
+    kc('con','Salidas del mes',num(f.salidas),'Formas 8 despachadas · '+mesLabel(mes))+
+    kc(est.vencidos?'bajo':'ok','Pendientes hoy',num(est.pendientes),num(est.vencidos)+' con fecha vencida · '+num(est.vencidosConStock)+' de ellos con producto')+'</div>';
+  var F=ueFilas(mes).filter(function(r){ return r.x.s>0; });
+  F.sort(function(a,b){ return (a.x.o==null?999:a.x.o)-(b.x.o==null?999:b.x.o) || b.x.p-a.x.p; });
+  var filas=F.map(function(r){ var x=r.x; return [r.n,x.s,x.on,x.ac,x.fr,x.o,brecha(x),x.p,x.v,r.tt.ult||'']; });
+  var pc=function(id){ return function(v){ return v==null?'—':chip(estado(g[id],v),fmt(v,'%')); }; };
+  var cols=[{h:'Unidad ejecutora',t:'txt',w:44},{h:'Salidas',t:'num',w:9},{h:'A tiempo',t:'dec',w:10,html:pc('1a')},{h:'Completo',t:'dec',w:10,html:pc('1b')},
+    {h:'Fill rate',t:'dec',w:10,html:pc('9')},{h:'OTIF',t:'dec',w:9,html:function(v){ return v==null?'—':esc(fmt(v,'%')); }},
+    {h:'Dónde pierde más',t:'txt',w:28},{h:'Pendientes',t:'num',w:11},{h:'Vencidos',t:'num',w:10},{h:'Último servicio',t:'txt',w:14,vacio:'—'}];
+  h+='<div class="pn"><div class="ph"><h3>A quién no le he cumplido y por qué · '+esc(mesLabel(mes))+' · peor primero</h3><button type="button" data-xls="desp">Excel (todas)</button></div>'+
+    tabla('desp',cols,filas,15)+
+    '<div class="nota">Ordenado por OTIF de menor a mayor. "Dónde pierde más" compara cuánto le falta a la salida a tiempo del almacén y cuánto al producto completo. Pendientes y vencidos son la foto de hoy. '+num(filas.length)+' unidades con salidas en el mes; el Excel trae todas. La fecha comprometida de cumplimiento aún no tiene fuente.</div></div>';
+  return h;
+}
+/* Unidades ejecutoras: cómo se atiende a cada una */
+function vUE(){
+  var mes=S.meses[S.idx], g=S.reg.indicadores, R=ueFilas(mes), tot=(S.src.kanban&&S.src.kanban.ueTotales)||{}, hoy=hoyPTY();
+  var h=cabecera('ue','Unidades ejecutoras','Cómo se atiende a cada unidad ejecutora y en qué no se le cumple.');
+  var nombres={}; R.forEach(function(r){ nombres[r.n]=1; }); Object.keys(tot).forEach(function(n){ nombres[n]=1; });
+  var filas=Object.keys(nombres).map(function(n){ var r=R.filter(function(z){ return z.n===n; })[0], x=r?r.x:{}, tt=tot[n]||{};
+    var dSin=tt.ult?Math.round((hoy-fISO(tt.ult))/864e5):null;
+    return [n,tt.f8,tt.urg,tt.mens,tt.ult||'',dSin,x.s||0,x.on,x.fr,x.cf,x.p]; });
+  filas.sort(function(a,b){ return (a[8]==null?999:a[8])-(b[8]==null?999:b[8]); });
+  var conS=filas.filter(function(r){ return r[6]>0; }).length, bajoFR=filas.filter(function(r){ return r[8]!=null && r[8]<g['9'].meta; }).length,
+      sin15=filas.filter(function(r){ return r[5]!=null && r[5]>15; }).length;
+  var cfs=filas.map(function(r){ return r[9]; }).filter(function(v){ return v!=null; }), cfm=cfs.length?Math.round(10*cfs.reduce(function(a,b){ return a+b; },0)/cfs.length)/10:null;
+  h+='<div class="kp">'+kc('ok','Unidades atendidas',num(conS),'con salidas en '+MESL[+mes.substring(5,7)-1])+
+    kc(bajoFR?'bajo':'ok','Bajo la meta de fill rate',num(bajoFR),'meta ≥ '+g['9'].meta+'% · '+mesLabel(mes))+
+    kc(sin15?'bajo':'ok','Más de 15 días sin servicio',num(sin15),'desde su último despacho')+
+    kc('con','Confirmación de recibido',cfm!=null?fmt(cfm,'%'):'—','promedio de las unidades')+'<div></div><div></div></div>';
+  var pc=function(id){ return function(v){ return v==null?'—':chip(estado(g[id],v),fmt(v,'%')); }; };
+  var cols=[{h:'Unidad ejecutora',t:'txt',w:44},{h:'F8 en curso',t:'num',w:11},{h:'Urgentes',t:'num',w:10},{h:'Mensuales',t:'num',w:10},
+    {h:'Último servicio',t:'txt',w:14,vacio:'—'},{h:'Días sin servicio',t:'num',w:12,vacio:'—'},{h:'Salidas del mes',t:'num',w:12},
+    {h:'A tiempo',t:'dec',w:10,html:pc('1a')},{h:'Fill rate',t:'dec',w:10,html:pc('9')},
+    {h:'Confirmó recibido',t:'dec',w:12,html:function(v){ return v==null?'—':esc(fmt(v,'%')); }},{h:'Pendientes',t:'num',w:11}];
+  h+='<div class="pn"><div class="ph"><h3>Nivel de servicio por unidad ejecutora · '+esc(mesLabel(mes))+' · peor fill rate primero</h3><button type="button" data-xls="ue">Excel (todas)</button></div>'+
+    tabla('ue',cols,filas,20)+'<div class="nota">Mismas definiciones que el correo semanal de Nivel de servicio. F8 en curso y último servicio son la foto de hoy. '+num(filas.length)+' unidades; el Excel trae todas.</div></div>';
+  return h;
+}
+
+/* Presupuesto y pagos */
+function vPres(){
+  var man=S.src.manual, ent=S.src.recepcion, pr=man&&man.presupuesto, I5=S.ind['5'];
+  var h=cabecera('pres','Presupuesto y pagos','Cuánto se ha ejecutado, cuánto se ha recibido de cada proveedor y dónde está el pago.');
+  var r1=function(x){ return Math.round(x*10)/10; }, pctE=pr?r1(100*pr.ejecutado/pr.modificado):null, pctC=pr?r1(100*pr.comprometido/pr.modificado):null;
+  var rec=0, recMes=0, mesUlt='', ta=0, tt=0;
+  if(ent&&ent.rows){ ent.rows.forEach(function(x){ rec+=Number(x.valor)||0; if(x.periodo>mesUlt) mesUlt=x.periodo; if(x.cumpl){ tt++; if(x.cumpl==='A TIEMPO') ta++; } });
+    ent.rows.forEach(function(x){ if(x.periodo===mesUlt) recMes+=Number(x.valor)||0; }); }
+  var g4=S.reg.indicadores['4'], g5=S.reg.indicadores['5'], pAn=tt?Math.round(1000*ta/tt)/10:null;
+  var corteE=ent&&ent._meta?ent._meta.corte:'';
+  h+='<div class="kp">'+
+    kc('ok','Presupuesto modificado',pr?bal(pr.modificado):'—','GR55 · corte '+(pr?fCorta(pr.corte):'—'))+
+    kc(pr?estado(g4,pctE):'con','Ejecutado (dev. + pag.)',pr?bal(pr.ejecutado):'—',(pr?fmt(pctE,'%'):'')+' · meta '+(g4.dir==='up'?'≥ ':'≤ ')+g4.meta+'%')+
+    kc('con','Comprometido',pr?bal(pr.comprometido):'—',pr?fmt(pctC,'%')+' del modificado':'')+
+    kc('ok','Recibido en el año',ent?bal(rec):'—','Entradas por Recepción · corte '+fCorta(corteE))+
+    kc(estado(g5,pAn),'Proveedores a tiempo',pAn!=null?fmt(pAn,'%'):'—',num(ta)+' de '+num(tt)+' entregas · meta ≥ '+g5.meta+'%')+
+    kc('con','Pendiente de pago','Sin fuente','Recibido − pagado: Finanzas no lo registra')+'</div>';
+  /* ciclo de pago */
+  var paso=function(t,s,est,txt){ var c=COL[est]; return '<div style="background:'+c[2]+'"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><span>'+chip(est,txt)+'</span></div>'; };
+  h+='<div class="pn"><div class="ph"><h3>El ciclo de pago, de la orden al pago</h3></div><div class="chev">'+
+    paso('Orden de compra','SEGUIRE · tránsitos de OC','bajo','Aún no conectada')+
+    paso('Recepción','Entradas por Recepción',(S.est.recepcion&&S.est.recepcion.stale)?'bajo':'ok',(S.est.recepcion&&S.est.recepcion.stale)?'Desactualizada':'Con fuente')+
+    paso('Devengado','GR55 · carga manual','ok','Con fuente')+
+    paso('Trámite de pago','Sin registro en el ecosistema','con','Sin fuente')+
+    paso('Pagado','Sin registro en el ecosistema','con','Sin fuente')+'</div>'+
+    '<div class="nota">Las etapas sin fuente dependen de que Finanzas registre el trámite de pago.</div></div>';
+  /* barras mensuales de #5 */
+  var ms=I5?Object.keys(I5.serie).sort():[], bars='';
+  ms.forEach(function(m){ var v=I5.serie[m].v, st=estado(g5,v); bars+='<div class="b"><em>'+fmt(v,'%')+'</em><i style="height:'+(v*1.4)+'px;background:'+COL[st][0]+'"></i><span>'+MES[+m.substring(5,7)-1]+'</span></div>'; });
+  var izq='<div class="pn"><div class="ph"><h3>Cumplimiento de entrega de proveedores · '+(ms[0]||'').substring(0,4)+'</h3></div>'+
+    '<div class="bars"><div class="mt" style="bottom:'+(g5.meta*1.4+18)+'px" title="Meta"></div>'+bars+'</div>'+
+    '<div class="nota">Entregas a tiempo ÷ entregas comparables, por mes de recepción. Línea punteada: meta '+g5.meta+'%. '+(corteE?'Último corte: '+fCorta(corteE)+'.':'')+'</div></div>';
+  /* tabla por proveedor */
+  var P={};
+  if(ent&&ent.rows) ent.rows.forEach(function(x){ var k=x.prov||'(sin proveedor)'; if(!P[k]) P[k]={ v:0, oc:{}, a:0, n:0, late:[], ult:'' };
+    var p=P[k]; p.v+=Number(x.valor)||0; if(x.oc) p.oc[x.oc]=1; if(x.fRec&&x.fRec>p.ult) p.ult=x.fRec;
+    if(x.cumpl){ p.n++; if(x.cumpl==='A TIEMPO') p.a++; else if(x.dias!=null) p.late.push(+x.dias); } });
+  var filas=Object.keys(P).map(function(k){ var p=P[k]; p.late.sort(function(a,b){ return a-b; });
+    var med=p.late.length?p.late[Math.floor(p.late.length/2)]:null;
+    return [k,Object.keys(p.oc).length,Math.round(p.v),p.n?Math.round(1000*p.a/p.n)/10:null,med,String(p.ult).substring(0,10),'','',''];
+  }).sort(function(a,b){ return b[2]-a[2]; });
+  var cols=[{h:'Proveedor',t:'txt',w:44},{h:'OC',t:'num',w:8},{h:'Recibido B/.',t:'num',w:16},
+    {h:'A tiempo',t:'dec',w:11,html:function(v){ return v==null?'—':chip(estado(g5,v),fmt(v,'%')); }},
+    {h:'Atraso típico (días)',t:'num',w:14,vacio:'—'},{h:'Última entrega',t:'txt',w:13},
+    {h:'Pagado',t:'txt',w:12,vacio:'Sin fuente'},{h:'Pendiente',t:'txt',w:12,vacio:'Sin fuente'},{h:'Etapa del trámite',t:'txt',w:16,vacio:'Sin fuente'}];
+  var der='<div class="pn"><div class="ph"><h3>Proveedores · 10 mayores por valor recibido en el año</h3><button type="button" data-xls="prov">Excel (todos)</button></div>'+
+    tabla('prov',cols,filas,10)+'<div class="nota">Atraso típico: mediana de días de las entregas tardías. '+num(filas.length)+' proveedores en total; el Excel trae la lista completa.</div></div>';
+  return h+'<div class="two">'+izq+der+'</div>';
+}
+
+/* Alertas y compromisos */
+function vAlertas(){
+  var comp={}, cj=S.src.compromisos;
+  if(cj&&cj.compromisos) cj.compromisos.forEach(function(c){ if(c&&c.clave) comp[c.clave]=c; });
+  var h=cabecera('alertas','Alertas y compromisos','Qué está fuera de meta, qué se está haciendo, quién lo hace y cuándo se resuelve.');
+  var mes=S.meses[S.idx], filasI=[];
+  ['1a','1b','9','2','3','4','5','6','7','8','10'].forEach(function(id){
+    var g=S.reg.indicadores[id], x=valorEn(id,mes); if(!x||x.vacio||x.v==null) return;
+    var st=estado(g,x.v); if(st==='ok') return;
+    var gap=g.dir==='up'?g.meta-x.v:x.v-g.meta, c=comp['ind:'+id]||{};
+    filasI.push(['ind:'+id,id+' · '+g.nombre,x.v,(g.dir==='up'?'≥ ':'≤ ')+fmt(g.meta,g.unidad),fmt(gap,uGap(g.unidad)),st,c.responsable||'',c.accion||'',c.fecha||'',c.estado||'']);
+  });
+  filasI.sort(function(a,b){ return (a[5]==='crit'?0:1)-(b[5]==='crit'?0:1); });
+  var colsI=[{h:'Clave',t:'txt',w:10},{h:'Indicador',t:'txt',w:36},{h:'Valor',t:'txt',w:10,html:function(v,r){ var g=S.reg.indicadores[r[0].substring(4)]; return esc(fmt(v,g.unidad)); }},
+    {h:'Meta',t:'txt',w:10},{h:'Distancia',t:'txt',w:12},{h:'Nivel',t:'txt',w:10,html:function(v){ return chip(v,v==='crit'?'Crítico':'Bajo meta'); }},
+    {h:'Responsable',t:'txt',w:22,vacio:'Por asignar'},{h:'Acción',t:'txt',w:36,vacio:'Por asignar'},{h:'Resuelto el',t:'txt',w:12,vacio:'Sin fecha'},{h:'Estado',t:'txt',w:12,vacio:'Abierto'}];
+  var L=S.vitales||[], filasR=L.map(function(x){ var k='ren:'+x.cod+'|'+x.destino, c=comp[k]||{};
+    return [k,x.cod,String(x.renglon||'').split(',').slice(0,2).join(','),x.destino,x.mover,x.origenes.join(' y '),c.responsable||'',c.accion||'',c.fecha||'',c.estado||'']; });
+  var colsR=[{h:'Clave',t:'txt',w:28},{h:'Renglón',t:'txt',w:12},{h:'Descripción',t:'txt',w:40},{h:'CEDIS en cero',t:'txt',w:16},{h:'Mover (u)',t:'num',w:12},{h:'Desde',t:'txt',w:24},
+    {h:'Responsable',t:'txt',w:22,vacio:'Por asignar'},{h:'Acción',t:'txt',w:36,vacio:'Traslado sugerido'},{h:'Resuelto el',t:'txt',w:12,vacio:'Sin fecha'},{h:'Estado',t:'txt',w:12,vacio:'Abierto'}];
+  var nComp=Object.keys(comp).length, red=S.src.redistribucion;
+  h+='<div class="kp">'+kc(filasI.length?'crit':'ok','Indicadores fuera de meta',String(filasI.length),'en '+MESL[+mes.substring(5,7)-1])+
+    kc(L.length?'crit':'ok','Vitales con un CEDIS en cero',num(L.length),'traslado posible · corte '+fCorta(red&&red.kpi&&red.kpi.corte))+
+    kc(nComp?'ok':'bajo','Compromisos registrados',String(nComp),cj?'compromisos.json · corte '+fCorta(cj.corte):'Registro no disponible')+'<div></div><div></div><div></div></div>';
+  h+='<div class="pn"><div class="ph"><h3>Indicadores fuera de meta · '+esc(mesLabel(mes))+'</h3><button type="button" data-xls="ind">Excel</button></div>'+tabla('ind',colsI,filasI)+'</div>';
+  h+='<div class="pn"><div class="ph"><h3>Vitales con un CEDIS en cero · ordenados por demanda del CEDIS sin inventario</h3><button type="button" data-xls="ren">Excel (todos)</button></div>'+tabla('ren',colsR,filasR,25)+
+    '<div class="nota">Se muestran los primeros 25 de '+num(filasR.length)+'. Para asignar responsable, acción y fecha: agregar una fila en compromisos.json (SIGUELO_DINALOG) con la Clave de esta tabla.</div></div>';
+  return h;
+}
+function exportarTabla(key){
+  var T=TABLAS[key]; if(!T) return;
+  var nom={ desp:['Despachos_por_unidad','Despachos por unidad ejecutora'], ue:['Nivel_servicio_por_unidad','Nivel de servicio por unidad ejecutora'], prov:['Proveedores_recibido','Proveedores: recibido y cumplimiento de entrega'], ind:['Indicadores_fuera_de_meta','Indicadores fuera de meta'], ren:['Vitales_CEDIS_en_cero','Renglones vitales con un CEDIS en cero'] }[key];
+  var filas=T.filas.map(function(r){ return r.map(function(v,i){ var c=T.cols[i]; if(key==='ind'&&i===5) return v==='crit'?'Crítico':'Bajo meta'; return (v===''||v==null)?(c.vacio||''):v; }); });
+  xlsInstitucional(nom[0],nom[1],[],T.cols.map(function(c){ return { h:c.h, t:c.t, w:c.w }; }),filas);
+}
+
 /* ── Descargas: librerías bajo demanda (la página abre liviana) ── */
 var LIBS={ h2c:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
   xls:'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js',
@@ -473,40 +685,46 @@ function cerrarMenu(){ $('dd').classList.remove('on'); $('bMenu').setAttribute('
 $('bMenu').addEventListener('click',function(e){ e.stopPropagation(); var o=$('dd').classList.toggle('on'); $('bMenu').setAttribute('aria-expanded',o?'true':'false'); });
 document.addEventListener('click',function(e){ if(!e.target.closest('.menu')) cerrarMenu(); });
 
-/* Excel institucional: mismo formato que los demás tableros (ExcelJS, logo, encabezado azul, filtros). */
-$('bXls').addEventListener('click',function(){
-  cerrarMenu(); if(!S.reg) return; toast('Preparando Excel…');
+function xlsInstitucional(nombre,titulo,meta,cols,filas,frozenX){
+  if(!filas.length){ toast('No hay filas que exportar.'); return; }
+  toast('Preparando Excel…');
   Promise.all([lib('xls'), logoBin()]).then(function(r){
-    var T=tablaHistorica(0), nC=T.cols.length, ExcelJS=window.ExcelJS;
-    var meta=[['Fuentes', S.reg.fuentes.length+' publicaciones del ecosistema DINALOG (ver columnas Fuente y Estado)'],
-              ['Nota','Cada mes muestra el valor de cierre; el mes en curso, el último corte. Las celdas vacías son meses sin dato publicado.']];
-    var wb=new ExcelJS.Workbook(); wb.creator='Dirección Nacional de Logística';
-    var ws=wb.addWorksheet('Indicadores',{views:[{state:'frozen',ySplit:7+meta.length,xSplit:2}]});
+    var nC=cols.length, ExcelJS=window.ExcelJS, wb=new ExcelJS.Workbook(); wb.creator='Dirección Nacional de Logística';
+    var ws=wb.addWorksheet('Reporte',{views:[{state:'frozen',ySplit:7+meta.length,xSplit:frozenX||0}]});
     if(r[1]){ var idI=wb.addImage({base64:r[1],extension:'png'}); ws.addImage(idI,{tl:{col:0,row:0},ext:{width:58,height:58}}); }
     var linea=function(f,txt,o){ ws.mergeCells(f,2,f,Math.max(2,nC)); var c=ws.getCell(f,2); c.value=txt; c.font=Object.assign({name:'Calibri',size:11},o||{}); };
     linea(1,'CAJA DE SEGURO SOCIAL',{bold:true,size:13,color:{argb:'FF0C447C'}});
     linea(2,'Dirección Nacional de Logística · Tablero de Mando de la Dirección',{color:{argb:'FF1E5A9E'}});
-    linea(3,'Histórico de indicadores del Plan Estratégico',{bold:true,size:12});
+    linea(3,titulo,{bold:true,size:12});
     var f=5;
     [['Generado',new Date().toLocaleString('es-PA',{timeZone:'America/Panama'})+' (hora de Panamá)']].concat(meta).forEach(function(kv){
       ws.getCell(f,1).value=kv[0]; ws.getCell(f,1).font={bold:true,size:10,color:{argb:'FF5F6B78'}};
       ws.mergeCells(f,2,f,Math.max(2,nC)); ws.getCell(f,2).value=kv[1]; ws.getCell(f,2).font={size:10}; f++; });
     f++;
     var hr=ws.getRow(f);
-    T.cols.forEach(function(c,i){ var x=hr.getCell(i+1); x.value=c.h; x.font={bold:true,color:{argb:'FFFFFFFF'},size:10};
-      x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0C447C'}}; x.alignment={vertical:'middle',horizontal:c.t==='txt'?'left':'right',wrapText:true}; });
+    cols.forEach(function(c,i){ var x=hr.getCell(i+1); x.value=c.h; x.font={bold:true,color:{argb:'FFFFFFFF'},size:10};
+      x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0C447C'}}; x.alignment={vertical:'middle',horizontal:(c.t||'txt')==='txt'?'left':'right',wrapText:true}; });
     hr.height=30; ws.autoFilter={from:{row:f,column:1},to:{row:f,column:nC}};
-    T.filas.forEach(function(rw,j){ var row=ws.getRow(f+1+j); rw.forEach(function(v,i){ var x=row.getCell(i+1), tp=T.cols[i].t;
+    filas.forEach(function(rw,j){ var row=ws.getRow(f+1+j); rw.forEach(function(v,i){ var x=row.getCell(i+1), tp=cols[i].t||'txt';
       x.value=(v===''||v==null)?null:(tp==='txt'?String(v):(isFinite(v)?Number(v):String(v)));
-      if(tp==='dec') x.numFmt='0.0#'; x.font={name:tp==='txt'?'Calibri':'Consolas',size:10};
+      if(tp==='num') x.numFmt='#,##0'; if(tp==='dec') x.numFmt='0.0#'; x.font={name:tp==='txt'?'Calibri':'Consolas',size:10};
       if(j%2) x.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF4F7FB'}}; }); });
-    T.cols.forEach(function(c,i){ ws.getColumn(i+1).width=c.w||14; });
+    cols.forEach(function(c,i){ ws.getColumn(i+1).width=c.w||14; });
     return wb.xlsx.writeBuffer();
   }).then(function(buf){
     var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
-    a.download='Tablero_Mando_Indicadores_'+sello().substring(0,10)+'.xlsx'; document.body.appendChild(a); a.click();
+    a.download=nombre+'_'+sello().substring(0,10)+'.xlsx'; document.body.appendChild(a); a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500); toast('Excel descargado.');
   }).catch(function(e){ toast(e.message); });
+}
+/* Excel institucional: mismo formato que los demás tableros (ExcelJS, logo, encabezado azul, filtros). */
+$('bXls').addEventListener('click',function(){
+  cerrarMenu(); if(!S.reg) return;
+  var T=tablaHistorica(0);
+  xlsInstitucional('Tablero_Mando_Indicadores','Histórico de indicadores del Plan Estratégico',
+    [['Fuentes', S.reg.fuentes.length+' publicaciones del ecosistema DINALOG (ver columnas Fuente y Estado)'],
+     ['Nota','Cada mes muestra el valor de cierre; el mes en curso, el último corte. Las celdas vacías son meses sin dato publicado.']],
+    T.cols, T.filas, 2);
 });
 $('bPdf').addEventListener('click',function(){
   cerrarMenu(); if(!S.reg) return; toast('Preparando PDF…');
@@ -542,6 +760,7 @@ cargar(REG_URL).then(function(reg){
   return Promise.all(jobs);
 }).then(function(){
   prepararIndicadores(); evaluarFuentes(); construir();
+  var h0=(location.hash||'').replace('#',''); if(['alertas','desp','ue','plan','pres'].indexOf(h0)>=0) vista(h0);
 }).catch(function(e){
   $('main').innerHTML='<div class="load">No se pudo leer el registro de fuentes ('+esc(e.message)+'). Revise la conexión y recargue la página.</div>';
 });
