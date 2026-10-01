@@ -3,39 +3,179 @@
   "actualizado": "2026-10-01",
   "descripcion": "Registro único de fuentes y metas del Tablero de Mando de la Dirección. Las metas viven SOLO aquí. YARVIS leerá este mismo archivo.",
   "fuentes": [
-    { "id": "inventario", "nombre": "Inventario Consolidado · CEDIS Panamá",
+    {
+      "id": "inventario",
+      "nombre": "Inventario Consolidado · CEDIS Panamá",
       "url": "https://torredecontrolcss.github.io/Curvas_de_Inventario/kpi_inventario.json",
-      "tipo": "kpi", "indicadores": ["2", "3", "10"], "diasHabilesMax": 1,
-      "tablero": "https://torredecontrolcss.github.io/Curvas_de_Inventario/" },
-    { "id": "kanban", "nombre": "Kanban de despacho · CEDIS Panamá",
+      "tipo": "kpi",
+      "indicadores": [
+        "2",
+        "3",
+        "10"
+      ],
+      "diasHabilesMax": 1,
+      "tablero": "https://torredecontrolcss.github.io/Curvas_de_Inventario/"
+    },
+    {
+      "id": "kanban",
+      "nombre": "Kanban de despacho · CEDIS Panamá",
       "url": "https://torredecontrolcss.github.io/ASIGNACION_F8/kanban/kpi_kanban.json",
-      "tipo": "kpi", "indicadores": ["1a", "1b", "9", "6", "7"], "diasHabilesMax": 1,
-      "tablero": "https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html" },
-    { "id": "recepcion", "nombre": "Entradas de Mercancía por Recepción",
+      "tipo": "kpi",
+      "indicadores": [
+        "1a",
+        "1b",
+        "9",
+        "6",
+        "7"
+      ],
+      "diasHabilesMax": 1,
+      "tablero": "https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html"
+    },
+    {
+      "id": "recepcion",
+      "nombre": "Entradas de Mercancía por Recepción",
       "url": "https://torredecontrolcss.github.io/SIGUELO/entradas_recepcion.json",
-      "tipo": "derivado", "indicadores": ["5"], "diasHabilesMax": 2,
+      "tipo": "derivado",
+      "indicadores": [
+        "5"
+      ],
+      "diasHabilesMax": 2,
       "calculo": "Por mes de recepción: filas con cumpl = 'A TIEMPO' ÷ filas con cumpl informado",
-      "tablero": "https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html" },
-    { "id": "redistribucion", "nombre": "Redistribución entre CEDIS",
+      "tablero": "https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html"
+    },
+    {
+      "id": "redistribucion",
+      "nombre": "Redistribución entre CEDIS",
       "url": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.json",
-      "tipo": "derivado", "indicadores": ["8"], "diasHabilesMax": 1,
+      "tipo": "derivado",
+      "indicadores": [
+        "8"
+      ],
+      "diasHabilesMax": 1,
       "calculo": "kpi.destinosEnCero (traslados sugeridos hacia un CEDIS en cero)",
-      "tablero": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html" },
-    { "id": "manual", "nombre": "Carga manual de la Dirección (GR55 SAP-SAFIRO)",
+      "tablero": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html"
+    },
+    {
+      "id": "manual",
+      "nombre": "Carga manual de la Dirección (GR55 SAP-SAFIRO)",
       "url": "https://torredecontrolcss.github.io/SIGUELO_DINALOG/kpi_manual.json",
-      "tipo": "manual", "indicadores": ["4"], "diasHabilesMax": 45 }
+      "tipo": "manual",
+      "indicadores": [
+        "4"
+      ],
+      "diasHabilesMax": 45
+    },
+    {
+      "id": "compromisos",
+      "nombre": "Registro de compromisos de la Dirección",
+      "url": "https://torredecontrolcss.github.io/SIGUELO_DINALOG/compromisos.json",
+      "tipo": "manual",
+      "indicadores": [],
+      "diasHabilesMax": 999
+    }
   ],
   "indicadores": {
-    "1a": { "objetivo": "01", "nombre": "A tiempo (on-time)", "unidad": "%", "meta": 72, "dir": "up", "max": 100, "instrumento": "gauge", "notaMeta": "Meta provisional: el Plan fijó 72% para el OTIF antes de separarlo" },
-    "1b": { "objetivo": "01", "nombre": "Completo (in-full)", "unidad": "%", "meta": 72, "dir": "up", "max": 100, "instrumento": "gauge", "notaMeta": "Meta provisional" },
-    "9":  { "objetivo": "01", "nombre": "Fill rate (nivel de surtido)", "unidad": "%", "meta": 55, "dir": "up", "max": 100, "instrumento": "gauge" },
-    "2":  { "objetivo": "01", "nombre": "Desabasto · CEDIS Panamá", "unidad": "%", "meta": 18, "dir": "down", "max": 40, "instrumento": "thermo" },
-    "3":  { "objetivo": "01", "nombre": "Cobertura · CEDIS Panamá", "unidad": "m", "meta": 1, "dir": "up", "max": 3, "instrumento": "fuel" },
-    "4":  { "objetivo": "02", "nombre": "Ejecución presupuestaria", "unidad": "%", "meta": 60, "dir": "up", "max": 100, "instrumento": "gauge" },
-    "5":  { "objetivo": "02", "nombre": "Cumplimiento de proveedores", "unidad": "%", "meta": 80, "dir": "up", "max": 100, "instrumento": "gauge" },
-    "6":  { "objetivo": "02", "nombre": "Tiempo de reposición", "unidad": "d", "meta": 20, "dir": "down", "max": 40, "instrumento": "odo" },
-    "7":  { "objetivo": "03", "nombre": "Capacidad", "unidad": "F8/día", "meta": 50, "dir": "up", "max": 100, "instrumento": "odo" },
-    "8":  { "objetivo": "03", "nombre": "Brecha entre CEDIS", "unidad": "traslados", "meta": 90, "dir": "down", "max": 700, "instrumento": "thermo" },
-    "10": { "objetivo": "04", "nombre": "Vencimientos 0-90 días · CEDIS Panamá", "unidad": "%", "meta": 0.01, "dir": "down", "max": 2, "instrumento": "thermo", "notaMeta": "Meta del Plan en revisión: posible error de escala (0.01% vs 1%)" }
+    "1a": {
+      "objetivo": "01",
+      "nombre": "A tiempo (on-time)",
+      "unidad": "%",
+      "meta": 72,
+      "dir": "up",
+      "max": 100,
+      "instrumento": "gauge",
+      "notaMeta": "Meta provisional: el Plan fijó 72% para el OTIF antes de separarlo"
+    },
+    "1b": {
+      "objetivo": "01",
+      "nombre": "Completo (in-full)",
+      "unidad": "%",
+      "meta": 72,
+      "dir": "up",
+      "max": 100,
+      "instrumento": "gauge",
+      "notaMeta": "Meta provisional"
+    },
+    "9": {
+      "objetivo": "01",
+      "nombre": "Fill rate (nivel de surtido)",
+      "unidad": "%",
+      "meta": 55,
+      "dir": "up",
+      "max": 100,
+      "instrumento": "gauge"
+    },
+    "2": {
+      "objetivo": "01",
+      "nombre": "Desabasto · CEDIS Panamá",
+      "unidad": "%",
+      "meta": 18,
+      "dir": "down",
+      "max": 40,
+      "instrumento": "thermo"
+    },
+    "3": {
+      "objetivo": "01",
+      "nombre": "Cobertura · CEDIS Panamá",
+      "unidad": "m",
+      "meta": 1,
+      "dir": "up",
+      "max": 3,
+      "instrumento": "fuel"
+    },
+    "4": {
+      "objetivo": "02",
+      "nombre": "Ejecución presupuestaria",
+      "unidad": "%",
+      "meta": 60,
+      "dir": "up",
+      "max": 100,
+      "instrumento": "gauge"
+    },
+    "5": {
+      "objetivo": "02",
+      "nombre": "Cumplimiento de proveedores",
+      "unidad": "%",
+      "meta": 80,
+      "dir": "up",
+      "max": 100,
+      "instrumento": "gauge"
+    },
+    "6": {
+      "objetivo": "02",
+      "nombre": "Tiempo de reposición",
+      "unidad": "d",
+      "meta": 20,
+      "dir": "down",
+      "max": 40,
+      "instrumento": "odo"
+    },
+    "7": {
+      "objetivo": "03",
+      "nombre": "Capacidad",
+      "unidad": "F8/día",
+      "meta": 50,
+      "dir": "up",
+      "max": 100,
+      "instrumento": "odo"
+    },
+    "8": {
+      "objetivo": "03",
+      "nombre": "Brecha entre CEDIS",
+      "unidad": "traslados",
+      "meta": 90,
+      "dir": "down",
+      "max": 700,
+      "instrumento": "thermo"
+    },
+    "10": {
+      "objetivo": "04",
+      "nombre": "Vencimientos 0-90 días · CEDIS Panamá",
+      "unidad": "%",
+      "meta": 0.01,
+      "dir": "down",
+      "max": 2,
+      "instrumento": "thermo",
+      "notaMeta": "Meta del Plan en revisión: posible error de escala (0.01% vs 1%)"
+    }
   }
 }
