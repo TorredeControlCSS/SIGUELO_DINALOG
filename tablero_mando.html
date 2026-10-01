@@ -32,6 +32,8 @@ header img{width:44px;height:44px}
 .acts{align-items:center}
 .acts .yv{min-height:30px;background:#fff;color:var(--az);border:none;border-radius:15px;padding:0 12px;font-size:12px;font-weight:700;cursor:pointer}
 .menu{position:relative}
+.gh .menu .mn,.gh .tour{min-height:24px;padding:0 9px;background:#fff;color:var(--az);border:1px solid var(--az);font-size:11px;font-weight:700;cursor:pointer}
+.gh .slot{margin-left:auto;display:flex;gap:6px;align-items:center}
 .menu .mn{min-height:30px;padding:0 10px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer}
 .dd{position:absolute;right:0;top:34px;background:#fff;border:1px solid var(--bd);display:none;flex-direction:column;min-width:210px;z-index:40;box-shadow:0 4px 12px rgba(0,0,0,.18)}
 .dd.on{display:flex}
@@ -111,7 +113,11 @@ main{max-width:1340px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 .vh h2{margin:0;font-size:18px;color:var(--az)}.vh p{margin:0;font-size:13px;color:var(--tx2);flex-grow:1}
 .vh a{font-size:12px;font-weight:700}
 .kp{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
-.kp.k3{grid-template-columns:repeat(3,minmax(0,1fr))}.kp.k4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kp.k3{grid-template-columns:repeat(3,minmax(0,1fr))}.kp.kf{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.3fr)}
+.kc.fil{background:#fff}.kc.fil input{width:100%;min-height:30px;border:1px solid var(--bd);padding:0 8px;font-size:13px;font-family:inherit}
+.duo{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:stretch}
+.duo #mapaUE{height:520px}.duo .tw{max-height:520px}
+tr.sel{cursor:pointer}tr.sel:hover td{background:#e8f0f9!important}tr.sel.on td{background:#d6e6f7!important;font-weight:600}.kp.k4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .kc{border:1px solid var(--bd);padding:6px 10px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .kc .vs{display:flex;align-items:baseline;gap:8px;min-width:0}
 .kc .v{white-space:nowrap}.kc .s{line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -131,9 +137,9 @@ table.t tr:nth-child(even) td{background:#f4f7fb}
 .sf{color:var(--tx3);font-style:italic}
 .ch{display:inline-block;padding:1px 7px;font-size:11px;font-weight:700;white-space:nowrap}
 .chev{display:flex;gap:4px}
-.chev div{flex:1;padding:10px 24px;min-height:70px;display:flex;flex-direction:column;gap:3px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%,16px 50%)}
+.chev div{flex:1;padding:6px 22px;min-height:46px;display:flex;flex-direction:column;gap:1px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%,16px 50%)}
 .chev div:first-child{clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%)}
-.chev b{font-size:13px}.chev span{font-size:11px}
+.chev b{font-size:12px}.chev span{font-size:11px}.chev em{font-style:normal;font-family:var(--mono);font-size:15px;font-weight:700}
 .bars{display:flex;align-items:flex-end;gap:6px;height:170px;border-bottom:1px solid var(--bd);padding:0 4px;position:relative}
 .bars .b{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
 .bars .b i{display:block;width:70%;max-width:36px}
@@ -146,9 +152,51 @@ table.t th .ar{font-size:9px;opacity:.85;margin-left:4px}
 #mapaUE{height:380px;border:1px solid var(--bd)}
 .mleg{display:flex;gap:10px;font-size:11px;align-items:center;flex-wrap:wrap}.mleg i{display:inline-block;width:14px;height:10px;margin-right:4px;vertical-align:middle}
 .card.go{cursor:pointer}.card.go:hover{outline:2px solid var(--az2)}
+#tourOv{display:none;position:fixed;inset:0;z-index:70;pointer-events:none}
+#tourBox{pointer-events:auto;position:fixed;left:50%;bottom:22px;transform:translateX(-50%);width:min(520px,92vw);background:#fff;border:2px solid var(--az);padding:12px 14px;box-shadow:0 8px 28px rgba(0,0,0,.3)}
+#tourBox b{color:var(--az);font-size:15px}#tourBox p{margin:6px 0 10px;font-size:13px;line-height:1.45}
+#tourBox .tn{display:flex;gap:6px;align-items:center}#tourBox .tn span{flex-grow:1;font-size:12px;color:var(--tx3)}
+#tourBox button{min-height:32px;padding:0 12px;border:1px solid var(--az);background:#fff;color:var(--az);font-weight:700;cursor:pointer}#tourBox #tourS{background:var(--az);color:#fff}
+.tourOn{position:relative;z-index:60;box-shadow:0 0 0 4px #f0b429,0 0 0 9999px rgba(0,0,0,.45)!important}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1c1c1c;color:#fff;padding:10px 16px;font-size:13px;display:none;z-index:60;max-width:90vw}
 .load{padding:40px;text-align:center;font-size:14px;color:var(--tx2)}
+@media (max-width:1100px){
+  header{flex-wrap:wrap;padding:10px 14px}.hr{align-items:flex-start;width:100%}
+  nav{flex-wrap:nowrap;overflow-x:auto;padding:0 10px;-webkit-overflow-scrolling:touch}nav .tab{white-space:nowrap;flex-shrink:0}
+  .navm{margin-left:0;flex-shrink:0}
+  main{padding:8px 10px 14px}
+  .kp,.kp.kf{grid-template-columns:repeat(2,minmax(0,1fr))!important}.kp.k3{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .duo{grid-template-columns:1fr}.duo #mapaUE{height:380px}
+  .chev{flex-direction:column}.chev div,.chev div:first-child{clip-path:none;border-left:4px solid var(--az)}
+  .vh{flex-direction:column;align-items:flex-start;gap:4px}
+}
+@media (max-width:640px){
+  .ht h1{font-size:16px}.ht div{font-size:11px}header img{width:34px;height:34px}
+  .grid{grid-template-columns:1fr!important}.kp,.kp.kf,.kp.k3,.kp.k4{grid-template-columns:1fr!important}
+  .dec .dc .t span{white-space:normal}.gh{flex-wrap:wrap}.gh .slot{margin-left:0}
+  .src{flex-direction:column;align-items:flex-start;gap:6px}
+  #tourBox{bottom:10px}
+}
 @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gh,.lcell{grid-column:1/-1!important}.grp{grid-column:1/-1!important}.cards{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dec{grid-template-columns:1fr}}
+nav .tabs{display:flex;gap:4px;min-width:0}
+/* Teléfonos y tabletas: el Director usa el tablero sobre todo en el móvil. */
+@media (max-width:1100px){
+  nav{flex-direction:column;align-items:stretch;gap:0;padding:0}
+  nav .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 10px;scrollbar-width:none}nav .tabs::-webkit-scrollbar{display:none}
+  .navm{width:100%;overflow-x:auto;padding:6px 10px;background:var(--az2);gap:4px;-webkit-overflow-scrolling:touch}
+  .navm .mb{flex-shrink:0;min-height:32px}.navm .play{flex-shrink:0}
+  .ghL{order:-2}.lcell{order:-1}
+}
+@media (max-width:640px){
+  .ht div{display:none}.stamp{font-size:11px}.hr{gap:4px}
+  nav .tab{padding:8px 11px;font-size:13px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px;padding:6px}
+  .gh,.lcell{grid-column:1/-1!important}
+  .card{padding:6px 7px}.card .nm{font-size:11px}.ins{height:84px}.ins svg{width:100%;max-width:150px;height:auto}
+  .val{font-size:18px}.mt,.nt,.dl,.gap{font-size:11px}
+  .kp,.kp.kf,.kp.k3,.kp.k4{grid-template-columns:repeat(2,minmax(0,1fr))!important}.kc.fil{grid-column:1/-1}
+  .kc .v{font-size:17px}.kc .l{white-space:normal;line-height:1.2}
+}
 @media print{nav,.acts,.q{display:none}body{background:#fff}}
 </style>
 </head>
@@ -160,7 +208,7 @@ table.t th .ar{font-size:9px;opacity:.85;margin-left:4px}
     <div class="stamp" id="stamp">Cargando fuentes…</div>
     <div class="acts">
       <button class="yv" id="bYarvis" type="button" title="Disponible en la siguiente fase">💬 Consultar a YARVIS ↗</button>
-      <div class="menu"><button class="mn" id="bMenu" type="button" aria-haspopup="true" aria-expanded="false">Descargar ▾</button>
+      <div class="menu" id="menuDesc" style="display:none"><button class="mn" id="bMenu" type="button" aria-haspopup="true" aria-expanded="false">Descargar ▾</button>
         <div class="dd" id="dd" role="menu">
           <button id="bCap" type="button" role="menuitem">Captura de pantalla (PNG)</button>
           <button id="bXls" type="button" role="menuitem">Histórico de indicadores (Excel)</button>
@@ -170,12 +218,14 @@ table.t th .ar{font-size:9px;opacity:.85;margin-left:4px}
   </div>
 </header>
 <nav>
+  <div class="tabs">
   <button type="button" class="tab on" data-v="panel">Panel ejecutivo</button>
   <button type="button" class="tab" data-v="alertas">Alertas y compromisos</button>
   <button type="button" class="tab" data-v="desp">Despachos</button>
   <button type="button" class="tab" data-v="ue">Unidades ejecutoras</button>
   <button type="button" class="tab" data-v="plan">Planificación</button>
   <button type="button" class="tab" data-v="pres">Presupuesto y pagos</button>
+  </div>
   <div class="navm" id="navm"></div>
 </nav>
 <main id="main">
@@ -348,6 +398,7 @@ function card(id){
     '<div class="mt">Meta '+(g.dir==='up'?'≥ ':'≤ ')+esc(fmt(g.meta,g.unidad))+(g.notaMeta?' · provisional':'')+'</div>'+
     '<div class="gap" id="gp_'+id+'"></div><div class="dl" id="dl_'+id+'"></div><div class="nt" id="nt_'+id+'"></div><div class="stale" id="st_'+id+'" style="display:none"></div></div>';
 }
+function ghL(txt,span,extra){ return '<div class="gh ghL" style="grid-column:span '+span+'">'+esc(txt)+(extra||'')+'</div>'; }
 function gh(txt,span,extra){ return '<div class="gh" style="grid-column:span '+span+'">'+esc(txt)+(extra||'')+'</div>'; }
 
 /* ── Franja de decisiones: renglones VITALES con un CEDIS en cero y traslado posible ── */
@@ -372,21 +423,29 @@ function decisiones(){
 
 function construir(){
   var hoy=hoyPTY(), mesHoy=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0');
-  var meses=[]; for(var m=1;m<=hoy.getMonth()+1;m++) meses.push(hoy.getFullYear()+'-'+String(m).padStart(2,'0'));
+  /* Meses del selector: desde el inicio de la medición (registro_fuentes.inicioMedicion) y como
+     máximo los últimos 12, así en 2027 la ventana corre sola (oct-26 … sep-27) y el año se
+     muestra en la etiqueta cuando la ventana cruza de un año a otro. */
+  var meses=[], ini=String(S.reg.inicioMedicion||'2026-05'), cur=new Date(hoy.getFullYear(),hoy.getMonth(),1);
+  for(var k=0;k<12;k++){ var dd=new Date(cur.getFullYear(),cur.getMonth()-k,1), mm=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0'); if(mm<ini) break; meses.unshift(mm); }
+  if(!meses.length) meses=[mesHoy];
+  S.dosAnios = meses[0].substring(0,4)!==meses[meses.length-1].substring(0,4);
   S.meses=meses; S.mesHoy=mesHoy; S.idx=meses.length-1;
   /* Si el mes en curso aún no tiene salidas, el panel abre en el último mes con datos. */
   var k1=valorEn('1a',mesHoy); if(meses.length>1 && k1 && k1.vacio) S.idx=meses.length-2;
   var h='<section class="dec">'+decisiones()+'</section>'+
 
     /* Una sola rejilla de 6 columnas: todas las tarjetas miden lo mismo en ancho y en alto. */
-    '<div class="grid">'+gh(OBJ['01'],5)+gh('Lectura del mes',1,'<button class="info" type="button" data-leer="1">ⓘ Cómo leer</button>')+
+    '<div class="grid">'+gh(OBJ['01'],5,'<span class="slot" id="slotAcc"><button class="tour" type="button" data-tour="1">▶ Recorrido guiado</button></span>')+ghL('Lectura del mes',1,'<button class="info" type="button" data-leer="1">ⓘ Cómo leer</button>')+
     ORDEN['01'].map(card).join('')+'<div class="lcell"><ul class="lect" id="lect"></ul></div>'+
     gh(OBJ['02'],3)+gh(OBJ['03'],2)+gh(OBJ['04'],1)+
     ORDEN['02'].map(card).join('')+ORDEN['03'].map(card).join('')+ORDEN['04'].map(card).join('')+'</div>'+
     '<div class="src" id="src">'+S.srcHtml+'</div>';
+  var md=$('menuDesc'); if(md) md.parentNode.removeChild(md);
   $('main').innerHTML='<div id="v-panel">'+h+'</div><div id="v-alertas" class="vw" hidden></div><div id="v-desp" class="vw" hidden></div><div id="v-ue" class="vw" hidden></div><div id="v-plan" class="vw" hidden></div><div id="v-pres" class="vw" hidden></div>';
-  $('navm').innerHTML='<button class="play" id="bPlay" type="button">▶ Recorrer '+hoy.getFullYear()+'</button>'+
-    meses.map(function(m,i){ return '<button class="mb" type="button" data-i="'+i+'">'+MES[+m.substring(5,7)-1]+'</button>'; }).join('');
+  if(md){ md.style.display=''; $('slotAcc').appendChild(md); }
+  $('navm').innerHTML='<button class="play" id="bPlay" type="button">▶ Recorrer</button>'+
+    meses.map(function(m,i){ return '<button class="mb" type="button" data-i="'+i+'" title="'+mesLabel(m)+'">'+MES[+m.substring(5,7)-1]+(S.dosAnios?' '+m.substring(2,4):'')+'</button>'; }).join('');
   $('navm').addEventListener('click',function(e){
     var b=e.target.closest('.mb'); if(b){ parar(); pintar(+b.getAttribute('data-i')); return; }
     if(e.target.closest('#bPlay')) recorrer();
@@ -398,9 +457,16 @@ function construir(){
     var q=e.target.closest('[data-q]'); if(q){ ayuda(q.getAttribute('data-q')); return; }
     if(e.target.closest('[data-leer]')){ comoLeer(); return; }
     var so=e.target.closest('th.so'); if(so){ ordenar(so.getAttribute('data-k'),+so.getAttribute('data-c')); return; }
+    if(e.target.closest('[data-tour]')){ tour(0); return; }
+    var tr=e.target.closest('tr[data-k="ue"]'); if(tr){ var T=TABLAS.ue, nm=T.filas[+tr.getAttribute('data-i')][0]; ubicarUE(nm); return; }
     var go=e.target.closest('[data-go]'); if(go){ e.preventDefault(); vista(go.getAttribute('data-go')); return; }
     var c=e.target.closest('.card.go'); if(c){ vista(VISTA_IND[c.id.substring(3)]||'panel'); return; }
     var x=e.target.closest('[data-xls]'); if(x){ exportarTabla(x.getAttribute('data-xls')); return; }
+  });
+  $('main').addEventListener('input',function(e){
+    if(e.target.id!=='fUE') return; var T=TABLAS.ue; if(!T) return; var v=e.target.value.trim();
+    T.filtro=v; $('tw_ue').innerHTML=htmlTabla('ue');
+    var ex=T.filas.filter(function(r){ return r[0].toLowerCase()===v.toLowerCase(); })[0]; if(ex) ubicarUE(ex[0]);
   });
   document.querySelector('nav').addEventListener('click',function(e){ var b=e.target.closest('.tab'); if(b) vista(b.getAttribute('data-v')); });
   pintar(S.idx);
@@ -487,12 +553,36 @@ function pintar(i){
   if(vie.length) L.push('<li>Fuente desactualizada: <b>'+esc(vie.join(', '))+'</b>.</li>');
   $('lect').innerHTML=L.join('');
 }
-function parar(){ if(S.timer){ clearInterval(S.timer); S.timer=null; $('bPlay').textContent='▶ Recorrer '+S.meses[0].substring(0,4); } }
+function parar(){ if(S.timer){ clearInterval(S.timer); S.timer=null; $('bPlay').textContent='▶ Recorrer'; } }
 function recorrer(){
   if(S.timer){ parar(); return; }
   $('bPlay').textContent='Detener'; pintar(0);
   S.timer=setInterval(function(){ if(S.idx>=S.meses.length-1){ parar(); return; } pintar(S.idx+1); },1000);
 }
+/* Recorrido guiado: resalta cada parte del panel con una explicación corta. */
+var TOUR=[
+  ['#stamp','Fecha de actualización','La hora PTY de la fuente más reciente. Si una fuente se atrasa, la franja inferior lo marca como "Desactualizada".'],
+  ['.dec','Requieren su decisión','Los casos más urgentes: renglones vitales en cero en un CEDIS que otro CEDIS puede surtir hoy. "Ver todas" abre Planificación.'],
+  ['#cd_1a','Un indicador','Cada tarjeta es un instrumento: el valor, la meta 2026, cuánto debe subir o bajar y el cambio frente al mes anterior. El botón "?" explica qué mide y de dónde sale. Clic en la tarjeta abre su vista de detalle.'],
+  ['.lcell','Lectura del mes','El resumen en palabras: cuántos indicadores están en meta, el mayor avance, el mayor retroceso y las fuentes atrasadas.'],
+  ['#navm','Los meses','Elija un mes para ver sus valores o use "Recorrer" para ver la evolución. Los meses empiezan cuando empezó la medición y la ventana muestra siempre los últimos 12.'],
+  ['nav','Vistas de detalle','Alertas y compromisos, Despachos, Unidades ejecutoras, Planificación y Presupuesto y pagos: cada una responde una pregunta de la Dirección.'],
+  ['#slotAcc','Descargas','Captura de la pantalla y el histórico de indicadores en Excel o PDF, con formato institucional.'],
+  ['#src','Fuentes','De dónde sale cada cifra y su fecha de corte.'],
+  ['#bYarvis','YARVIS','El asistente que responderá preguntas sobre estos indicadores. Disponible en la siguiente fase.']
+];
+function tour(i){
+  var ov=$('tourOv'); if(!ov){ ov=document.createElement('div'); ov.id='tourOv'; ov.innerHTML='<div id="tourBox" role="dialog" aria-live="polite"><b id="tourT"></b><p id="tourX"></p><div class="tn"><span id="tourN"></span><button type="button" id="tourP">Anterior</button><button type="button" id="tourS">Siguiente</button><button type="button" id="tourC">Cerrar</button></div></div>'; document.body.appendChild(ov);
+    $('tourP').onclick=function(){ tour(S.tourI-1); }; $('tourS').onclick=function(){ tour(S.tourI+1); }; $('tourC').onclick=finTour; }
+  if(i<0) i=0; if(i>=TOUR.length){ finTour(); return; }
+  if($('v-panel').hidden) vista('panel');
+  S.tourI=i; var st=TOUR[i], el=document.querySelector(st[0]);
+  Array.prototype.forEach.call(document.querySelectorAll('.tourOn'),function(x){ x.classList.remove('tourOn'); });
+  if(el){ el.classList.add('tourOn'); if(el.scrollIntoView) el.scrollIntoView({block:'center',behavior:'smooth'}); }
+  $('tourT').textContent=st[1]; $('tourX').textContent=st[2]; $('tourN').textContent=(i+1)+' de '+TOUR.length;
+  $('tourP').disabled=i===0; $('tourS').textContent=i===TOUR.length-1?'Terminar':'Siguiente'; ov.style.display='block';
+}
+function finTour(){ var ov=$('tourOv'); if(ov) ov.style.display='none'; Array.prototype.forEach.call(document.querySelectorAll('.tourOn'),function(x){ x.classList.remove('tourOn'); }); }
 function comoLeer(){
   $('mT').textContent='Cómo leer el panel';
   $('mD').textContent='Velocímetro: indicadores en porcentaje con meta. Termómetro: lo que no debe subir; la línea negra es la meta. Contador: volumen y días. Tanque: cobertura, de vacío a lleno.';
@@ -526,13 +616,14 @@ function cabecera(v,titulo,pregunta){ return '<div class="vh"><h2>'+esc(titulo)+
    El orden se aplica a la lista completa; el recorte de filas visibles va después. */
 function celda(c,v,r){ if(c.a==='c'){ var h0=(c.html&&c.html(v,r))||(v===''||v==null?'<span class="sf">'+esc(c.vacio||'')+'</span>':esc(c.t==='num'?num(v):c.t==='dec'?fmt(v,''):v)); return '<td style="text-align:center">'+h0+'</td>'; } var h=(c.html&&c.html(v,r))||(v===''||v==null?'<span class="sf">'+esc(c.vacio||'')+'</span>':esc(c.t==='num'?num(v):c.t==='dec'?fmt(v,''):v)); return '<td'+(c.t&&c.t!=='txt'?' class="n"':'')+'>'+h+'</td>'; }
 function htmlTabla(key){
-  var T=TABLAS[key], fs=T.filas;   /* todas las filas; la caja tiene su propio desplazamiento */
+  var T=TABLAS[key], fq=(T.filtro||'').toLowerCase();   /* todas las filas; la caja tiene su propio desplazamiento */
+  var fs=T.filas.map(function(r,i){ return { r:r, i:i }; }).filter(function(o){ return !fq || String(o.r[0]).toLowerCase().indexOf(fq)>=0; });
   return '<table class="t"><thead><tr>'+T.cols.map(function(c,i){ var ar=T.oc===i?(T.od>0?'▲':'▼'):'⇅';
       return '<th class="so" data-k="'+key+'" data-c="'+i+'" title="Ordenar"'+(c.a==='c'?' style="text-align:center"':'')+'>'+esc(c.h)+'<span class="ar">'+ar+'</span></th>'; }).join('')+'</tr></thead><tbody>'+
-    fs.map(function(r){ return '<tr>'+r.slice(0,T.cols.length).map(function(v,i){ return celda(T.cols[i],v,r); }).join('')+'</tr>'; }).join('')+'</tbody></table>';
+    fs.map(function(o){ var r=o.r; return '<tr data-k="'+key+'" data-i="'+o.i+'"'+(T.fila?' class="sel'+(T.sel===r[0]?' on':'')+'"':'')+'>'+r.slice(0,T.cols.length).map(function(v,i){ return celda(T.cols[i],v,r); }).join('')+'</tr>'; }).join('')+'</tbody></table>';
 }
 function tabla(key,cols,filas,maxFilas){
-  TABLAS[key]={ cols:cols, filas:filas, max:maxFilas||0, oc:-1, od:1 };
+  TABLAS[key]={ cols:cols, filas:filas, max:maxFilas||0, oc:-1, od:1, fila:key==='ue' };
   return '<div class="tw" id="tw_'+key+'">'+htmlTabla(key)+'</div>';
 }
 function ordenar(key,i){
@@ -562,10 +653,13 @@ function vPend(v){
 
 /* Despachos: global del mes y unidades ejecutoras peor primero */
 function kanMes(mes){ var k=S.src.kanban; return k&&k.historico?k.historico[mes]:null; }
+/* CEDIS Panamá es quien sirve: su propio almacén no se mide como unidad solicitante. */
+var NO_UE=/^ALMACEN GENERAL CEDIS$/i;
 function ueFilas(mes){
   var f=kanMes(mes), u=(f&&f.ue)||{}, tot=(S.src.kanban&&S.src.kanban.ueTotales)||{};
-  return Object.keys(u).map(function(n){ var x=u[n], tt=tot[n]||{}; return { n:n, x:x, tt:tt }; });
+  return Object.keys(u).filter(function(n){ return !NO_UE.test(n); }).map(function(n){ var x=u[n], tt=tot[n]||{}; return { n:n, x:x, tt:tt }; });
 }
+function totUE(){ var tot=(S.src.kanban&&S.src.kanban.ueTotales)||{}, o={}; Object.keys(tot).forEach(function(n){ if(!NO_UE.test(n)) o[n]=tot[n]; }); return o; }
 /* Fecha prometida por UE: sale del detalle del Kanban (kanban/tablero.json, ~1.8 MB).
    Se baja SOLO al abrir Despachos, una vez por sesión. fechaComprometida = la que fija
    el supervisor en el Kanban ("F. prometida"); sin ella, el pedido atrasado no tiene fecha. */
@@ -643,10 +737,10 @@ function dibujarMapaUE(){
     var el=$('mapaUE'); if(!el) return;
     if(S.mapa){ S.mapa.remove(); S.mapa=null; }
     el.innerHTML='';
-    var L=window.L, m=L.map('mapaUE',{scrollWheelZoom:false}).setView([8.45,-80.1],7); S.mapa=m;
+    var L=window.L, m=L.map('mapaUE',{scrollWheelZoom:true}).setView([8.45,-80.1],7); S.mapa=m;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:16,attribution:'© OpenStreetMap'}).addTo(m);
     if(typeof PROVINCIAS_POLIGONOS!=='undefined') PROVINCIAS_POLIGONOS.forEach(function(pp){ L.geoJSON(pp.geometry,{style:{color:'#7a8899',weight:1,fill:false},interactive:false}).addTo(m); });
-    var tot=(S.src.kanban&&S.src.kanban.ueTotales)||{}, F={}; ueFilas(mes).forEach(function(r){ F[r.n]=r.x; });
+    var tot=totUE(), F={}; ueFilas(mes).forEach(function(r){ F[r.n]=r.x; }); S.mk={};
     var nombres={}; Object.keys(F).forEach(function(n){ nombres[n]=1; }); Object.keys(tot).forEach(function(n){ nombres[n]=1; });
     var malo=[], bueno=[], pts=[], sinXY=[];
     Object.keys(nombres).forEach(function(n){
@@ -665,7 +759,7 @@ function dibujarMapaUE(){
         linea('Despachadas en '+MES[+mes.substring(5,7)-1]+' (F8)',num(x.s||0))+linea('Pendientes hoy (F8)',num(x.p!=null?x.p:(tt.f8||0)))+linea('Atrasadas (F8)',x.v!=null?num(x.v):'—')+
         linea('Confirmó recibido',x.cf!=null?fmt(x.cf,'%'):'—')+linea('Última entrega en bahía',ult?fCorta(ult)+' '+ult.substring(0,4):'—')+'</table>'+
         '<div style="margin-top:6px;font-size:11px">'+chip(st,fr==null?'Sin despachos en el mes':(st==='ok'?'En meta':st==='bajo'?'Cerca de la meta':'Lejos de la meta'))+'</div></div>');
-      pts.push([xy.lat,xy.lng]);
+      S.mk[n]=mk; pts.push([xy.lat,xy.lng]);
     });
     if(L.heatLayer){
       if(bueno.length) L.heatLayer(bueno,{radius:34,blur:26,minOpacity:.25,max:1,gradient:{0:'rgba(39,174,96,0)',0.5:'#7dcea0',1:'#1e8449'}}).addTo(m);
@@ -689,8 +783,14 @@ function cargarEntregas(){
     S.ultEnt=U; }).catch(function(){ S.ultEnt=null; S.entErr=true; });
   return S.entP;
 }
+function ubicarUE(nm){
+  var T=TABLAS.ue; if(T){ T.sel=nm; $('tw_ue').innerHTML=htmlTabla('ue'); }
+  var mk=S.mk&&S.mk[nm];
+  if(mk && S.mapa){ S.mapa.flyTo(mk.getLatLng(),12,{duration:.8}); setTimeout(function(){ mk.openPopup(); },850); }
+  else toast('Esta unidad no tiene ubicación en el mapa.');
+}
 function vUE(){
-  var mes=S.meses[S.idx], g=S.reg.indicadores, R=ueFilas(mes), tot=(S.src.kanban&&S.src.kanban.ueTotales)||{};
+  var mes=S.meses[S.idx], g=S.reg.indicadores, R=ueFilas(mes), tot=totUE();
   var h=cabecera('ue','Unidades ejecutoras','Cómo se atiende a cada unidad ejecutora y en qué no se le cumple.');
   var nombres={}; R.forEach(function(r){ nombres[r.n]=1; }); Object.keys(tot).forEach(function(n){ nombres[n]=1; });
   var filas=Object.keys(nombres).map(function(n){ var r=R.filter(function(z){ return z.n===n; })[0], x=r?r.x:{}, tt=tot[n]||{};
@@ -699,10 +799,13 @@ function vUE(){
   filas.sort(function(a,b){ return (a[7]==null?999:a[7])-(b[7]==null?999:b[7]); });
   var conS=filas.filter(function(r){ return r[5]>0; }).length, bajoFR=filas.filter(function(r){ return r[7]!=null && r[7]<g['9'].meta; }).length;
   var cfs=filas.map(function(r){ return r[8]; }).filter(function(v){ return v!=null; }), cfm=cfs.length?Math.round(10*cfs.reduce(function(a,b){ return a+b; },0)/cfs.length)/10:null;
-  h+='<div class="kp k3">'+kc('ok','Unidades atendidas',num(conS),'con Formas 8 despachadas en '+MESL[+mes.substring(5,7)-1])+
-    kc(bajoFR?'bajo':'ok','Bajo la meta de fill rate',num(bajoFR),'meta ≥ '+g['9'].meta+'% · '+mesLabel(mes))+
-    kc('con','Confirmación de recibido',cfm!=null?fmt(cfm,'%'):'—','promedio de las unidades')+'</div>';
-  h+='<div class="pn"><div class="ph"><h3>Mapa de nivel de servicio · fill rate de '+esc(mesLabel(mes))+' por unidad ejecutora</h3></div>'+
+  var nUE=filas.filter(function(r){ return r[7]!=null; }).length;
+  h+='<div class="kp kf">'+kc('ok','Unidades atendidas',num(conS),'con Formas 8 despachadas en '+MESL[+mes.substring(5,7)-1])+
+    kc(bajoFR?'bajo':'ok','Unidades bajo la meta de fill rate',num(bajoFR)+' de '+num(nUE),'con fill rate menor a '+g['9'].meta+'% en '+MESL[+mes.substring(5,7)-1])+
+    kc('con','Confirmación de recibido',cfm!=null?fmt(cfm,'%'):'—','promedio de las unidades')+
+    '<div class="kc fil"><label class="l" for="fUE">Buscar unidad ejecutora</label><div class="vs"><input id="fUE" list="lUE" type="search" placeholder="Escriba parte del nombre…" autocomplete="off">'+
+    '<datalist id="lUE">'+filas.map(function(r){ return '<option value="'+esc(r[0])+'">'; }).join('')+'</datalist></div></div></div>';
+  h+='<div class="duo"><div class="pn"><div class="ph"><h3>Mapa de nivel de servicio · fill rate de '+esc(mesLabel(mes))+'</h3></div>'+
     '<div id="mapaUE"><div class="load">Cargando mapa…</div></div>'+
     '<div class="mleg"><span><i style="background:'+COL.ok[0]+'"></i>En meta (≥ '+g['9'].meta+'%)</span><span><i style="background:'+COL.bajo[0]+'"></i>Cerca de la meta</span><span><i style="background:'+COL.crit[0]+'"></i>Lejos de la meta</span><span><i style="background:'+COL.con[0]+'"></i>Sin despachos de CEDIS Panamá en el mes</span><span>Clic en un nodo para ver el detalle de la unidad. Letra: H hospital · P policlínica · C CAPPS · U ULAPS. Mancha roja: lejos de la meta; verde: en meta. Despachos de CEDIS Panamá (Kanban): las unidades del interior se atienden desde CEDIS Divisa y Chiriquí.</span></div></div>';
   var pc=function(id){ return function(v){ return v==null?'—':chip(estado(g[id],v),fmt(v,'%')); }; };
@@ -710,8 +813,8 @@ function vUE(){
     {h:'Despachadas en el mes (F8)',t:'num',w:14},{h:'A tiempo',t:'dec',w:10,html:pc('1a')},{h:'Fill rate',t:'dec',w:10,html:pc('9')},
     {h:'Confirmó recibido',t:'dec',w:12,html:function(v){ return v==null?'—':esc(fmt(v,'%')); }},{h:'Pendientes (F8)',t:'num',w:12},
     {h:'Última entrega en bahía',t:'txt',w:14,vacio:S.entErr?'No disponible':(S.ultEnt?'Sin registro':'Consultando…')},{h:'Días sin entrega',t:'num',w:11,vacio:'—'}];
-  h+='<div class="pn"><div class="ph"><h3>Nivel de servicio por unidad ejecutora · '+esc(mesLabel(mes))+' · peor fill rate primero</h3><button type="button" data-xls="ue">Excel (todas)</button></div>'+
-    tabla('ue',cols,filas)+'<div class="nota">Mismas definiciones que el correo semanal de Nivel de servicio. "F8 en curso" son las Formas 8 activas hoy en el Kanban. "Última entrega en bahía" sale de la Memoria de entregas del Kanban, sin las confirmaciones retroactivas de limpieza. '+num(filas.length)+' unidades. Clic en un encabezado para ordenar.</div></div>';
+  h+='<div class="pn"><div class="ph"><h3>Nivel de servicio por unidad · '+esc(mesLabel(mes))+' · clic en una fila para ubicarla</h3><button type="button" data-xls="ue">Excel (todas)</button></div>'+
+    tabla('ue',cols,filas)+'<div class="nota">Mismas definiciones que el correo semanal de Nivel de servicio. "F8 en curso" son las Formas 8 activas hoy en el Kanban. "Última entrega en bahía" sale de la Memoria de entregas del Kanban, sin las confirmaciones retroactivas de limpieza. '+num(filas.length)+' unidades. Clic en un encabezado para ordenar.</div></div></div>';
   return h;
 }
 
@@ -722,7 +825,7 @@ function vUE(){
 function dona(titulo,partes,nota){
   var tot=partes.reduce(function(a,p){ return a+p.n; },0), r=46, C=2*Math.PI*r, acc=0;
   var arcs=partes.filter(function(p){ return p.n>0; }).map(function(p){ var f=p.n/tot, s='<circle r="'+r+'" cx="60" cy="60" fill="none" stroke="'+p.c+'" stroke-width="22" stroke-dasharray="'+(f*C).toFixed(2)+' '+C.toFixed(2)+'" stroke-dashoffset="'+(-acc*C).toFixed(2)+'" transform="rotate(-90 60 60)"><title>'+esc(p.l)+': '+p.n+'</title></circle>'; acc+=f; return s; }).join('');
-  return '<div class="pn" style="flex:1;min-width:0"><div class="ph"><h3>'+esc(titulo)+'</h3></div><div style="display:flex;align-items:center;gap:14px">'+
+  return '<div class="pn" style="flex:1 1 280px;min-width:0"><div class="ph"><h3>'+esc(titulo)+'</h3></div><div style="display:flex;align-items:center;gap:14px">'+
     '<svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="'+esc(titulo)+'">'+arcs+'<text x="60" y="58" text-anchor="middle" font-size="20" font-weight="700" font-family="Consolas,monospace" fill="#1c1c1c">'+tot+'</text><text x="60" y="74" text-anchor="middle" font-size="10" fill="#4a4a4a">total</text></svg>'+
     '<div style="display:flex;flex-direction:column;gap:5px;font-size:12px">'+partes.map(function(p){ return '<div><i style="display:inline-block;width:11px;height:11px;background:'+p.c+';margin-right:6px;vertical-align:middle"></i>'+esc(p.l)+' · <b style="font-family:Consolas,monospace">'+p.n+'</b>'+(tot?' ('+Math.round(100*p.n/tot)+'%)':'')+'</div>'; }).join('')+'</div></div>'+
     (nota?'<div class="nota">'+esc(nota)+'</div>':'')+'</div>';
@@ -803,27 +906,21 @@ function vPres(){
     kc(estado(g5,pAn),'Proveedores a tiempo',pAn!=null?fmt(pAn,'%'):'—',num(ta)+' de '+num(tt)+' · meta ≥ '+g5.meta+'%')+
     kc('con','Pendiente de pago','—','sin fuente: Finanzas')+'</div>';
   /* ciclo de pago */
-  var paso=function(t,s,est,txt){ var c=COL[est]; return '<div style="background:'+c[2]+'"><b>'+esc(t)+'</b><span>'+esc(s)+'</span><span>'+chip(est,txt)+'</span></div>'; };
-  h+='<div class="pn"><div class="ph"><h3>El ciclo de pago, de la orden al pago</h3></div><div class="chev">'+
-    (S.src.transitos?paso('Orden de compra','Tránsitos de OC · registro de Planificación','bajo','Con fuente · preliminar'):paso('Orden de compra','Tránsitos de OC (registro de Planificación)','bajo','Por conectar'))+
-    paso('Recepción','Entradas por Recepción',(S.est.recepcion&&S.est.recepcion.stale)?'bajo':'ok',(S.est.recepcion&&S.est.recepcion.stale)?'Desactualizada':'Con fuente')+
-    paso('Devengado','GR55 · carga manual','ok','Con fuente')+
-    paso('Trámite de pago','Sin registro en el ecosistema','con','Sin fuente')+
-    paso('Pagado','Sin registro en el ecosistema','con','Sin fuente')+'</div>'+
-    '<div class="nota">Las etapas sin fuente dependen de que Finanzas registre el trámite de pago.</div></div>';
+  var paso=function(t,v,s,est){ var c=COL[est]; return '<div style="background:'+c[2]+'"><b>'+esc(t)+'</b><em style="color:'+c[1]+'">'+esc(v)+'</em><span>'+esc(s)+'</span></div>'; };
   /* Órdenes y solicitudes registradas por Planificación, y cuántas ya entraron por Recepción */
-  var T=S.src.transitos;
-  if(T&&T.rows){
-    var docs={}, ocs={}, mont=0, porEst={}, oc10=function(s){ return String(s||'').replace(/\D/g,'').substring(0,10); }, ocRec={};
+  var Tt=S.src.transitos, nDoc=0, mDoc=0, nRev=0, conOc=0, recibidas=0;
+  if(Tt&&Tt.rows){ var dd0={}, oc10=function(s){ return String(s||'').replace(/\D/g,'').substring(0,10); }, ocRec={};
     if(ent&&ent.rows) ent.rows.forEach(function(x){ var o=oc10(x.oc); if(o) ocRec[o]=1; });
-    var conOc=0, recibidas=0;
-    T.rows.forEach(function(x){ docs[x.doc||x.id]=1; mont+=x.monto||0; porEst[x.estado||'—']=(porEst[x.estado||'—']||0)+1;
-      if(x.oc){ conOc++; if(ocRec[oc10(x.oc)]) recibidas++; } });
-    h+='<div class="kp k4">'+kc('con','Documentos registrados',num(Object.keys(docs).length),num(T.rows.length)+' líneas · OC y solicitudes de entrega')+
-      kc('con','Monto registrado',bal(mont),(T._meta&&T._meta.montoNoNumerico?num(T._meta.montoNoNumerico)+' líneas con monto no numérico · ':'')+'preliminar')+
-      kc(porEst.REVISAR?'bajo':'ok','Por revisar',num(porEst.REVISAR||0),'líneas escaneadas sin validar por el planificador')+
-      kc('con','Con entrada en Recepción',conOc?fmt(Math.round(1000*recibidas/conOc)/10,'%'):'—',num(recibidas)+' de '+num(conOc)+' líneas con número de OC')+'</div>';
-  }
+    Tt.rows.forEach(function(x){ dd0[x.doc||x.id]=1; mDoc+=x.monto||0; if(x.estado==='REVISAR') nRev++; if(x.oc){ conOc++; if(ocRec[oc10(x.oc)]) recibidas++; } });
+    nDoc=Object.keys(dd0).length; }
+  var nLin=ent&&ent.rows?ent.rows.length:0, recSt=(S.est.recepcion&&S.est.recepcion.stale);
+  h+='<div class="pn"><div class="ph"><h3>El ciclo de pago, de la orden al pago</h3></div><div class="chev">'+
+    (Tt?paso('1 · Orden de compra',bal(mDoc),num(nDoc)+' documentos · '+num(nRev)+' por revisar · '+(conOc?Math.round(100*recibidas/conOc)+'% ya recibido':'')+' · preliminar','bajo'):paso('1 · Orden de compra','—','Tránsitos de OC por conectar','con'))+
+    paso('2 · Recepción',ent?bal(rec):'—',num(nLin)+' líneas en el año'+(recSt?' · desactualizada ('+fCorta(corteE)+')':' · corte '+fCorta(corteE)),recSt?'bajo':'ok')+
+    paso('3 · Devengado',pr?bal(pr.ejecutado):'—','GR55 '+(pr?fCorta(pr.corte):'')+' · preliminar','ok')+
+    paso('4 · Trámite de pago','—','sin registro: Finanzas','con')+
+    paso('5 · Pagado','—','sin registro: Finanzas','con')+'</div>'+
+    '<div class="nota">Las etapas sin fuente dependen de que Finanzas registre el trámite de pago.</div></div>';
   /* barras mensuales de #5 */
   var ms=I5?Object.keys(I5.serie).sort():[], bars='';
   ms.forEach(function(m){ var v=I5.serie[m].v, st=estado(g5,v); bars+='<div class="b"><em>'+fmt(v,'%')+'</em><i style="height:'+(v*1.4)+'px;background:'+COL[st][0]+'"></i><span>'+MES[+m.substring(5,7)-1]+'</span></div>'; });
@@ -911,7 +1008,7 @@ var LIBS={ h2c:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2ca
   leaf:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
   heat:'https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js' };
 var GLOB={ h2c:'html2canvas', xls:'ExcelJS', pdf:'jspdf', leaf:'L' };
-function lib(k){ return new Promise(function(res,rej){ if(lib[k] || (GLOB[k] && window[GLOB[k]]) || (k==='heat' && window.L && window.L.heatLayer)) return res(); var s=document.createElement('script'); s.src=LIBS[k]; s.onload=function(){ lib[k]=1; res(); }; s.onerror=function(){ rej(new Error('No se pudo preparar la descarga: revise la conexión y vuelva a intentar.')); }; document.head.appendChild(s); }); }
+function lib(k){ return new Promise(function(res,rej){ if(lib[k] || (GLOB[k] && window[GLOB[k]]) || (k==='heat' && window.L && window.L.heatLayer)) return res(); var s=document.createElement('script'); s.src=LIBS[k]; s.onload=function(){ lib[k]=1; res(); }; s.onerror=function(){ rej(new Error('No se pudo cargar un componente desde internet: revise la conexión y vuelva a intentar.')); }; document.head.appendChild(s); }); }
 function sello(){ return new Date().toLocaleString('sv-SE',{timeZone:'America/Panama'}).substring(0,16); }
 function estFuente(f){ var e=S.est[f.id]||{}; return !e.ok?'No disponible':e.stale?'Desactualizada':'Al día'; }
 /* Tabla del histórico: una fila por indicador, una columna por mes con dato. */
