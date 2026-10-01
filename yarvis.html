@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0C447C">
 <title>YARVIS · Dirección Nacional de Logística</title>
-<link rel="icon" href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/favicon.ico">
+<link rel="icon" href="favicon.ico">
+<link rel="manifest" href="yarvis.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="YARVIS">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 :root{--az:#0C447C;--az2:#0a3866;--az3:#e8f0f9;--bd:#c9d3df;--tx:#1c1c1c;--tx2:#4a4a4a;--tx3:#6a6a6a;--bg:#eef1f5;--ok:#1d5a27;--warn:#7a4a00;--crit:#9b1c1c;
   --mono:Consolas,"Courier New",monospace;--sans:"Segoe UI",Calibri,Arial,sans-serif}
@@ -29,6 +35,7 @@ header a:focus-visible,header button:focus-visible,button:focus-visible,textarea
 .caja p{margin:0 0 14px;font-size:13px;color:var(--tx2);line-height:1.45}
 .caja input{width:100%;font-size:22px;letter-spacing:6px;text-align:center;padding:10px;border:1px solid var(--bd);font-family:var(--mono)}
 .caja label.rec{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--tx2);margin:10px 0 14px}
+.caja label.rec input{width:20px;height:20px;padding:0;letter-spacing:0;flex-shrink:0}
 .caja button{width:100%;background:var(--az);color:#fff;border:0;padding:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
 .caja .err{color:var(--crit);font-size:13px;min-height:18px;margin-top:10px}
 
@@ -68,14 +75,34 @@ header a:focus-visible,header button:focus-visible,button:focus-visible,textarea
 #barra button{flex-shrink:0;min-width:44px;min-height:42px;border:1px solid var(--az);background:#fff;color:var(--az);font-size:18px;cursor:pointer;font-family:inherit}
 #barra #env{background:var(--az);color:#fff;font-size:14px;font-weight:700;padding:0 14px}
 #barra button[disabled]{opacity:.45;cursor:default}
+/* botón de instalar, grande y visible para todos */
+.inst{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#fff;color:var(--az);border:2px solid var(--az);
+  padding:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px}
+.inst span{font-size:22px;line-height:1}
+.caja .inst{background:#fff;color:var(--az);border:2px solid var(--az);margin-top:16px}
+#guia{position:fixed;inset:0;background:rgba(10,30,55,.55);display:none;align-items:flex-end;justify-content:center;z-index:40}
+#guia.on{display:flex}
+#guia .pan{background:#fff;width:100%;max-width:520px;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));max-height:90vh;overflow:auto}
+#guia h2{margin:0 0 4px;font-size:18px;color:var(--az)}
+#guia p.s{margin:0 0 12px;font-size:13px;color:var(--tx2)}
+#guia ol{margin:0;padding:0;list-style:none;counter-reset:n}
+#guia li{counter-increment:n;display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid #e6eaef;font-size:15px;line-height:1.4}
+#guia li::before{content:counter(n);flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--az);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}
+#guia li b{color:var(--az)}
+#guia .ico{display:inline-block;border:1px solid var(--bd);padding:0 6px;border-radius:3px;font-size:16px;line-height:1.5;vertical-align:middle}
+#guia .cer{width:100%;margin-top:14px;background:var(--az);color:#fff;border:0;padding:12px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+#ios{position:fixed;left:10px;right:10px;bottom:calc(84px + env(safe-area-inset-bottom,0px));background:#fff;border:1px solid var(--bd);border-left:4px solid var(--az);
+  padding:10px 12px;font-size:13px;line-height:1.4;box-shadow:0 6px 18px rgba(0,0,0,.18);z-index:20}
+#ios button{float:right;border:0;background:transparent;font-size:18px;color:var(--tx3);cursor:pointer;margin:-4px -4px 0 8px}
 #mic.on{background:var(--crit);border-color:var(--crit);color:#fff}
 .pie{font-size:11px;color:var(--tx3);text-align:center;margin-top:5px}
 </style>
 </head>
 <body>
 <header>
-  <img src="https://raw.githubusercontent.com/TorredeControlCSS/REPOSICION_UE_CSS/main/icons/icon-192.png" alt="Caja de Seguro Social">
+  <img src="icons/icon-192.png" alt="Caja de Seguro Social">
   <div class="t"><h1>YARVIS</h1><p>Asistente de la Dirección Nacional de Logística</p></div>
+  <button id="instalar" type="button" hidden>Instalar</button>
   <button id="nueva" type="button" hidden>Nueva conversación</button>
   <a href="tablero_mando.html">Tablero</a>
 </header>
@@ -88,8 +115,15 @@ header a:focus-visible,header button:focus-visible,button:focus-visible,textarea
     <label class="rec"><input id="rec" type="checkbox"> Recordar en este dispositivo</label>
     <button id="entrar" type="button">Entrar</button>
     <div class="err" id="errE" role="alert"></div>
+    <button class="inst" type="button" data-instalar><span>📲</span>Instalar YARVIS en este teléfono</button>
   </div>
 </section>
+
+<div id="guia" role="dialog" aria-modal="true" aria-labelledby="gT"><div class="pan">
+  <h2 id="gT">Instalar YARVIS</h2><p class="s" id="gS">Así queda como una app en su pantalla de inicio, con su ícono.</p>
+  <ol id="gPasos"></ol>
+  <button class="cer" type="button" id="gCerrar">Entendido</button>
+</div></div>
 
 <section id="chat" aria-label="Conversación con YARVIS">
   <div id="hilo" aria-live="polite"><div class="ancho" id="lista"></div></div>
@@ -114,6 +148,7 @@ var SUGERIDAS=[
 ];
 var $=function(id){ return document.getElementById(id); };
 var S={ pin:'', nombre:'', hist:[], ocupado:false };
+var instalada=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
 /* Texto de YARVIS → HTML: párrafos, viñetas con guion y **negritas**. Todo se escapa primero. */
@@ -134,7 +169,8 @@ function vacio(){
   var hr=new Date().getHours(), sal=hr<12?'Buenos días':hr<19?'Buenas tardes':'Buenas noches';
   $('lista').innerHTML='<div class="vacio"><h2>'+sal+(S.nombre?', '+esc(S.nombre.split(' ')[0].charAt(0)+S.nombre.split(' ')[0].slice(1).toLowerCase()):'')+'</h2>'+
     '<p>Pregunte por un indicador, una unidad ejecutora o un renglón. Puede seguir preguntando sobre la respuesta anterior.</p>'+
-    '<div class="sug">'+SUGERIDAS.map(function(s){ return '<button type="button" data-s="'+esc(s)+'">'+esc(s)+'</button>'; }).join('')+'</div></div>';
+    '<div class="sug">'+SUGERIDAS.map(function(s){ return '<button type="button" data-s="'+esc(s)+'">'+esc(s)+'</button>'; }).join('')+'</div>'+
+    (instalada?'':'<button class="inst" type="button" data-instalar><span>📲</span>Instalar YARVIS en este teléfono</button>')+'</div>';
   $('nueva').hidden=true;
 }
 function llamar(cuerpo){
@@ -199,6 +235,39 @@ if(SR){
   rec.onend=function(){ $('mic').classList.remove('on'); $('q').focus(); };
   rec.onerror=function(){ $('mic').classList.remove('on'); };
 }
+
+/* ── aplicación instalable (PWA) ──
+   Un solo botón para todos: si el navegador permite instalar directo, abre su ventana de instalación;
+   si no (iPhone, Samsung, Firefox o Chrome que aún no lo ofrece), muestra los pasos de ESE teléfono. */
+if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('yarvis-sw.js',{ scope:'./yarvis' }).catch(function(){}); }); }
+var aviso=null, ua=navigator.userAgent;
+var esIOS=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+var esSamsung=/SamsungBrowser/i.test(ua), esAndroid=/android/i.test(ua), esMovil=esIOS||esAndroid;
+function mostrarInstalar(v){ $('instalar').hidden=!v||window.innerWidth<600; [].forEach.call(document.querySelectorAll('[data-instalar]'),function(b){ b.style.display=v?'':'none'; }); }
+mostrarInstalar(!instalada);
+if(!esMovil) [].forEach.call(document.querySelectorAll('[data-instalar]'),function(b){ b.lastChild.textContent='Instalar YARVIS en esta computadora'; });
+window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); aviso=e; });
+window.addEventListener('appinstalled',function(){ instalada=true; mostrarInstalar(false); $('guia').classList.remove('on'); });
+function pasos(){
+  if(esIOS && !/safari/i.test(ua.replace(/crios|fxios|edgios/i,'X'))) return ['Abra esta misma página en <b>Safari</b> (el navegador de la brújula azul). En iPhone solo Safari puede instalar apps desde una página.',
+    'Luego siga los pasos de Safari: <b>Compartir</b> y <b>Agregar a pantalla de inicio</b>.'];
+  if(esIOS) return ['Toque el botón <b>Compartir</b> <span class="ico">⬆︎</span> en la barra de abajo de Safari (el cuadro con la flecha hacia arriba).',
+    'Baje en la lista y toque <b>Agregar a pantalla de inicio</b> <span class="ico">＋</span>.','Toque <b>Agregar</b> arriba a la derecha. El ícono de YARVIS aparece en su pantalla de inicio.'];
+  if(esSamsung) return ['Toque el menú <span class="ico">≡</span> abajo a la derecha.','Toque <b>Agregar página a</b> y luego <b>Pantalla de inicio</b>.','Confirme con <b>Agregar</b>.'];
+  if(esAndroid) return ['Toque el menú <span class="ico">⋮</span> arriba a la derecha de Chrome.','Toque <b>Instalar aplicación</b> (o <b>Agregar a la pantalla principal</b>).','Confirme con <b>Instalar</b>. El ícono de YARVIS aparece en su pantalla.'];
+  return ['En Chrome o Edge, busque el ícono de instalar <span class="ico">⊕</span> al final de la barra de direcciones, arriba a la derecha.',
+    'Si no aparece, abra el menú <span class="ico">⋮</span> y elija <b>Instalar YARVIS</b> (en Edge: <b>Aplicaciones → Instalar este sitio</b>).','Confirme con <b>Instalar</b>.'];
+}
+function instalar(){
+  if(aviso){ aviso.prompt(); aviso.userChoice.then(function(r){ aviso=null; if(r&&r.outcome==='accepted') mostrarInstalar(false); }); return; }
+  $('gPasos').innerHTML=pasos().map(function(t){ return '<li><div>'+t+'</div></li>'; }).join('');
+  $('guia').classList.add('on'); $('gCerrar').focus();
+}
+$('instalar').addEventListener('click',instalar);
+document.addEventListener('click',function(e){ if(e.target.closest('[data-instalar]')) instalar(); });
+$('gCerrar').addEventListener('click',function(){ $('guia').classList.remove('on'); });
+$('guia').addEventListener('click',function(e){ if(e.target.id==='guia') $('guia').classList.remove('on'); });
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') $('guia').classList.remove('on'); });
 
 /* ── arranque: si el PIN quedó recordado, entra solo ── */
 var guardado=null; try{ guardado=localStorage.getItem('yv_pin'); }catch(e){}
