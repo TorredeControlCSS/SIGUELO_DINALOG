@@ -66,6 +66,15 @@
       "diasHabilesMax": 45
     },
     {
+      "id": "transitos",
+      "nombre": "Tránsitos de OC (registro de Planificación)",
+      "url": "https://torredecontrolcss.github.io/SIGUELO/transitos_oc.json",
+      "tipo": "derivado",
+      "indicadores": [],
+      "diasHabilesMax": 5,
+      "calculo": "Órdenes de compra y solicitudes de entrega que suben los planificadores (SEGUIRE). Preliminar: no es el compromiso presupuestario de Finanzas."
+    },
+    {
       "id": "compromisos",
       "nombre": "Registro de compromisos de la Dirección",
       "url": "https://torredecontrolcss.github.io/SIGUELO_DINALOG/compromisos.json",
