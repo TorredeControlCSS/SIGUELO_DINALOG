@@ -1,0 +1,17 @@
+{
+  "id": "./yarvis.html",
+  "name": "YARVIS · Asistente de la Dirección Nacional de Logística",
+  "short_name": "YARVIS",
+  "description": "Pregunte por indicadores, unidades ejecutoras y renglones; YARVIS responde con los datos publicados de la Dirección y cita la fuente de cada cifra.",
+  "lang": "es-PA",
+  "start_url": "./yarvis.html?app=1",
+  "scope": "./yarvis",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1f5",
+  "theme_color": "#0C447C",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
