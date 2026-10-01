@@ -2,13 +2,39 @@
   "generado": "2026-10-01 PTY",
   "corte": "2026-07-31",
   "fuente": "GR55 de SAP-SAFIRO · carga manual de la Dirección",
-  "instrucciones": "Actualizar una vez al mes con el GR55 más reciente: cambiar corte, valor, detalle y agregar la fila del mes en historico.",
+  "instrucciones": "Actualizar una vez al mes con el GR55 más reciente: corte, valor y detalle del indicador 4, el bloque presupuesto y una fila nueva en historico.",
   "indicadores": {
-    "4": { "nombre": "Ejecución presupuestaria", "valor": 52.7, "unidad": "%",
-           "detalle": "B/. 188.5 MM ejecutado (devengado + pagado) de B/. 357.6 MM modificado · comprometido B/. 146.0 MM" }
+    "4": {
+      "nombre": "Ejecución presupuestaria",
+      "valor": 52.7,
+      "unidad": "%",
+      "detalle": "B/. 188.5 MM ejecutado (devengado + pagado) de B/. 357.6 MM modificado · comprometido B/. 146.0 MM"
+    }
   },
   "historico": {
-    "2025-07": { "4": 31.8, "corte": "2025-07-31" },
-    "2026-07": { "4": 52.7, "corte": "2026-07-31" }
+    "2025-07": {
+      "4": 31.8,
+      "corte": "2025-07-31",
+      "modificado": 412604930,
+      "ejecutado": 131317627
+    },
+    "2026-07": {
+      "4": 52.7,
+      "corte": "2026-07-31",
+      "modificado": 357561741,
+      "ejecutado": 188531333
+    }
+  },
+  "presupuesto": {
+    "corte": "2026-07-31",
+    "modificado": 357561741,
+    "comprometido": 146017172,
+    "ejecutado": 188531333,
+    "anioAnterior": {
+      "corte": "2025-07-31",
+      "modificado": 412604930,
+      "comprometido": 279590367,
+      "ejecutado": 131317627
+    }
   }
 }
