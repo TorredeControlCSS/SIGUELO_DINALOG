@@ -30,6 +30,7 @@
   .a-adm { --c:#5B4A9E; --b:#eeeaf8; --l:#d6cff0; }
   .a-tdc { --c:#0F6E56; --b:#e1f2ec; --l:#bfe0d4; }
   .a-inn { --c:#B4532A; --b:#fbeae3; --l:#f2cdbd; }
+  .a-dir { --c:#123F6B; --b:#e3eaf3; --l:#c3d2e4; }
   .a-ue  { --c:#5F5F5F; --b:#f3f3f3; --l:#d9d9d9; }
   .nodo.a-ue rect { stroke-dasharray: 5 3; }
   .nodo.a-ue .n-t { font-size: 12.5px; }
@@ -52,10 +53,12 @@
   .header p { font-size: 12px; color: #b9d2ec; margin-top: 3px; }
   .inicio { cursor: pointer; }
   .header .inicio:hover h1 { text-decoration: underline; text-underline-offset: 4px; }
-  /* 01-oct-2026 · acceso al Tablero de Mando de la Dirección */
-  .header .mando { margin-left: auto; display: flex; align-items: center; gap: 8px; background: #fff; color: var(--azul);
-    text-decoration: none; font-size: 13px; font-weight: 700; padding: 9px 16px; border-radius: 3px; white-space: nowrap; }
-  .header .mando:hover { background: #e8f0f9; }
+  /* 01-oct-2026 · accesos directos de la Dirección: Tablero de Mando y Yarvis, compactos e iguales */
+  .header .accesos { margin-left: auto; display: flex; gap: 8px; }
+  .header .acc { display: flex; align-items: center; gap: 7px; color: #fff; text-decoration: none; font-size: 12.5px; font-weight: 600;
+    padding: 7px 12px; border: 1px solid rgba(255,255,255,.55); border-radius: 6px; white-space: nowrap; background: rgba(255,255,255,.06); }
+  .header .acc:hover { background: rgba(255,255,255,.16); }
+  .header .acc svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
   /* ---------- LIENZO CON MARCA DE AGUA (se conserva) ---------- */
   .lienzo { position: relative; min-height: calc(100vh - 130px); overflow: hidden; }
@@ -109,7 +112,7 @@
   .leyenda .sw { display: inline-block; width: 11px; height: 11px; border: 1.5px solid var(--c); background: var(--b); vertical-align: -1px; margin-right: 5px; border-radius: 2px; }
 
   /* Tarjetas pastel de las capas transversales */
-  .franjas { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-top: 10px; }
+  .franjas { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-top: 10px; }
   .franja { text-align: left; border: 1px solid var(--l); background: var(--b); border-radius: 4px;
     padding: 10px 12px; cursor: pointer; color: var(--texto); }
   .franja b { display: block; font-size: 13px; color: var(--c); }
@@ -150,6 +153,8 @@
   @media (max-width: 719px) {
     .header { padding: 12px 16px; }
     .header h1 { font-size: 16px; }
+    .header .acc span { display: none; }
+    .header .acc { padding: 7px 8px; }
     .barra, .escena { margin-left: 12px; margin-right: 12px; }
     .buscar { flex: 1 1 100%; width: 100%; }
     .diagrama, .escena > .panel { display: none; }
@@ -222,7 +227,10 @@
     <h1>SIGUELO &mdash; Portal Central DINALOG</h1>
     <p>Sistema Integrado de Gesti&oacute;n Unificada y Evaluaci&oacute;n Log&iacute;stica &middot; Direcci&oacute;n Nacional de Log&iacute;stica</p>
   </div>
-  <a class="mando" href="tablero_mando.html" title="Indicadores del Plan Estratégico">Tablero de Mando de la Direcci&oacute;n &rarr;</a>
+  <div class="accesos">
+    <a class="acc" href="tablero_mando.html" target="_blank" rel="noopener" title="Tablero de Mando de la Dirección: indicadores del Plan Estratégico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><span>Tablero de Mando</span></a>
+    <a class="acc" href="yarvis.html" target="_blank" rel="noopener" title="Yarvis, asistente virtual de la Dirección"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg><span>Yarvis</span></a>
+  </div>
 </div>
 
 <div class="lienzo">
@@ -316,6 +324,7 @@
         <div class="franjas" id="franjas">
           <button type="button" class="franja a-adm" data-ref="b0"><b>Talento humano</b><span>Administraci&oacute;n &middot; 3 tableros</span></button>
           <button type="button" class="franja a-inn" data-ref="b2"><b>Innovaci&oacute;n transversal</b><span>Pilotos de la Direcci&oacute;n &middot; 2 tableros</span></button>
+          <button type="button" class="franja a-dir" data-ref="b3"><b>Direcci&oacute;n &middot; Mando y consulta</b><span>Lee todo el ciclo &middot; 2 tableros</span></button>
         </div>
       </div>
 
@@ -374,7 +383,8 @@ var AREAS = {
   pla:{ n:'Planificación' },
   aba:{ n:'Abasto' },
   adm:{ n:'Administración' },
-  inn:{ n:'Innovación transversal' }
+  inn:{ n:'Innovación transversal' },
+  dir:{ n:'Dirección' }
 };
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -421,7 +431,11 @@ var TAB = {
   far:{ n:'Mi Farma Digital', p:1, u:GH+'mifarmadigital/',
         r:'Geolocaliza medicamentos por perímetro con la fórmula de Haversine y acota la búsqueda por perímetro, provincia y país.' },
   tur:{ n:'Pantalla de Turnos', p:1, u:GH+'Pantalla_de_Turnos/',
-        r:'Atención por turnos en el almacén y las ventanillas.' }
+        r:'Atención por turnos en el almacén y las ventanillas.' },
+  tmd:{ n:'Tablero de Mando de la Dirección', p:0, u:GH+'SIGUELO_DINALOG/tablero_mando.html',
+        r:'Los indicadores del Plan Estratégico con su meta, su responsable y la distancia a la meta; alertas, despachos, unidades ejecutoras, planificación y presupuesto.' },
+  yar:{ n:'Yarvis · Asistente Virtual', p:1, u:GH+'SIGUELO_DINALOG/yarvis.html',
+        r:'Responde en lenguaje natural sobre indicadores, unidades ejecutoras, renglones, Formas 8 y vencimientos, con la fuente y el corte de cada cifra. En prueba con el equipo de la Dirección.' }
 };
 
 /* Etapas del ciclo */
@@ -454,7 +468,10 @@ var GRUPOS = {
        ins:['Reloj biométrico'], k:['rh','pro','mis'] },
   b2:{ a:'inn', t:'Innovación transversal', resp:'Pilotos creados por la Dirección Nacional de Logística',
        d:'Servicios nuevos que la Dirección pone a prueba antes de extenderlos a la red.',
-       ins:null, k:['far','tur'] }
+       ins:null, k:['far','tur'] },
+  b3:{ a:'dir', t:'Dirección · Mando y consulta', resp:'Dirección Nacional de Logística',
+       d:'Lee todo el ciclo y lo resume para decidir: los indicadores del Plan Estratégico y un asistente que responde con los datos de cada etapa.',
+       ins:['Todas las etapas del ciclo','Unidades Ejecutoras'], k:['tmd','yar'] }
 };
 
 /* Áreas que entregan reportes en la Ventanilla Única (reflejan las secciones de cargar_reportes.html) */
@@ -537,7 +554,7 @@ function htmlInicial(){
   });
   h += bloqueGrupo('ue', GRUPOS.ue.t, 'Consumo, pedidos y proyección · '+plural(GRUPOS.ue.k.length),
                    GRUPOS.ue.k.map(function(k){ return filaTablero(k); }).join(''), 'ue');
-  ['b0','b2'].forEach(function(r){
+  ['b0','b2','b3'].forEach(function(r){
     var g = GRUPOS[r];
     h += bloqueGrupo(g.a, g.t, g.resp.split(' · ')[0]+' · '+plural(g.k.length),
                      g.k.map(function(k){ return filaTablero(k); }).join(''), r);
@@ -551,6 +568,7 @@ function ubicacion(k){
   if (GRUPOS.ue.k.indexOf(k)>-1) return 'Unidades Ejecutoras';
   if (GRUPOS.b0.k.indexOf(k)>-1) return 'Talento humano';
   if (GRUPOS.b2.k.indexOf(k)>-1) return 'Innovación transversal';
+  if (GRUPOS.b3.k.indexOf(k)>-1) return 'Dirección · Mando y consulta';
   if (k==='car') return 'Soporte transversal';
   return '';
 }
@@ -574,7 +592,7 @@ function pintarMovil(){
          '<span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot"></div></div>';
   });
   h += '</div><div class="m-ue-w a-ue"><button type="button" class="m-btn" data-ref="ue"><div><b>Unidades Ejecutoras</b><span>Reciben la entrega; sus pedidos regresan a Planificar como nueva demanda · 1 tablero</span></div><span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot"></div></div><div class="m-franjas">';
-  ['b0','b2'].forEach(function(r){
+  ['b0','b2','b3'].forEach(function(r){
     var g = GRUPOS[r];
     h += '<div class="a-'+g.a+'"><button type="button" class="m-btn" data-ref="'+r+'"><div><b>'+esc(g.t)+'</b><span>'+
          esc(g.resp.split(' · ')[0])+' · '+plural(g.k.length)+'</span></div>'+
@@ -715,7 +733,7 @@ $('#panel').innerHTML = htmlInicial();
     { s:['#panel','#movil .m-paso'], t:'Tableros de cada etapa',
       x:'Al tocar una etapa verás quién la opera, qué reportes la alimentan y sus tableros. El botón Entrar abre cada uno en una pestaña nueva.' },
     { s:['#franjas','#movil .m-franjas'], t:'Capas transversales',
-      x:'Talento humano e innovación transversal acompañan a todo el ciclo.' },
+      x:'Talento humano, innovación transversal y la Dirección acompañan a todo el ciclo. La base de la Dirección reúne el Tablero de Mando y Yarvis: los dos leen todas las etapas para decidir.' },
     { s:['#btnInicio'], t:'Volver al inicio',
       x:'Vista inicial, o un clic en el título, regresa el portal a como lo encontraste: todos los tableros a la vista y sin filtros.' },
     { s:['#buscar'], t:'Buscar un tablero',
