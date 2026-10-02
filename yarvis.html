@@ -159,7 +159,9 @@ table.t tr:nth-child(even) td{background:var(--card2)}
 #ajus .sal{width:100%;border:1px solid var(--bd);background:var(--card);color:var(--rj);border-radius:var(--r);padding:9px;cursor:pointer;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:8px}
 @media (max-width:700px){#salir{display:none!important}}
 :root[data-tema="oscuro"] table.t th,:root[data-tema="oscuro"] #env,:root[data-tema="oscuro"] .caja .ent,:root[data-tema="oscuro"] .msg.yo .b,:root[data-tema="oscuro"] #guia .cer{background:#24507c}
+html.auto #entrada{display:none}
 </style>
+<script>/* con PIN recordado, la pantalla de entrada no llega a dibujarse */try{if(localStorage.getItem('yv_pin'))document.documentElement.className+=' auto';}catch(e){}</script>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -273,7 +275,7 @@ $('lado').addEventListener('click',function(e){
   if(a){ var id=a.getAttribute('data-abrir'); if(S.conv&&S.conv.id===id){ cerrarLado(); return; }
     var info=(S.lista||[]).filter(function(c){ return c.id===id; })[0]||{ t:'' };
     S.conv={ id:id, t:info.t, m:[] }; S.tablas={}; $('lista').innerHTML='<div class="msg yv"><div class="b"><div class="pensando"><i></i><i></i><i></i></div></div></div>'; $('nueva').hidden=false; pintarLista(); cerrarLado();
-    llamar({ pin:S.pin, accion:'conversacion', id:id }).then(function(j){ if(!S.conv||S.conv.id!==id) return; $('lista').innerHTML=''; S.conv.m=(j&&j.mensajes)||[]; S.conv.m.forEach(pintarPar); abajo(); })
+    llamar({ pin:S.pin, accion:'conversacion', id:id }).then(function(j){ if(!S.conv||S.conv.id!==id) return; $('lista').innerHTML=''; S.conv.m=(j&&j.mensajes)||[]; S.conv.m.forEach(pintarPar); abajo(); guardarConvAct(); })
       .catch(function(){ $('lista').innerHTML='<div class="msg yv error"><div class="b">No se pudo abrir la conversación. Revise su conexión.</div></div>'; }); }
 });
 /* ── formato de la respuesta ── */
@@ -382,7 +384,15 @@ function vacio(){
 function pintarHoy(){ var d=$('hoy'); if(!d||!S.hoy||!S.hoy.length) return;
   d.innerHTML='<div class="sugT">Hoy en la Dirección</div><div class="sug">'+S.hoy.map(function(s){ return '<button type="button" class="'+(s.tipo==='urgente'?'urg':'nov')+'" data-s="'+esc(s.texto)+'">'+esc(s.texto)+'</button>'; }).join('')+'</div>'; }
 function cargarHoy(){ llamar({ pin:S.pin, accion:'sugerencias' }).then(function(j){ S.hoy=(j&&j.sugerencias)||[]; pintarHoy(); }).catch(function(){}); }
-function nuevaConv(){ S.conv={ id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), t:'', m:[] }; S.tablas={}; vacio(); pintarLista(); }
+function nuevaConv(){ S.conv={ id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), t:'', m:[] }; S.tablas={}; vacio(); pintarLista(); guardarConvAct(); }
+/* La conversación en curso se guarda en el equipo: si el teléfono cierra la app al cambiar de pantalla,
+   al volver aparece tal como estaba (hasta 12 horas después). */
+function guardarConvAct(){ try{ localStorage.setItem('yv_conv_act',JSON.stringify({ t:Date.now(), quien:S.nombre, conv:S.conv })); }catch(e){ try{ localStorage.removeItem('yv_conv_act'); }catch(x){} } }
+function restaurarConv(){
+  try{ var g=JSON.parse(localStorage.getItem('yv_conv_act')||'null'); if(!g||!g.conv||Date.now()-g.t>12*3600e3||(g.quien&&S.nombre&&g.quien!==S.nombre)) return false;
+    S.conv=g.conv; S.tablas={}; if(!S.conv.m.length){ vacio(); return true; }
+    $('lista').innerHTML=''; S.conv.m.forEach(pintarPar); $('nueva').hidden=false; setTimeout(abajo,50); return true; }catch(e){ return false; }
+}
 $('nueva').addEventListener('click',function(){ nuevaConv(); $('q').focus(); });
 function llamar(cuerpo,ms){
   /* tiempo máximo de espera: si el servidor no contesta, se avisa en vez de quedarse esperando */
@@ -399,13 +409,13 @@ function preguntar(texto){
   /* si tarda, se le dice al usuario qué está pasando para que no crea que se quedó pegado */
   var t1=setTimeout(function(){ var e=esp.querySelector('[data-espera]'); if(e) e.textContent='Consultando los datos de la Dirección…'; },8000),
       t2=setTimeout(function(){ var e=esp.querySelector('[data-espera]'); if(e) e.textContent='Sigue trabajando: las consultas grandes pueden tardar hasta un minuto.'; },25000);
-  S.ocupado=true; $('env').disabled=true; $('q').value=''; ajustar();
+  S.ocupado=true; $('env').disabled=true; $('q').value=''; ajustar(); try{ sessionStorage.removeItem('yv_borrador'); }catch(e){}
   var hist=S.conv.m.slice(-6).map(function(m){ return { p:m.p, r:m.j.respuesta }; });
   llamar({ pin:S.pin, pregunta:texto, historial:hist, conversacion:S.conv.id }).then(function(j){
     if(!j.ok){ esp.className='msg yv error'; esp.innerHTML='<div class="b">'+esc(j.error||'Yarvis no pudo responder.')+'</div>'; if(/PIN/i.test(j.error||'')){ try{ localStorage.removeItem('yv_pin'); }catch(e){} } return; }
     var m={ p:texto, j:{ respuesta:j.respuesta, fuentes:j.fuentes, aviso:j.aviso, tabla:j.tabla, serie:j.serie, vista:j.vista } };
     esp.innerHTML=cuerpoRespuesta(m.j);
-    if(!S.conv.m.length) S.conv.t=texto.slice(0,80); S.conv.m.push(m);
+    if(!S.conv.m.length) S.conv.t=texto.slice(0,80); S.conv.m.push(m); guardarConvAct();
     /* la conversación sube al primer lugar de la lista, con su número de preguntas */
     S.lista=(S.lista||[]).filter(function(c){ return c.id!==S.conv.id; }); S.lista.unshift({ id:S.conv.id, t:S.conv.t, f:new Date().toISOString(), n:S.conv.m.length }); pintarLista();
     esp.scrollIntoView({ block:'start', behavior:'smooth' });
@@ -416,20 +426,40 @@ function preguntar(texto){
 $('env').addEventListener('click',function(){ preguntar($('q').value); });
 $('q').addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); preguntar($('q').value); } });
 function ajustar(){ var q=$('q'); q.style.height='auto'; q.style.height=Math.min(130,q.scrollHeight)+'px'; }
-$('q').addEventListener('input',ajustar);
+$('q').addEventListener('input',function(){ ajustar(); try{ sessionStorage.setItem('yv_borrador',$('q').value); }catch(e){} });
+try{ var bor=sessionStorage.getItem('yv_borrador'); if(bor){ $('q').value=bor; } }catch(e){}
 
 /* ── entrada con PIN ── */
+/* La sesión se muestra de inmediato y la conversación activa se recupera del equipo. Con PIN recordado,
+   la verificación corre por detrás: solo si el servidor rechaza el PIN se vuelve a la pantalla de entrada. */
+function mostrarApp(restaurar){
+  $('entrada').style.display='none'; $('app').classList.add('on'); $('bHist').hidden=false; $('salir').hidden=false; $('salir2').hidden=false;
+  $('salir').title='Salir ('+(S.nombre||'')+')'; ajustarAlto();
+  if(!(restaurar&&restaurarConv())) nuevaConv();
+  cargarLista(); cargarHoy();
+}
 function entrar(pin,silencioso){
-  $('errE').textContent=''; $('entrar').disabled=true; $('entrar').textContent='Verificando…';
+  $('errE').textContent='';
+  if(silencioso){
+    /* PIN recordado: entra sin esperar; si el servidor lo rechaza, vuelve a pedirlo */
+    S.pin=pin; try{ S.nombre=localStorage.getItem('yv_nombre')||''; }catch(e){}
+    mostrarApp(true);
+    return llamar({ pin:pin, accion:'entrar' }).then(function(j){
+      if(j&&j.ok){ if(j.nombre&&j.nombre!==S.nombre){ S.nombre=j.nombre; try{ localStorage.setItem('yv_nombre',S.nombre); }catch(e){} $('salir').title='Salir ('+S.nombre+')'; } return; }
+      try{ localStorage.removeItem('yv_pin'); localStorage.removeItem('yv_conv_act'); }catch(e){}
+      S.pin=''; document.documentElement.classList.remove('auto'); $('app').classList.remove('on'); $('entrada').style.display='flex'; $('rec').checked=false;
+      $('errE').textContent=(j&&j.error)||'Su PIN ya no es válido. Escríbalo de nuevo.';
+    }).catch(function(){ /* sin conexión: la sesión sigue; las preguntas avisarán si no hay red */ });
+  }
+  $('entrar').disabled=true; $('entrar').textContent='Verificando…';
   return llamar({ pin:pin, accion:'entrar' }).then(function(j){
     if(!j.ok) throw new Error(j.error||'PIN no válido.');
     S.pin=pin; S.nombre=j.nombre||'';
-    try{ if($('rec').checked||silencioso) localStorage.setItem('yv_pin',pin); else localStorage.removeItem('yv_pin'); }catch(e){}
-    $('entrada').style.display='none'; $('app').classList.add('on'); $('bHist').hidden=false; $('salir').hidden=false; $('salir').title='Salir ('+S.nombre+')'; ajustarAlto(); nuevaConv(); cargarLista(); cargarHoy(); $('salir2').hidden=false; $('q').focus();
+    try{ localStorage.setItem('yv_nombre',S.nombre); if($('rec').checked) localStorage.setItem('yv_pin',pin); else localStorage.removeItem('yv_pin'); }catch(e){}
+    mostrarApp(false); $('q').focus();
   }).catch(function(e){
-    try{ localStorage.removeItem('yv_pin'); }catch(x){}
     $('entrada').style.display='flex'; $('app').classList.remove('on');
-    if(!silencioso) $('errE').textContent=/HTTP|fetch|Failed/i.test(e.message)?'No hay conexión con Yarvis. Revise su internet e intente de nuevo.':e.message;
+    $('errE').textContent=/HTTP|fetch|Failed|TIEMPO/i.test(e.message)?'No hay conexión con Yarvis. Revise su internet e intente de nuevo.':e.message;
   }).then(function(){ $('entrar').disabled=false; $('entrar').textContent='Entrar'; });
 }
 $('entrar').addEventListener('click',function(){ var p=$('pin').value.trim(); if(!/^\d{4,8}$/.test(p)){ $('errE').textContent='El PIN tiene de 4 a 8 dígitos.'; return; } entrar(p,false); });
@@ -453,10 +483,11 @@ $('salir2').addEventListener('click',function(){ $('ajus').classList.remove('on'
 
 /* ── salir: cierra la sesión en este equipo y olvida el PIN recordado ── */
 $('salir').addEventListener('click',function(){
-  try{ localStorage.removeItem('yv_pin'); }catch(e){}
+  try{ localStorage.removeItem('yv_pin'); localStorage.removeItem('yv_conv_act'); localStorage.removeItem('yv_nombre'); }catch(e){}
   S.pin=''; S.nombre=''; S.conv=null; S.lista=[]; S.tablas={};
   $('lista').innerHTML=''; $('hLista').innerHTML=''; cerrarLado();
   $('app').classList.remove('on'); $('bHist').hidden=true; $('nueva').hidden=true; $('salir').hidden=true; $('salir2').hidden=true; S.hoy=[];
+  document.documentElement.classList.remove('auto');
   $('pin').value=''; $('rec').checked=false; $('errE').textContent='Sesión cerrada en este equipo.'; $('entrada').style.display='flex'; $('pin').focus();
 });
 
@@ -509,7 +540,7 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ $('guia')
 /* la invitación a instalar aparece al abrir el enlace, antes o después de escribir el PIN */
 ofrecerInstalar();
 var guardado=null; try{ guardado=localStorage.getItem('yv_pin'); }catch(e){}
-if(guardado){ $('rec').checked=true; entrar(guardado,true); } else $('pin').focus();
+if(guardado){ $('rec').checked=true; $('entrada').style.display='none'; entrar(guardado,true); } else $('pin').focus();
 })();
 </script>
 </body>
