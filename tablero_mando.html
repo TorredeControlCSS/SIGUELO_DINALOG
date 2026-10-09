@@ -267,7 +267,7 @@ var DEF = {
   '9':['Qué parte de la cantidad solicitada por las unidades ejecutoras se asignó.','Unidades asignadas ÷ unidades solicitadas en el mes.','Cada publicación del Kanban'],
   '2':['Renglones agotados en CEDIS Panamá.','Renglones en estado AGOTADO (inventario proyectado en cero o menos) ÷ renglones del Reporte de Abastecimiento.','Cada corte de inventario'],
   '3':['Cuántos meses alcanza el inventario de CEDIS Panamá al ritmo de consumo.','Mediana de los meses de cobertura de los renglones con demanda.','Cada corte de inventario'],
-  '4':['Presupuesto ejecutado sobre el presupuesto modificado.','(Devengado + pagado) ÷ presupuesto modificado, según el GR55 de SAP-SAFIRO. Hoy es una cifra preliminar: el GR55 de julio que se presentó en el Plan. No sale del Kardex. Se actualizará cuando Finanzas comparta sus datos.','Carga manual mensual'],
+  '4':['Presupuesto ejecutado sobre el presupuesto modificado.','Estimado = (ejecutado del último GR55 + valor de las entradas contables 101 − 102 del MB51 desde el día siguiente a su corte) ÷ presupuesto modificado. Las entradas 561/562 no tienen presupuesto asignado y no cuentan. Cuando Finanzas entregue un GR55 nuevo, se reemplaza el ancla y el kardex suma desde ese corte.','GR55 (carga manual) + Kardex MB51'],
   '5':['Entregas de proveedores recibidas dentro de su fecha de entrega.','Entregas a tiempo ÷ entregas comparables, por mes de recepción.','Cada carga de recepción'],
   '6':['Días que tarda el ciclo de atención de un pedido.','Mediana de días del ciclo de los pedidos del mes, según el Kanban. Aún no separa pedido mensual y urgencia.','Cada publicación del Kanban'],
   '7':['Formas 8 que salen del almacén por día hábil.','Salidas del mes ÷ días hábiles transcurridos.','Cada publicación del Kanban'],
@@ -307,6 +307,18 @@ function serieKpi(j, id){
   Object.keys(h).forEach(function(m){ var f=h[m]; if(f && f[id]!==undefined) out[m]={ v:f[id], corte:f.corte, salidas:f.salidas }; });
   return out;
 }
+/* ── #4 estimado: ancla GR55 + entradas contables del kardex (101 + 102; 102 viene negativo) ── */
+function ejecEstimada(){
+  var man=S.src.manual, kx=S.src.kardex, pr=man&&man.presupuesto; if(!pr||!kx||!kx.dias||!kx._meta) return null;
+  var c=pr.corte, M=kx._meta; if(!c || (M.desde && M.desde>finMasUno(c))) return null;
+  var r1=function(x){ return Math.round(x*10)/10; }, cols=M.columnas||['fecha','101','102','561','562'], ix={}; cols.forEach(function(k,i){ ix[k]=i; });
+  var neto=0, s561=0, s562=0, n=0, acu={}, hasta='';
+  kx.dias.forEach(function(d){ var f=d[0]; if(f<=c) return; n++; neto+=(+d[ix['101']]||0)+(+d[ix['102']]||0); s561+=(+d[ix['561']]||0); s562+=(+d[ix['562']]||0); if(f>hasta) hasta=f; acu[f.substring(0,7)]={ neto:neto, f:f }; });
+  var porMes={}; Object.keys(acu).forEach(function(m){ porMes[m]={ v:r1(100*(pr.ejecutado+acu[m].neto)/pr.modificado), corte:acu[m].f }; });
+  var ej=pr.ejecutado+neto;
+  return { dias:n, corteGR55:c, gr55:pr.ejecutado, neto:neto, ejecutado:ej, modificado:pr.modificado, pct:r1(100*ej/pr.modificado), hasta:hasta||c, s561:s561, s562:s562, porMes:porMes, almacenes:M.almacenes||{} };
+}
+function finMasUno(c){ var d=fISO(c); if(!d) return c; d.setDate(d.getDate()+1); return d.toISOString().substring(0,10); }
 function prepararIndicadores(){
   var I={}, src=S.src;
   var inv=src.inventario, kan=src.kanban, man=src.manual;
@@ -317,7 +329,10 @@ function prepararIndicadores(){
     Object.keys(s).forEach(function(m){ if(!s[m].salidas) s[m].vacio=true; });
     I[id]={ serie:s, det:(kan.indicadores[id]||{}).detalle, fuente:'kanban', corte:kan.corte, flujo:'salidas', mesDet:kan.mes, hist:kan.historico||{} };
   });
-  if(man) I['4']={ serie:serieKpi(man,'4'), det:'Cifra preliminar: GR55 de julio presentado en el Plan. Pendiente de los datos de Finanzas.', fuente:'manual', corte:man.corte, arrastre:true };
+  if(man){ var E4=ejecEstimada(); S.e4=E4;
+    if(E4&&E4.dias){ var s4=serieKpi(man,'4'); Object.keys(E4.porMes).forEach(function(m){ s4[m]=E4.porMes[m]; });
+      I['4']={ serie:s4, det:'Estimado: GR55 al '+fCorta(E4.corteGR55)+' ('+bal(E4.gr55)+') + entradas contables del kardex al '+fCorta(E4.hasta)+' ('+bal(E4.neto)+') = '+bal(E4.ejecutado)+' de '+bal(E4.modificado)+'. No incluye 561/562.', fuente:'kardex', corte:E4.hasta, arrastre:true }; }
+    else I['4']={ serie:serieKpi(man,'4'), det:'Cifra preliminar: GR55 de julio presentado en el Plan. Pendiente de los datos de Finanzas.', fuente:'manual', corte:man.corte, arrastre:true }; }
   var ent=src.recepcion;
   if(ent && ent.rows){
     var pm={}, ta=0, tt=0;
@@ -983,7 +998,7 @@ function vPlan(){
 function vPres(){
   var man=S.src.manual, ent=S.src.recepcion, pr=man&&man.presupuesto, I5=S.ind['5'];
   var h=cabecera('pres','Presupuesto y pagos','Cuánto se ha ejecutado, cuánto se ha recibido de cada proveedor y dónde está el pago.');
-  var r1=function(x){ return Math.round(x*10)/10; }, pctE=pr?r1(100*pr.ejecutado/pr.modificado):null, pctC=pr?r1(100*pr.comprometido/pr.modificado):null;
+  var E4=S.e4, r1=function(x){ return Math.round(x*10)/10; }, ejV=pr?(E4?E4.ejecutado:pr.ejecutado):0, pctE=pr?r1(100*ejV/pr.modificado):null, pctC=pr?r1(100*pr.comprometido/pr.modificado):null;
   var rec=0, recMes=0, mesUlt='', ta=0, tt=0;
   if(ent&&ent.rows){ ent.rows.forEach(function(x){ rec+=Number(x.valor)||0; if(x.periodo>mesUlt) mesUlt=x.periodo; if(x.cumpl){ tt++; if(x.cumpl==='A TIEMPO') ta++; } });
     ent.rows.forEach(function(x){ if(x.periodo===mesUlt) recMes+=Number(x.valor)||0; }); }
@@ -991,11 +1006,11 @@ function vPres(){
   var corteE=ent&&ent._meta?ent._meta.corte:'';
   h+='<div class="kp">'+
     kc('ok','Presupuesto modificado',pr?bal(pr.modificado):'—','GR55 '+(pr?fCorta(pr.corte):'—')+' · preliminar')+
-    kc(pr?estado(g4,pctE):'con','Ejecutado (dev. + pag.)',pr?bal(pr.ejecutado):'—',(pr?fmt(pctE,'%'):'')+' · meta ≥ '+g4.meta+'% · preliminar')+
+    kc(pr?estado(g4,pctE):'con',E4?'Ejecutado estimado':'Ejecutado (dev. + pag.)',pr?bal(ejV):'—',(pr?fmt(pctE,'%'):'')+(E4?' · GR55 + kardex al '+fCorta(E4.hasta):' · meta ≥ '+g4.meta+'% · preliminar'))+
     kc('con','Comprometido',pr?bal(pr.comprometido):'—',pr?fmt(pctC,'%')+' del modificado':'')+
     kc('ok','Recibido en el año',ent?bal(rec):'—','Recepción · corte '+fCorta(corteE))+
     kc(estado(g5,pAn),'Proveedores a tiempo',pAn!=null?fmt(pAn,'%'):'—',num(ta)+' de '+num(tt)+' · meta ≥ '+g5.meta+'%')+
-    kc('con','Pendiente de pago','—','sin fuente: Finanzas')+'</div>';
+    (E4?kc('bajo','Entradas sin presupuesto (561)',bal(E4.s561),'desde '+fCorta(finMasUno(E4.corteGR55))+' · no cuentan'):kc('con','Pendiente de pago','—','sin fuente: Finanzas'))+'</div>';
   /* ciclo de pago */
   var paso=function(t,v,s,est){ var c=COL[est]; return '<div style="background:'+c[2]+'"><b>'+esc(t)+'</b><em style="color:'+c[1]+'">'+esc(v)+'</em><span>'+esc(s)+'</span></div>'; };
   /* Órdenes y solicitudes registradas por Planificación, y cuántas ya entraron por Recepción */
@@ -1008,10 +1023,11 @@ function vPres(){
   var chevP='<div class="pn"><div class="ph"><h3>El ciclo de pago, de la orden al pago</h3></div><div class="chev">'+
     (Tt?paso('1 · Orden de compra',bal(mDoc),num(nDoc)+' documentos · '+num(nRev)+' por revisar · '+(conOc?Math.round(100*recibidas/conOc)+'% ya recibido':'')+' · preliminar','bajo'):paso('1 · Orden de compra','—','Tránsitos de OC por conectar','con'))+
     paso('2 · Recepción',ent?bal(rec):'—',num(nLin)+' líneas en el año'+(recSt?' · desactualizada ('+fCorta(corteE)+')':' · corte '+fCorta(corteE)),recSt?'bajo':'ok')+
-    paso('3 · Devengado',pr?bal(pr.ejecutado):'—','GR55 '+(pr?fCorta(pr.corte):'')+' · preliminar','ok')+
+    (E4?paso('3 · Devengado (estimado)',bal(E4.ejecutado),'GR55 '+fCorta(E4.corteGR55)+' '+bal(E4.gr55)+' + 101−102 del kardex '+bal(E4.neto)+' al '+fCorta(E4.hasta),'ok')
+       :paso('3 · Devengado',pr?bal(pr.ejecutado):'—','GR55 '+(pr?fCorta(pr.corte):'')+' · preliminar','ok'))+
     paso('4 · Trámite de pago','—','sin registro: Finanzas','con')+
     paso('5 · Pagado','—','sin registro: Finanzas','con')+'</div>'+
-    '<div class="nota">Las etapas sin fuente dependen de que Finanzas registre el trámite de pago.</div></div>';
+    '<div class="nota">'+(E4?'Ejecutado estimado = GR55 al '+fCorta(E4.corteGR55)+' + valor de las entradas contables (101 − 102) del MB51 desde el '+fCorta(finMasUno(E4.corteGR55))+'. Las entradas 561 (sin pedido ni presupuesto asignado) no suman: es una lectura financiera, no operativa. Kardex de '+Object.keys(E4.almacenes).join(', ')+'. ':'')+'Las etapas sin fuente dependen de que Finanzas registre el trámite de pago.</div></div>';
   /* Serie de tiempo de #5: línea mes a mes con su valor y la meta rotulada */
   var ms=I5?Object.keys(I5.serie).sort():[];
   var izq='<div class="pn" style="min-width:0"><div class="ph"><h3>Proveedores a tiempo por mes · '+(ms[0]||'').substring(0,4)+(corteE?' · corte '+fCorta(corteE):'')+'</h3></div>'+
@@ -1057,7 +1073,7 @@ function accionSugerida(id){
     case '7': return 'Sostener el ritmo de salidas del almacén.';
     case '8': return rk ? 'Ejecutar los **'+num(rk.urgentes)+' traslados urgentes** entre CEDIS ('+num(rk.unidadesUrgentes)+' unidades).' : 'Ejecutar los traslados urgentes entre CEDIS.';
     case '10': return (inv&&inv.indicadores['10']?'**'+inv.indicadores['10'].detalle+'**: ':'')+'**redistribuir** a unidades con consumo antes de su vencimiento.';
-    case '4': return '**Pendiente de los datos de Finanzas** (cifra preliminar del Plan).';
+    case '4': return S.e4 ? 'Estimado con el **GR55 al '+fCorta(S.e4.corteGR55)+'** y las **entradas contables del kardex** al '+fCorta(S.e4.hasta)+'. Pedir a Finanzas el GR55 más reciente para actualizar el ancla.' : '**Pendiente de los datos de Finanzas** (cifra preliminar del Plan).';
   }
   return '';
 }
