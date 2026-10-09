@@ -1,6 +1,6 @@
 {
  "version": 1,
- "actualizado": "2026-10-08",
+ "actualizado": "2026-10-09",
  "descripcion": "Registro único de fuentes y metas del Tablero de Mando de la Dirección. Las metas viven SOLO aquí. YARVIS leerá este mismo archivo.",
  "fuentes": [
   {
@@ -45,7 +45,7 @@
    "indicadores": [
     "5"
    ],
-   "diasHabilesMax": 2,
+   "diasHabilesMax": 7,
    "calculo": "Por mes de recepción: filas con cumpl = 'A TIEMPO' ÷ filas con cumpl informado",
    "tablero": {
     "nombre": "Entradas de Mercancía",

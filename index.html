@@ -452,7 +452,7 @@ var ETAPAS = [
     ins:['Solicitudes de entrega','Órdenes de compra'], k:['tra','seg'] },
   { ref:'e2', a:'aba', t:'Recibir del proveedor', resp:'Abasto · Recepción',
     d:'Agenda, confirma y registra la entrada de los renglones que entrega el proveedor.',
-    ins:['Solicitudes de cita de los proveedores','Entradas diarias de recepción','Bitácora del control documental'], k:['sol','con','ent','trz'] },
+    ins:['Solicitudes de cita de los proveedores','Entradas semanales de recepción','Bitácora del control documental'], k:['sol','con','ent','trz'] },
   { ref:'e3', a:'adm', t:'Registrar existencias', resp:'Administración · Kardex y facturación',
     d:'Registra los movimientos y el inventario en SAP-SAFIRO a través del kardex.',
     ins:['MB51','MB52','MM60','Inventario valorizado SALMI'], k:['kar','csa'] },
@@ -480,7 +480,7 @@ var GRUPOS = {
 
 /* Áreas que entregan reportes en la Ventanilla Única (reflejan las secciones de cargar_reportes.html) */
 var FUENTES = [
-  { n:'Recepción', d:'Entradas diarias', a:'Recibir' },
+  { n:'Recepción', d:'Entradas semanales', a:'Recibir' },
   { n:'Almacén y Torre de Control', d:'16 reportes del WMS SALMI: saldos, solicitudes, distribución, inventario valorizado, y trazabilidad, reservas e inventario neto de cada área (MED, MQ, ODO y Cuarto Frío)', a:'Planificar · Despachar · UE' },
   { n:'Kardex', d:'MB51, MB52 y MM60 de SAP-SAFIRO', a:'Registrar · Kanban' },
   { n:'Recursos Humanos', d:'Reloj biométrico', a:'Talento humano' },

@@ -300,9 +300,9 @@ var CITAS_URL = 'https://script.google.com/macros/s/AKfycbwVw0ACNMhdN6d-JsI1lyP2
 
 /* Catálogo de insumos — refleja la tabla del memorando */
 var INSUMOS = [
-  { k:'recepcion',  n:1, nombre:'RECEPCIÓN · Entradas diarias',
+  { k:'recepcion',  n:1, nombre:'RECEPCIÓN · Entradas semanales',
     fuente:'Reporte de Excel', resp:'Jefatura de Recepción / Dirección de Abasto',
-    per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv' },
+    per:'Semanal', acepta:'.xlsx,.xls,.csv', semanal:true },
   { k:'salmi',      n:2, nombre:'ALMACÉN Y TORRE DE CONTROL · Reportes WMS SALMI',
     fuente:'WMS SALMI', resp:'Jefatura de Almacén',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
