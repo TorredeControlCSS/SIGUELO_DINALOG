@@ -205,7 +205,7 @@
    "dir": "down",
    "max": 40,
    "instrumento": "thermo",
-   "responsable": "Heraclio Herrera"
+   "responsable": "Simón Sotillo"
   },
   "3": {
    "objetivo": "01",
@@ -215,7 +215,7 @@
    "dir": "up",
    "max": 3,
    "instrumento": "fuel",
-   "responsable": "Heraclio Herrera"
+   "responsable": "Simón Sotillo"
   },
   "4": {
    "objetivo": "02",
@@ -249,7 +249,7 @@
    "dir": "up",
    "max": 100,
    "instrumento": "gauge",
-   "responsable": "Simon Sotillo"
+   "responsable": "Simón Sotillo"
   },
   "6": {
    "objetivo": "02",
@@ -279,7 +279,7 @@
    "dir": "down",
    "max": 700,
    "instrumento": "thermo",
-   "responsable": "Simon Sotillo"
+   "responsable": "Simón Sotillo"
   },
   "10": {
    "objetivo": "04",
