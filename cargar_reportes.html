@@ -2089,10 +2089,21 @@ function lanzarCurvas_(){
         var ab=linea('Reporte de abastecimiento:'), ve=linea('Reporte de vencimientos:');
         var extra=(ab?' · abastecimiento '+ab:'')+(ve?' · vencimientos '+ve:'');
         if(e.estado==='listo'){
-          curLeerSello_(function(g){
-            if(g && g!==CUR_GEN0) curFin_(true,'✓ curva publicada · '+String(g).slice(11)+extra);
-            else curFin_(false,'el servidor dijo listo pero el JSON no cambió — revise');
-          }, function(){ curFin_(true,'✓ listo (no se pudo releer el JSON)'+extra); });
+          /* 12-oct-2026 · GitHub Pages tarda uno o varios minutos en servir el
+             JSON recién subido. Antes se leía una sola vez al instante y, si
+             Pages aún mostraba el anterior, se marcaba error aunque la curva sí
+             se hubiera publicado. Ahora se compara contra el sello que el
+             backend subió (e.generado) y se reintenta hasta 4 min. */
+          if(CUR_POLL){ clearInterval(CUR_POLL); CUR_POLL=null; }
+          var meta=e.generado?String(e.generado):'', intentos=0;
+          (function confirmar(){
+            curLeerSello_(function(g){
+              if(g && (g===meta || (!meta && g!==CUR_GEN0))){ curFin_(true,'✓ curva publicada · '+String(g).slice(11)+extra); return; }
+              if(++intentos<16){ curSt_('curva subida a las '+(meta?meta.slice(11,16):'?')+' · esperando que GitHub la muestre ('+(intentos*15)+' s)','#1e5a9e'); setTimeout(confirmar,15000); return; }
+              if(e.jsonOk) curFin_(true,'✓ curva subida a las '+(meta?meta.slice(11,16):'?')+extra+' · GitHub aún muestra la anterior; recargue en unos minutos');
+              else curFin_(false,'el servidor dijo listo pero el JSON no cambió — revise');
+            }, function(){ if(++intentos<16){ setTimeout(confirmar,15000); return; } curFin_(!!e.jsonOk,(e.jsonOk?'✓ listo':'listo')+' (no se pudo releer el JSON)'+extra); });
+          })();
           return;
         }
         if(e.estado==='error'){
