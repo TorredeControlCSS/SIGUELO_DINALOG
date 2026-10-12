@@ -330,6 +330,7 @@ function prepararIndicadores(){
   var cob=src.cobertura;
   if(cob && cob.indicadores){ ['2','3'].forEach(function(id){
     var s=serieKpi(cob,id), ini=Object.keys(s).sort()[0], ant=inv?serieKpi(inv,id):{};
+    Object.keys(s).forEach(function(m){ if(cob.historico[m] && cob.historico[m].rec) s[m].rec=true; });
     Object.keys(ant).forEach(function(m){ if(m<ini){ s[m]=ant[m]; s[m].ant=true; } });
     I[id]={ serie:s, det:(cob.indicadores[id]||{}).detalle, fuente:'cobertura', corte:cob.corte, foto:true };
   }); }
@@ -361,7 +362,7 @@ function prepararIndicadores(){
 function valorEn(id, mes){
   var I=S.ind[id]; if(!I) return null;
   var f=I.serie[mes];
-  if(f) return { v:f.v, corte:f.corte, vacio:!!f.vacio, ant:!!f.ant };
+  if(f) return { v:f.v, corte:f.corte, vacio:!!f.vacio, ant:!!f.ant, rec:!!f.rec };
   if(I.foto && mes===S.mesHoy){ var kf=Object.keys(I.serie).filter(function(m){ return m<=mes; }).sort(); if(kf.length){ var q=I.serie[kf[kf.length-1]]; return { v:q.v, corte:q.corte }; } }
   if(I.flujo && mes===S.mesHoy) return { v:null, vacio:true };
   if(I.arrastre){ var ks=Object.keys(I.serie).filter(function(m){ return m<=mes; }).sort(); if(ks.length){ var k=ks[ks.length-1]; if(mesesEntre(k,mes)>3) return null; return { v:I.serie[k].v, corte:I.serie[k].corte, arrastre:k }; } }
@@ -586,6 +587,7 @@ function pintar(i){
       } else if(x.corte && I.corte && String(x.corte).substring(0,10)===String(I.corte).substring(0,10)) det=I.det||'';
     }
     if(v!=null && I && I.fuente==='cobertura' && !(x&&x.ant)) det='Cifra principal: medicamentos, 3 CEDIS · clic para ver cada CEDIS';
+    if(x && x.rec) det='Reconstruido al cierre del mes con las Formas 8 y los saldos en línea de los 3 CEDIS';
     if(x && x.ant) det='Solo CEDIS Panamá · método anterior';
     nt.textContent=det;
     if(id==='2'||id==='3') pintarFamilias(id,mes,x);
@@ -1127,15 +1129,15 @@ function accionSugerida(id){
   var k=S.src.kanban, est=(k&&k.estado)||{}, red=S.src.redistribucion, rk=red&&red.kpi, inv=S.src.inventario;
   switch(id){
     case '1a': return est.vencidosConStock ? 'Despachar las **'+num(est.vencidosConStock)+' Formas 8 atrasadas** que **ya tienen producto** en el almacén.' : 'Revisar la fase del Kanban con más pedidos atrasados.';
-    case '1b': return est.vencidosCero ? '**'+num(est.vencidosCero)+' Formas 8 atrasadas esperan producto**: priorizar sus renglones en **compras y traslados**.' : 'Revisar renglones con faltante en los pedidos del mes.';
+    case '1b': return est.vencidosCero ? '**'+num(est.vencidosCero)+' Formas 8 atrasadas esperan producto**: priorizar sus renglones con **Planificación** (adquisiciones y traslados).' : 'Revisar renglones con faltante en los pedidos del mes.';
     case '9': return 'Revisar los renglones con **mayor cantidad no asignada** y su cobertura en los tres CEDIS.';
     case '2': { var cb=S.src.cobertura, n=0, c={}; if(red&&red.f) red.f.forEach(function(x){ if(x.destinoEnCero && !c[x.cod]){ c[x.cod]=1; n++; } });
       if(!cb||!cb.detalle) return 'Revisar los renglones en cero con las órdenes de compra en tránsito.';
       var pe=['PA','DI','CH'].map(function(k){ return [k,cb.detalle[k].MED.ago]; }).sort(function(a,b){ return b[1]-a[1]; })[0];
       return '**'+cb.indicadores['2'].detalle+'**. El CEDIS con más medicamentos en cero es **'+cb.cedis[pe[0]]+'** ('+fmt(pe[1],'%')+')'+(n?'; **'+num(n)+'** renglones en cero en algún CEDIS se pueden **surtir hoy desde otro CEDIS** (Planificación)':'')+'.'; }
-    case '3': { var cb3=S.src.cobertura; if(!cb3||!cb3.detalle) return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra en tránsito** (Tránsitos de OC).';
+    case '3': { var cb3=S.src.cobertura; if(!cb3||!cb3.detalle) return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra / solicitudes de entrega en tránsito** (Tránsitos de OC).';
       var fz=(cb3.fueraCatalogo&&cb3.fueraCatalogo.filas.length)||0, lo=['MQ','LAB'].filter(function(f){ return cb3.detalle.NAC[f].cob<S.reg.indicadores['3'].meta; });
-      return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra en tránsito**'+(lo.length?'; bajo meta también **'+lo.map(function(f){ return cb3.familias[f]+' ('+fmt(cb3.detalle.NAC[f].cob,'m')+')'; }).join(' y ')+'**':'')+(fz?'. Revisar los **'+num(fz)+' pedidos fuera de catálogo** (Planificación)':'')+'.'; }
+      return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra / solicitudes de entrega en tránsito**'+(lo.length?'; bajo meta también **'+lo.map(function(f){ return cb3.familias[f]+' ('+fmt(cb3.detalle.NAC[f].cob,'m')+')'; }).join(' y ')+'**':'')+(fz?'. Revisar los **'+num(fz)+' pedidos fuera de catálogo** (Planificación)':'')+'.'; }
     case '5': { var L=proveedoresBajos(3); return L.length ? 'Gestionar con los proveedores de mayor valor bajo meta: '+L.map(function(x){ return '**'+x.p+'** ('+fmt(x.pct,'%')+')'; }).join(', ')+'.' : 'Revisar los proveedores bajo meta.'; }
     case '6': return 'Separar el tiempo de pedidos mensuales y urgencias para medir contra su meta.';
     case '7': return 'Sostener el ritmo de salidas del almacén.';
