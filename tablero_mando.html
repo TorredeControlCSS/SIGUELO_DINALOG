@@ -81,6 +81,7 @@ main{max-width:1600px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 .resp{margin-top:auto;padding-top:4px;border-top:1px solid var(--bd);font-size:11px;color:var(--tx2)}
 .stale{font-size:11px;font-weight:700;color:var(--amt);background:#fbe0bd;padding:1px 6px;align-self:flex-start}
 .lect{font-size:13px;line-height:1.45;margin:0;padding-left:16px;display:flex;flex-direction:column;gap:6px}
+.lcell .lect{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:28px}@media (max-width:760px){.lcell .lect{grid-template-columns:1fr}}
 .thermo{display:flex;align-items:flex-end;gap:10px}
 .tube{position:relative;width:16px;height:74px;background:#fff;border:1px solid #8a8a8a;border-bottom:none;border-radius:8px 8px 0 0}
 .tube .fill{position:absolute;left:0;right:0;bottom:0;transition:height .9s ease,background .5s}
@@ -262,7 +263,8 @@ var LOGO = 'https://raw.githubusercontent.com/TorredeControlCSS/REPOSICION_UE_CS
 var MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 var MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 var OBJ = { '01':'Objetivo 01 · Disponibilidad del insumo', '02':'Objetivo 02 · Presupuesto y proveedores', '03':'Objetivo 03 · Productividad', '04':'Objetivo 04 · Gobernanza' };
-var ORDEN = { '01':['1a','1b','9','2','3'], '02':['4','5','6'], '03':['7','8'], '04':['10'] };
+var ORDEN = { '01':['1a','1b','9','2','3'], '02':['4','11','5','6'], '03':['7','8'], '04':['10'] };
+var IDS = ['1a','1b','9','2','3','4','11','5','6','7','8','10'];
 var DEF = {
   '1a':['Pedidos (Formas 8) despachados dentro de su fecha de entrega.','Despachos a tiempo ÷ despachos elegibles del mes. Laboratorio se cuenta aparte.','Cada publicación del Kanban'],
   '1b':['Pedidos despachados con el 100% de lo solicitado.','Despachos completos ÷ despachos elegibles del mes. Incluye los faltantes por desabasto.','Cada publicación del Kanban'],
@@ -270,6 +272,7 @@ var DEF = {
   '2':['Renglones sin inventario en los 3 CEDIS (Panamá, Divisa y Chiriquí). Cifra principal: medicamentos; médico-quirúrgico y laboratorio se muestran aparte.','Renglones con salida F8 que están en cero ÷ renglones con salida F8, por familia. Nacional: en cero en los 3 CEDIS a la vez. Solo cuentan los renglones que algún CEDIS maneja (saldo desde junio o catálogo del Inventario Consolidado); lo pedido fuera de catálogo se lista aparte en Planificación.','Cada publicación de la Calculadora de Reposición'],
   '3':['Cuántos meses alcanza el inventario de los 3 CEDIS al ritmo de salida. Cifra principal: medicamentos; médico-quirúrgico y laboratorio se muestran aparte.','Por renglón: inventario de los 3 CEDIS ÷ salida mensual F8 de los 3 CEDIS (media de 90 días), en unidades. Por familia: la mediana. Solo cuentan los renglones que algún CEDIS maneja (saldo desde junio o catálogo del Inventario Consolidado).','Cada publicación de la Calculadora de Reposición'],
   '4':['Presupuesto ejecutado sobre el presupuesto modificado.','Estimado = (ejecutado del último GR55 + valor de las entradas contables 101 − 102 del MB51 desde el día siguiente a su corte) ÷ presupuesto modificado. Las entradas 561/562 no tienen presupuesto asignado y no cuentan. Cuando Finanzas entregue un GR55 nuevo, se reemplaza el ancla y el kardex suma desde ese corte.','GR55 (carga manual) + Kardex MB51'],
+  '11':['Producto recibido en CDPA con movimiento 561 (entrada sin pedido ni partida presupuestaria) que todavía no se regulariza con su 562. Está en el almacén pero no en la ejecución presupuestaria.','Por motivo declarado en SAP: valor de los 561 menos sus 562, acumulado desde el inicio del kardex (5-may). Valor al cierre de cada mes con los movimientos hasta ese día. Los 562 de motivos cuyo 561 es anterior al kardex no restan.','Cada publicación de la Calculadora (lee el kardex MB51)'],
   '5':['Entregas de proveedores recibidas dentro de su fecha de entrega.','Entregas a tiempo ÷ entregas comparables, por mes de recepción.','Cada carga de recepción'],
   '6':['Días que tarda el ciclo de atención de un pedido.','Mediana de días del ciclo de los pedidos del mes, según el Kanban. Aún no separa pedido mensual y urgencia.','Cada publicación del Kanban'],
   '7':['Formas 8 que salen del almacén por día hábil.','Salidas del mes ÷ días hábiles transcurridos.','Cada publicación del Kanban'],
@@ -290,8 +293,20 @@ function fCorta(s){ var d=fISO(s); return d ? (d.getDate()+'-'+MES[d.getMonth()]
 function diasHabiles(desde, hasta){ var n=0, d=new Date(desde); d.setDate(d.getDate()+1); while(d<=hasta){ var w=d.getDay(); if(w>=1&&w<=5) n++; d.setDate(d.getDate()+1); } return n; }
 function fmt(x,u){ if(x==null||isNaN(x)) return '—'; var r=Math.round(x*100)/100; var s=Math.abs(r)>=100?Math.round(r).toLocaleString('en-US'):String(r); return s+(u==='%'?'%':(u?' '+u:'')); }
 function uGap(u){ return u==='%'?'pts':u; }
+/* Meta por ruta: baja en partes iguales cada mes desde el valor al cierre del mes anterior a 'desde'
+   hasta 0 al cierre de 'cierre' (cierre fiscal). Antes de 'desde' no hay meta. */
+function metaMes(g,mes,id){
+  if(!g||!g.ruta) return g;
+  var r=g.ruta, I=S.ind[id], base=null, mb=mesAnt(r.desde);
+  if(I&&I.serie[mb]) base=I.serie[mb].v;
+  var o={}; Object.keys(g).forEach(function(k){ o[k]=g[k]; });
+  if(base==null || mes<r.desde){ o.meta=null; return o; }
+  var tot=mesesEntre(mb,r.cierre), quedan=Math.max(0,mesesEntre(mes,r.cierre));
+  o.meta=Math.round(10*base*quedan/tot)/10; o.base=base; return o;
+}
 /* Distancia a la meta en el sentido en que debe moverse: subir o bajar. */
 function textoGap(g,v){
+  if(g.meta==null) return 'Sin meta este mes';
   var gap=g.dir==='up'?g.meta-v:v-g.meta;
   if(gap<=0) return 'En meta · margen '+fmt(-gap,uGap(g.unidad));
   return (g.dir==='up'?'Debe subir ':'Debe bajar ')+fmt(gap,uGap(g.unidad))+' para llegar a la meta';
@@ -342,8 +357,11 @@ function prepararIndicadores(){
   });
   if(man){ var E4=ejecEstimada(); S.e4=E4;
     if(E4&&E4.dias){ var s4=serieKpi(man,'4'); Object.keys(E4.porMes).forEach(function(m){ s4[m]=E4.porMes[m]; });
-      I['4']={ serie:s4, det:'Estimado: GR55 al '+fCorta(E4.corteGR55)+' ('+bal(E4.gr55)+') + entradas contables del kardex al '+fCorta(E4.hasta)+' ('+bal(E4.neto)+') = '+bal(E4.ejecutado)+' de '+bal(E4.modificado)+'. No incluye 561/562.', fuente:'kardex', corte:E4.hasta, arrastre:true }; }
+      var cu4=src.cuadre&&src.cuadre.indicadores&&src.cuadre.indicadores['11']; S.c561=cu4?cu4.v*1e6:null;
+      I['4']={ serie:s4, det:(S.c561!=null?'Con las 561 regularizadas: '+fmt(Math.round(1000*(E4.ejecutado+S.c561)/E4.modificado)/10,'%')+'. ':'')+'Estimado: GR55 al '+fCorta(E4.corteGR55)+' ('+bal(E4.gr55)+') + entradas contables del kardex al '+fCorta(E4.hasta)+' ('+bal(E4.neto)+') = '+bal(E4.ejecutado)+' de '+bal(E4.modificado)+'. No incluye 561/562.', fuente:'kardex', corte:E4.hasta, arrastre:true }; }
     else I['4']={ serie:serieKpi(man,'4'), det:'Cifra preliminar: GR55 de julio presentado en el Plan. Pendiente de los datos de Finanzas.', fuente:'manual', corte:man.corte, arrastre:true }; }
+  var cu=src.cuadre;
+  if(cu && cu.indicadores){ var s11=serieKpi(cu,'11'); I['11']={ serie:s11, det:(cu.indicadores['11']||{}).detalle, fuente:'cuadre', corte:cu.corte, foto:true }; }
   var ent=src.recepcion;
   if(ent && ent.rows){
     var pm={}, ta=0, tt=0;
@@ -432,7 +450,7 @@ function card(id){
   return '<div class="card go" id="cd_'+id+'" title="Ver el detalle"><div class="hd"><div class="lamp" id="lp_'+id+'"></div><div class="nm">'+esc(id+' · '+g.nombre)+'</div><button class="q" type="button" data-q="'+id+'" aria-label="Qué mide este indicador">?</button></div>'+
     '<div class="ins">'+ins+'</div>'+
     '<div class="vr"><div class="val" id="vl_'+id+'">—</div><div class="fec" id="fc_'+id+'"></div></div>'+
-    '<div class="mt">Meta '+(g.dir==='up'?'≥ ':'≤ ')+esc(fmt(g.meta,g.unidad))+(g.notaMeta?' · provisional':'')+'</div>'+
+    '<div class="mt" id="mt_'+id+'">Meta '+(g.dir==='up'?'≥ ':'≤ ')+esc(fmt(g.meta,g.unidad))+(g.notaMeta?' · provisional':'')+'</div>'+
     '<div class="gap" id="gp_'+id+'"></div><div class="dl" id="dl_'+id+'"></div><div class="nt" id="nt_'+id+'"></div>'+(id==='2'||id==='3'?'<div class="fams" id="fm_'+id+'"></div>':'')+'<div class="stale" id="st_'+id+'" style="display:none"></div>'+
     (g.responsable?'<div class="resp">Responsable: <b>'+esc(g.responsable)+'</b></div>':'')+'</div>';
 }
@@ -474,10 +492,11 @@ function construir(){
   var h='<section class="dec">'+decisiones()+'</section>'+
 
     /* Una sola rejilla de 6 columnas: todas las tarjetas miden lo mismo en ancho y en alto. */
-    '<div class="grid">'+gh(OBJ['01'],5,'<span class="slot" id="slotAcc"><button class="tour" type="button" data-tour="1">▶ Recorrido guiado</button></span>')+ghL('Lectura del mes',1,'<button class="info" type="button" data-leer="1">ⓘ Cómo leer</button>')+
-    ORDEN['01'].map(card).join('')+'<div class="lcell"><ul class="lect" id="lect"></ul></div>'+
-    gh(OBJ['02'],3)+gh(OBJ['03'],2)+gh(OBJ['04'],1)+
-    ORDEN['02'].map(card).join('')+ORDEN['03'].map(card).join('')+ORDEN['04'].map(card).join('')+'</div>'+
+    '<div class="grid">'+gh(OBJ['01'],5,'<span class="slot" id="slotAcc"><button class="tour" type="button" data-tour="1">▶ Recorrido guiado</button></span>')+gh(OBJ['04'],1)+
+    ORDEN['01'].map(card).join('')+ORDEN['04'].map(card).join('')+
+    gh(OBJ['02'],4)+gh(OBJ['03'],2)+
+    ORDEN['02'].map(card).join('')+ORDEN['03'].map(card).join('')+
+    ghL('Lectura del mes',6,'<button class="info" type="button" data-leer="1">ⓘ Cómo leer</button>')+'<div class="lcell" style="grid-column:span 6"><ul class="lect" id="lect"></ul></div></div>'+
     '<div class="src" id="src">'+S.srcHtml+'</div>';
   var md=$('menuDesc'); if(md) md.parentNode.removeChild(md);
   $('main').innerHTML='<div id="v-panel">'+h+'</div><div id="v-alertas" class="vw" hidden></div><div id="v-desp" class="vw" hidden></div><div id="v-ue" class="vw" hidden></div><div id="v-plan" class="vw" hidden></div><div id="v-pres" class="vw" hidden></div>';
@@ -495,6 +514,7 @@ function construir(){
     var q=e.target.closest('[data-q]'); if(q){ ayuda(q.getAttribute('data-q')); return; }
     if(e.target.closest('[data-leer]')){ comoLeer(); return; }
     if(e.target.closest('[data-cob]')){ ayudaCobertura(); return; }
+    if(e.target.closest('[data-c561]')){ ayudaCuadre(); return; }
     var so=e.target.closest('th.so'); if(so){ ordenar(so.getAttribute('data-k'),+so.getAttribute('data-c')); return; }
     if(e.target.closest('[data-tour]')){ tour(0); return; }
     var cbv=e.target.closest('li[data-cbv]'); if(cbv){ comboElegir(cbv.getAttribute('data-cb'),cbv.getAttribute('data-cbv')); return; }
@@ -524,7 +544,7 @@ function construir(){
 }
 
 function estado(g,v){
-  if(v==null) return 'con';
+  if(v==null || g.meta==null) return 'con';
   var good=g.dir==='up'?v>=g.meta:v<=g.meta; if(good) return 'ok';
   var near=g.dir==='up'?v>=0.8*g.meta:v<=1.25*g.meta; return near?'bajo':'crit';
 }
@@ -543,7 +563,8 @@ function pintar(i){
   $('stamp').innerHTML='Actualizado: <b>'+esc(S.mayor||'—')+'</b> hora PTY · Mes en vista: <b>'+esc(mesLabel(mes))+'</b>';
   var resumen={ med:0, ok:0, mejor:null, peor:null };
   Object.keys(S.reg.indicadores).forEach(function(id){
-    var g=S.reg.indicadores[id], I=S.ind[id], x=valorEn(id,mes), p=valorEn(id,ant);
+    var g=metaMes(S.reg.indicadores[id],mes,id), I=S.ind[id], x=valorEn(id,mes), p=valorEn(id,ant);
+    if(g.ruta){ var mtE=$('mt_'+id); if(mtE) mtE.textContent=g.meta==null?'Meta desde '+mesLabel(g.ruta.desde):'Meta del mes ≤ '+fmt(g.meta,g.unidad)+' · cero al cierre fiscal'; }
     var fuenteId=null; S.reg.fuentes.forEach(function(f){ if(f.indicadores.indexOf(id)>=0) fuenteId=f.id; });
     var e=S.est[fuenteId]||{};
     var v = x && !x.vacio ? x.v : null;
@@ -600,6 +621,7 @@ function pintar(i){
       $('a3_'+id).setAttribute('stroke', has?(g.dir==='up'?BAND.G:BAND.R):BAND.X);
       $('nd_'+id).style.transform='rotate('+(-90+180*f)+'deg)';
     } else if(g.instrumento==='thermo'){
+      if(g.ruta){ var mk=$('cd_'+id).querySelector('.tube .mk'); if(mk) mk.style.bottom=(g.meta==null?0:cl(g.meta/g.max)*100)+'%'; var ts=$('cd_'+id).querySelector('.tsc span'); if(ts) ts.textContent=g.meta==null?'Sin meta':'Meta ≤ '+fmt(g.meta,g.unidad); }
       $('tf_'+id).style.height=(f*100)+'%'; $('tf_'+id).style.background=has?c[0]:'#cfcfcf'; $('tb_'+id).style.background=has?c[0]:'#cfcfcf';
     } else odo(id, has?v:null, g.unidad);
   });
@@ -667,7 +689,8 @@ function comoLeer(){
 function ayuda(id){
   var g=S.reg.indicadores[id], d=DEF[id]||['','',''], f=S.reg.fuentes.filter(function(x){ return x.indicadores.indexOf(id)>=0; })[0];
   $('mT').textContent=id+' · '+g.nombre; $('mD').textContent=d[0]; $('mC').textContent=d[1];
-  $('mM').textContent=(g.dir==='up'?'≥ ':'≤ ')+fmt(g.meta,g.unidad)+(g.notaMeta?' · '+g.notaMeta:'');
+  var gm=metaMes(g,S.meses[S.idx],id);
+  $('mM').textContent=g.ruta?(gm.meta==null?'Desde '+mesLabel(g.ruta.desde):'Este mes ≤ '+fmt(gm.meta,g.unidad))+' · baja en partes iguales cada mes desde el valor al cierre de '+mesLabel(mesAnt(g.ruta.desde))+(gm.base!=null?' ('+fmt(gm.base,g.unidad)+')':'')+' hasta 0 al cierre fiscal ('+mesLabel(g.ruta.cierre)+')':(g.dir==='up'?'≥ ':'≤ ')+fmt(g.meta,g.unidad)+(g.notaMeta?' · '+g.notaMeta:'');
   $('mS').textContent=f?f.nombre:'—'; $('mF').textContent=d[2]; $('ov').classList.add('on');
 }
 $('mX').addEventListener('click',function(){ $('ov').classList.remove('on'); });
@@ -676,7 +699,7 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') $('ov').cl
 $('bYarvis').addEventListener('click',function(){ window.open('yarvis.html','_blank','noopener'); });
 
 /* ══ VISTAS DE DETALLE ════════════════════════════════════════════════════ */
-var VISTA_IND={ '1a':'desp','1b':'desp','9':'desp','6':'desp','7':'desp','2':'plan','3':'plan','8':'plan','10':'plan','4':'pres','5':'pres' };
+var VISTA_IND={ '1a':'desp','1b':'desp','9':'desp','6':'desp','7':'desp','2':'plan','3':'plan','8':'plan','10':'plan','4':'pres','11':'pres','5':'pres' };
 var DETALLE={ alertas:'https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html',
   desp:'https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html', ue:'https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html',
   plan:'https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html', pres:'https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html' };
@@ -1060,6 +1083,53 @@ function ayudaCobertura(){
   $('ov').classList.add('on');
 }
 
+/* Cuadre presupuestario: GR55 (Finanzas) + kardex MB51 (101−102 y 561 sin regularizar).
+   Cierra exacto contra el presupuesto modificado. Comprometido por recibir es estimado: supone que
+   las entradas con pedido desde el GR55 devengan compromisos vigentes a esa fecha. */
+function cuadrePres(){
+  var man=S.src.manual, pr=man&&man.presupuesto, E4=S.e4, cu=S.src.cuadre, kx=S.src.kardex, g4=S.reg.indicadores['4'];
+  if(!pr||!E4||!cu||!cu.indicadores) return null;
+  var MM=function(x){ return (Math.round(x/1e5)/10).toFixed(1); }, pc=function(x){ return fmt(Math.round(1000*x/pr.modificado)/10,'%'); };
+  var c561=cu.indicadores['11'].v*1e6, disp=pr.modificado-pr.ejecutado-pr.comprometido, porRec=Math.max(0,pr.comprometido-E4.neto), libre=disp-c561;
+  var conC=E4.ejecutado+c561, pctC=Math.round(1000*conC/pr.modificado)/10;
+  var rec=0, desde='', M=kx&&kx._meta, cols=(M&&M.columnas)||['fecha','101','102','561','562'], ix={}; cols.forEach(function(k,i){ ix[k]=i; });
+  if(kx&&kx.dias) kx.dias.forEach(function(d){ rec+=(+d[ix['101']]||0)+(+d[ix['102']]||0); if(!desde||d[0]<desde) desde=d[0]; });
+  var g11=metaMes(S.reg.indicadores['11'],S.mesHoy,'11');
+  var kp='<div class="kp">'+
+    kc('ok','Presupuesto modificado',bal(pr.modificado),'GR55 '+fCorta(pr.corte)+' · Finanzas')+
+    kc(estado(g4,E4.pct),'Ejecutado estimado',bal(E4.ejecutado),fmt(E4.pct,'%')+' · GR55 + kardex 101−102 al '+fCorta(E4.hasta))+
+    kc('con','Comprometido por recibir','≈ '+bal(porRec),MM(pr.comprometido)+' del GR55 − '+MM(E4.neto)+' recibido con pedido desde '+fCorta(finMasUno(pr.corte)))+
+    kc(estado(g11,cu.indicadores['11'].v),'Entradas 561 sin regularizar',bal(c561),'sin cargo a partida · desde '+fCorta(cu.desde)+(g11.meta!=null?' · meta del mes ≤ '+fmt(g11.meta,'MM'):''))+
+    kc(estado(g4,pctC),'Ejecución con cuadre',fmt(pctC,'%'),'('+MM(E4.ejecutado)+' + '+MM(c561)+') ÷ '+MM(pr.modificado)+' · meta ≥ '+g4.meta+'%')+
+    kc('con','Recibido con pedido',bal(rec),'kardex 101−102 · '+fCorta(desde)+' a '+fCorta(E4.hasta)+' · todas las familias')+'</div>';
+  var seg=[['Ejecutado · GR55 al '+fCorta(pr.corte),pr.ejecutado,'#3f9a4a','#fff'],['Ejecutado · kardex 101−102 desde '+fCorta(finMasUno(pr.corte)),E4.neto,'#7fb77e','#0b3d13'],
+    ['Comprometido por recibir (estimado)',porRec,'#a7c4e5','#0C447C'],['561 sin regularizar',c561,'#f0cf8f','#7a4a00'],['Disponible libre',Math.max(0,libre),'#e3e7ec','#2e2e2e']];
+  var bar=seg.map(function(x){ return '<div style="width:'+(100*Math.max(0,x[1])/pr.modificado)+'%;background:'+x[2]+';color:'+x[3]+';padding:6px;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(x[0])+' · '+bal(x[1])+'">'+MM(x[1])+'</div>'; }).join('');
+  var ley=seg.map(function(x){ return '<span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;font-size:12px"><i style="width:12px;height:12px;background:'+x[2]+';display:inline-block"></i>'+esc(x[0])+' · '+bal(x[1])+'</span>'; }).join('');
+  var F=[['Presupuesto modificado',pr.modificado,'GR55 al '+fCorta(pr.corte)+' (Finanzas)'],['Ejecutado (devengado + pagado) al '+fCorta(pr.corte),pr.ejecutado,'GR55 al '+fCorta(pr.corte)],
+    ['Comprometido al '+fCorta(pr.corte),pr.comprometido,'GR55 al '+fCorta(pr.corte)],['Disponible al '+fCorta(pr.corte),disp,'Modificado − ejecutado − comprometido'],
+    ['+ Entradas con pedido desde '+fCorta(finMasUno(pr.corte))+' (101 − 102)',E4.neto,'Kardex MB51 · pasan de comprometido a ejecutado'],['= Ejecutado estimado al '+fCorta(E4.hasta),E4.ejecutado,'GR55 + kardex',1],
+    ['= Comprometido por recibir (estimado)',porRec,MM(pr.comprometido)+' − '+MM(E4.neto),1],['Entradas 561 sin regularizar (desde '+fCorta(cu.desde)+')',c561,'Kardex MB51 · 561 sin su 562'],
+    ['Disponible si se regularizan las 561',libre,MM(disp)+' − '+MM(c561)],['Ejecución con cuadre',conC,MM(E4.ejecutado)+' + '+MM(c561),1]];
+  var tb='<table class="t" style="margin-top:6px"><thead><tr><th>Concepto</th><th style="text-align:right">B/. MM</th><th style="text-align:right">% del modificado</th><th>Fuente</th></tr></thead><tbody>'+
+    F.map(function(r){ return '<tr'+(r[3]?' style="font-weight:700"':'')+'><td>'+esc(r[0])+'</td><td class="n">'+MM(r[1])+'</td><td class="n">'+pc(r[1])+'</td><td>'+esc(r[2])+'</td></tr>'; }).join('')+'</tbody></table>';
+  var fz=cu.motivos&&cu.motivos.filas||[];
+  TABLAS.c561={ cols:[{h:'Motivo declarado en SAP',t:'txt',w:44},{h:'Entrada 561 B/.',t:'num',w:16},{h:'Reversa 562 B/.',t:'num',w:16},{h:'Sin regularizar B/.',t:'num',w:16},{h:'Primera entrada',t:'txt',w:14},{h:'Último movimiento',t:'txt',w:14}], filas:fz.map(function(r){ return r.slice(); }), oc:-1, od:1 };
+  var panel='<div class="pn"><div class="ph"><h3>Cuadre presupuestario · medicamentos, médico-quirúrgico y laboratorio · corte '+esc(fCorta(E4.hasta))+'</h3><button type="button" data-c561="1">ⓘ Cómo se calcula</button>'+(fz.length?'<button type="button" data-xls="c561">Excel · 561 sin regularizar</button>':'')+'</div>'+
+    '<div style="display:flex;border:1px solid #c9d3df">'+bar+'</div><div>'+ley+'</div>'+tb+
+    '<div class="nota">Hasta que Finanzas entregue un GR55 nuevo, el comprometido por recibir supone que las entradas con pedido devengan compromisos vigentes al '+esc(fCorta(pr.corte))+'. Las 561 son producto recibido sin pedido ni partida: está en el almacén pero no en la ejecución. Responsables: '+esc(S.reg.indicadores['4'].responsable||'')+'.</div></div>';
+  return { kp:kp, panel:panel };
+}
+function ayudaCuadre(){
+  var g=S.reg.indicadores['11'], gm=metaMes(g,S.mesHoy,'11');
+  $('mT').textContent='Cuadre presupuestario · cómo se calcula';
+  $('mD').innerHTML='Cuánto del presupuesto modificado ya se ejecutó, cuánto falta por recibir y cuánto producto entró sin cargo a una partida (561). La barra suma exactamente el presupuesto modificado.';
+  $('mC').innerHTML='<b>1.</b> El último GR55 de Finanzas da el modificado, el ejecutado y el comprometido a su corte.<br><b>2.</b> Desde el día siguiente, las entradas con pedido del kardex (101 − 102) pasan de comprometido a ejecutado.<br><b>3.</b> Las entradas 561 son producto sin pedido ni partida; se restan sus 562 por motivo declarado en SAP. Lo que queda está en el almacén pero no en la ejecución.<br><b>4.</b> Ejecución con cuadre = (ejecutado estimado + 561 sin regularizar) ÷ modificado.';
+  $('mM').textContent='Ejecución ≥ '+S.reg.indicadores['4'].meta+'% · 561 sin regularizar: '+(gm.meta==null?'—':'este mes ≤ '+fmt(gm.meta,'MM'))+', cero al cierre fiscal';
+  $('mS').textContent='GR55 (Finanzas) · Kardex SAP-SAFIRO MB51 de CDPA'; $('mF').textContent='GR55: cuando Finanzas lo entrega · kardex: cada carga';
+  $('ov').classList.add('on');
+}
+
 /* Presupuesto y pagos */
 function vPres(){
   var man=S.src.manual, ent=S.src.recepcion, pr=man&&man.presupuesto, I5=S.ind['5'];
@@ -1070,6 +1140,8 @@ function vPres(){
     ent.rows.forEach(function(x){ if(x.periodo===mesUlt) recMes+=Number(x.valor)||0; }); }
   var g4=S.reg.indicadores['4'], g5=S.reg.indicadores['5'], pAn=tt?Math.round(1000*ta/tt)/10:null;
   var corteE=ent&&ent._meta?ent._meta.corte:'';
+  var CP=cuadrePres();
+  if(CP) h+=CP.kp+CP.panel; else
   h+='<div class="kp">'+
     kc('ok','Presupuesto modificado',pr?bal(pr.modificado):'—','GR55 '+(pr?fCorta(pr.corte):'—')+' · preliminar')+
     kc(pr?estado(g4,pctE):'con',E4?'Ejecutado estimado':'Ejecutado (dev. + pag.)',pr?bal(ejV):'—',(pr?fmt(pctE,'%'):'')+(E4?' · GR55 + kardex al '+fCorta(E4.hasta):' · meta ≥ '+g4.meta+'% · preliminar'))+
@@ -1138,6 +1210,8 @@ function accionSugerida(id){
     case '3': { var cb3=S.src.cobertura; if(!cb3||!cb3.detalle) return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra / solicitudes de entrega en tránsito** (Tránsitos de OC).';
       var fz=(cb3.fueraCatalogo&&cb3.fueraCatalogo.filas.length)||0, lo=['MQ','LAB'].filter(function(f){ return cb3.detalle.NAC[f].cob<S.reg.indicadores['3'].meta; });
       return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra / solicitudes de entrega en tránsito**'+(lo.length?'; bajo meta también **'+lo.map(function(f){ return cb3.familias[f]+' ('+fmt(cb3.detalle.NAC[f].cob,'m')+')'; }).join(' y ')+'**':'')+(fz?'. Revisar los **'+num(fz)+' pedidos fuera de catálogo** (Planificación)':'')+'.'; }
+    case '11': { var cu=S.src.cuadre; if(!cu) return ''; var f=cu.motivos&&cu.motivos.filas||[];
+      return 'Regularizar con su partida presupuestaria las entradas 561 pendientes, empezando por las de mayor valor'+(f.length?' (**'+String(f[0][0])+'**: '+bal(f[0][3])+')':'')+'. Lista completa en Excel en la vista Presupuesto y pagos.'; }
     case '5': { var L=proveedoresBajos(3); return L.length ? 'Gestionar con los proveedores de mayor valor bajo meta: '+L.map(function(x){ return '**'+x.p+'** ('+fmt(x.pct,'%')+')'; }).join(', ')+'.' : 'Revisar los proveedores bajo meta.'; }
     case '6': return 'Separar el tiempo de pedidos mensuales y urgencias para medir contra su meta.';
     case '7': return 'Sostener el ritmo de salidas del almacén.';
@@ -1150,9 +1224,9 @@ function accionSugerida(id){
 function vAlertas(){
   var h=cabecera('alertas','Alertas y compromisos','Qué está fuera de meta, qué sugieren los datos y quién responde.');
   var mes=S.meses[S.idx], filas=[], est=(S.src.kanban&&S.src.kanban.estado)||{};
-  ['1a','1b','9','2','3','4','5','6','7','8','10'].forEach(function(id){
-    var g=S.reg.indicadores[id], x=valorEn(id,mes); if(!x||x.vacio||x.v==null) return;
-    var st=estado(g,x.v); if(st==='ok') return;
+  IDS.forEach(function(id){
+    var g=metaMes(S.reg.indicadores[id],mes,id), x=valorEn(id,mes); if(!x||x.vacio||x.v==null) return;
+    var st=estado(g,x.v); if(st==='ok'||st==='con') return;
     var pa=valorEn(id,mesAnt(mes)), dv=(pa&&!pa.vacio&&pa.v!=null&&!(pa.corte&&pa.corte===x.corte)&&!!pa.ant===!!x.ant)?x.v-pa.v:null;
     filas.push([id+' · '+g.nombre,x.v,(g.dir==='up'?'≥ ':'≤ ')+fmt(g.meta,g.unidad),textoGap(g,x.v).replace(' para llegar a la meta',''),st,accionSugerida(id),g.responsable||'',id,dv]);
   });
@@ -1174,7 +1248,7 @@ function vAlertas(){
 }
 function exportarTabla(key){
   var T=TABLAS[key]; if(!T) return;
-  var nom={ ind:['Indicadores_fuera_de_meta','Indicadores fuera de meta y acción sugerida'], plan:['Vitales_CEDIS_en_cero_planificacion','Vitales con un CEDIS en cero: inventario y cobertura nacional'], desp:['Despachos_por_unidad','Despachos por unidad ejecutora'], ue:['Nivel_servicio_por_unidad','Nivel de servicio por unidad ejecutora'], prov:['Proveedores_recibido','Proveedores: recibido y cumplimiento de entrega'], fuera:['Pedidos_fuera_de_catalogo_CEDIS','Pedidos en Formas 8 que ningún CEDIS maneja (fuera de catálogo)'] }[key];
+  var nom={ ind:['Indicadores_fuera_de_meta','Indicadores fuera de meta y acción sugerida'], plan:['Vitales_CEDIS_en_cero_planificacion','Vitales con un CEDIS en cero: inventario y cobertura nacional'], desp:['Despachos_por_unidad','Despachos por unidad ejecutora'], ue:['Nivel_servicio_por_unidad','Nivel de servicio por unidad ejecutora'], prov:['Proveedores_recibido','Proveedores: recibido y cumplimiento de entrega'], fuera:['Pedidos_fuera_de_catalogo_CEDIS','Pedidos en Formas 8 que ningún CEDIS maneja (fuera de catálogo)'], c561:['Entradas_561_sin_regularizar','Entradas 561 sin regularizar por motivo declarado en SAP (kardex MB51 de CDPA)'] }[key];
   var filas=T.filas.map(function(r){ return r.slice(0,T.cols.length).map(function(v,i){ var c=T.cols[i]; if(key==='ind'&&i===4) return v==='crit'?'Crítico':'Bajo meta'; if(typeof v==='string') v=v.replace(/\*\*/g,''); return (v===''||v==null)?(c.vacio||''):v; }); });
   xlsInstitucional(nom[0],nom[1],[],T.cols.map(function(c){ return { h:c.h, t:c.t, w:c.w }; }),filas);
 }
@@ -1192,7 +1266,7 @@ function sello(){ return new Date().toLocaleString('sv-SE',{timeZone:'America/Pa
 function estFuente(f){ var e=S.est[f.id]||{}; return !e.ok?'No disponible':e.stale?'Desactualizada':'Al día'; }
 /* Tabla del histórico: una fila por indicador, una columna por mes con dato. */
 function tablaHistorica(maxMeses){
-  var ids=['1a','1b','9','2','3','4','5','6','7','8','10'], set={};
+  var ids=IDS, set={};
   ids.forEach(function(id){ var I=S.ind[id]; if(I) Object.keys(I.serie).forEach(function(m){ var f=I.serie[m]; if(f && f.v!=null && !f.vacio) set[m]=1; }); });
   var ms=Object.keys(set).sort(); if(maxMeses && ms.length>maxMeses) ms=ms.slice(ms.length-maxMeses);
   var cols=[{h:'N°',t:'txt',w:6},{h:'Indicador',t:'txt',w:36},{h:'Objetivo',t:'txt',w:10},{h:'Unidad',t:'txt',w:9},{h:'Meta 2026',t:'txt',w:11}]

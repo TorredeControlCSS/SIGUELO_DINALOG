@@ -111,6 +111,21 @@
    }
   },
   {
+   "id": "cuadre",
+   "nombre": "Cuadre de entradas 561 · Kardex SAP-SAFIRO",
+   "url": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/kpi_cuadre_561.json",
+   "tipo": "kpi",
+   "indicadores": [
+    "11"
+   ],
+   "diasHabilesMax": 3,
+   "calculo": "Por motivo declarado en SAP: 561 menos sus 562, acumulado desde el inicio del kardex (MB51 de CDPA). Es producto recibido sin pedido que aún no está cargado a una partida presupuestaria.",
+   "tablero": {
+    "nombre": "Kardex SAP-SAFIRO · Ajustes y bajas",
+    "url": "https://torredecontrolcss.github.io/SIGUELO/panel_kardex.html"
+   }
+  },
+  {
    "id": "transitos",
    "nombre": "Tránsitos de OC (registro de Planificación)",
    "url": "https://torredecontrolcss.github.io/SIGUELO/transitos_oc.json",
@@ -210,7 +225,21 @@
    "dir": "up",
    "max": 100,
    "instrumento": "gauge",
-   "responsable": "Marisabel Cernichiaro"
+   "responsable": "Marisabel Cernichiaro · Blanca Alvarez"
+  },
+  "11": {
+   "objetivo": "02",
+   "nombre": "Entradas 561 sin regularizar (B/.)",
+   "unidad": "MM",
+   "meta": 0,
+   "dir": "down",
+   "max": 30,
+   "instrumento": "thermo",
+   "ruta": {
+    "desde": "2026-10",
+    "cierre": "2026-12"
+   },
+   "responsable": "Marisabel Cernichiaro · Blanca Alvarez"
   },
   "5": {
    "objetivo": "02",
