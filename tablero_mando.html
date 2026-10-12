@@ -77,6 +77,8 @@ main{max-width:1600px;margin:0 auto;padding:10px 20px 16px;display:flex;flex-dir
 .fec{font-size:11px;color:var(--tx3);text-align:right}
 .mt{font-size:11px;color:var(--tx2)}.gap{font-size:12px;font-weight:600}.dl{font-size:12px;font-weight:700}
 .nt{font-size:11px;color:var(--tx3)}
+.fams{display:flex;flex-direction:column;gap:2px}.fams .fc{display:flex;justify-content:space-between;gap:6px;padding:1px 6px;border-left:3px solid;font-size:11.5px}.fams .fc b{font-family:var(--mono)}
+.resp{margin-top:auto;padding-top:4px;border-top:1px solid var(--bd);font-size:11px;color:var(--tx2)}
 .stale{font-size:11px;font-weight:700;color:var(--amt);background:#fbe0bd;padding:1px 6px;align-self:flex-start}
 .lect{font-size:13px;line-height:1.45;margin:0;padding-left:16px;display:flex;flex-direction:column;gap:6px}
 .thermo{display:flex;align-items:flex-end;gap:10px}
@@ -265,8 +267,8 @@ var DEF = {
   '1a':['Pedidos (Formas 8) despachados dentro de su fecha de entrega.','Despachos a tiempo ÷ despachos elegibles del mes. Laboratorio se cuenta aparte.','Cada publicación del Kanban'],
   '1b':['Pedidos despachados con el 100% de lo solicitado.','Despachos completos ÷ despachos elegibles del mes. Incluye los faltantes por desabasto.','Cada publicación del Kanban'],
   '9':['Qué parte de la cantidad solicitada por las unidades ejecutoras se asignó.','Unidades asignadas ÷ unidades solicitadas en el mes.','Cada publicación del Kanban'],
-  '2':['Renglones agotados en CEDIS Panamá.','Renglones en estado AGOTADO (inventario proyectado en cero o menos) ÷ renglones del Reporte de Abastecimiento.','Cada corte de inventario'],
-  '3':['Cuántos meses alcanza el inventario de CEDIS Panamá al ritmo de consumo.','Mediana de los meses de cobertura de los renglones con demanda.','Cada corte de inventario'],
+  '2':['Renglones sin inventario en los 3 CEDIS (Panamá, Divisa y Chiriquí). Cifra principal: medicamentos; médico-quirúrgico y laboratorio se muestran aparte.','Renglones con salida F8 que están en cero ÷ renglones con salida F8, por familia. Nacional: en cero en los 3 CEDIS a la vez. Solo cuentan los renglones que algún CEDIS maneja (saldo desde junio o catálogo del Inventario Consolidado); lo pedido fuera de catálogo se lista aparte en Planificación.','Cada publicación de la Calculadora de Reposición'],
+  '3':['Cuántos meses alcanza el inventario de los 3 CEDIS al ritmo de salida. Cifra principal: medicamentos; médico-quirúrgico y laboratorio se muestran aparte.','Por renglón: inventario de los 3 CEDIS ÷ salida mensual F8 de los 3 CEDIS (media de 90 días), en unidades. Por familia: la mediana. Solo cuentan los renglones que algún CEDIS maneja (saldo desde junio o catálogo del Inventario Consolidado).','Cada publicación de la Calculadora de Reposición'],
   '4':['Presupuesto ejecutado sobre el presupuesto modificado.','Estimado = (ejecutado del último GR55 + valor de las entradas contables 101 − 102 del MB51 desde el día siguiente a su corte) ÷ presupuesto modificado. Las entradas 561/562 no tienen presupuesto asignado y no cuentan. Cuando Finanzas entregue un GR55 nuevo, se reemplaza el ancla y el kardex suma desde ese corte.','GR55 (carga manual) + Kardex MB51'],
   '5':['Entregas de proveedores recibidas dentro de su fecha de entrega.','Entregas a tiempo ÷ entregas comparables, por mes de recepción.','Cada carga de recepción'],
   '6':['Días que tarda el ciclo de atención de un pedido.','Mediana de días del ciclo de los pedidos del mes, según el Kanban. Aún no separa pedido mensual y urgencia.','Cada publicación del Kanban'],
@@ -323,6 +325,14 @@ function prepararIndicadores(){
   var I={}, src=S.src;
   var inv=src.inventario, kan=src.kanban, man=src.manual;
   ['2','3','10'].forEach(function(id){ if(inv) I[id]={ serie:serieKpi(inv,id), det:(inv.indicadores[id]||{}).detalle, fuente:'inventario', corte:inv.corte, foto:true }; });
+  /* 2 y 3 · 3 CEDIS por familia (kpi_cobertura_cedis.json). Los meses previos a esa medición
+     conservan la cifra anterior (solo CEDIS Panamá) y se marcan como "método anterior". */
+  var cob=src.cobertura;
+  if(cob && cob.indicadores){ ['2','3'].forEach(function(id){
+    var s=serieKpi(cob,id), ini=Object.keys(s).sort()[0], ant=inv?serieKpi(inv,id):{};
+    Object.keys(ant).forEach(function(m){ if(m<ini){ s[m]=ant[m]; s[m].ant=true; } });
+    I[id]={ serie:s, det:(cob.indicadores[id]||{}).detalle, fuente:'cobertura', corte:cob.corte, foto:true };
+  }); }
   ['1a','1b','9','6','7'].forEach(function(id){
     if(!kan) return;
     var s=serieKpi(kan,id);
@@ -351,7 +361,7 @@ function prepararIndicadores(){
 function valorEn(id, mes){
   var I=S.ind[id]; if(!I) return null;
   var f=I.serie[mes];
-  if(f) return { v:f.v, corte:f.corte, vacio:!!f.vacio };
+  if(f) return { v:f.v, corte:f.corte, vacio:!!f.vacio, ant:!!f.ant };
   if(I.foto && mes===S.mesHoy){ var kf=Object.keys(I.serie).filter(function(m){ return m<=mes; }).sort(); if(kf.length){ var q=I.serie[kf[kf.length-1]]; return { v:q.v, corte:q.corte }; } }
   if(I.flujo && mes===S.mesHoy) return { v:null, vacio:true };
   if(I.arrastre){ var ks=Object.keys(I.serie).filter(function(m){ return m<=mes; }).sort(); if(ks.length){ var k=ks[ks.length-1]; if(mesesEntre(k,mes)>3) return null; return { v:I.serie[k].v, corte:I.serie[k].corte, arrastre:k }; } }
@@ -422,7 +432,8 @@ function card(id){
     '<div class="ins">'+ins+'</div>'+
     '<div class="vr"><div class="val" id="vl_'+id+'">—</div><div class="fec" id="fc_'+id+'"></div></div>'+
     '<div class="mt">Meta '+(g.dir==='up'?'≥ ':'≤ ')+esc(fmt(g.meta,g.unidad))+(g.notaMeta?' · provisional':'')+'</div>'+
-    '<div class="gap" id="gp_'+id+'"></div><div class="dl" id="dl_'+id+'"></div><div class="nt" id="nt_'+id+'"></div><div class="stale" id="st_'+id+'" style="display:none"></div></div>';
+    '<div class="gap" id="gp_'+id+'"></div><div class="dl" id="dl_'+id+'"></div><div class="nt" id="nt_'+id+'"></div>'+(id==='2'||id==='3'?'<div class="fams" id="fm_'+id+'"></div>':'')+'<div class="stale" id="st_'+id+'" style="display:none"></div>'+
+    (g.responsable?'<div class="resp">Responsable: <b>'+esc(g.responsable)+'</b></div>':'')+'</div>';
 }
 function ghL(txt,span,extra){ return '<div class="gh ghL" style="grid-column:span '+span+'">'+esc(txt)+(extra||'')+'</div>'; }
 function gh(txt,span,extra){ return '<div class="gh" style="grid-column:span '+span+'">'+esc(txt)+(extra||'')+'</div>'; }
@@ -482,6 +493,7 @@ function construir(){
   $('main').addEventListener('click',function(e){
     var q=e.target.closest('[data-q]'); if(q){ ayuda(q.getAttribute('data-q')); return; }
     if(e.target.closest('[data-leer]')){ comoLeer(); return; }
+    if(e.target.closest('[data-cob]')){ ayudaCobertura(); return; }
     var so=e.target.closest('th.so'); if(so){ ordenar(so.getAttribute('data-k'),+so.getAttribute('data-c')); return; }
     if(e.target.closest('[data-tour]')){ tour(0); return; }
     var cbv=e.target.closest('li[data-cbv]'); if(cbv){ comboElegir(cbv.getAttribute('data-cb'),cbv.getAttribute('data-cbv')); return; }
@@ -554,6 +566,8 @@ function pintar(i){
     var pv2 = p && !p.vacio ? p.v : null;
     if(id==='4' && v!=null && x.arrastre){ var yy=(+x.arrastre.substring(0,4)-1)+x.arrastre.substring(4); var py=I.serie[yy]; pv2=py?py.v:null; }
     if(p && x && p.corte && x.corte===p.corte && !(id==='4' && x.arrastre)) pv2=null;
+    var cambioMetodo = !!(p && x && !p.vacio && !x.vacio && !!p.ant!==!!x.ant);   /* 2 y 3: no comparar 3 CEDIS contra solo Panamá */
+    if(cambioMetodo) pv2=null;
     if(v!=null && pv2!=null){
       var d=v-pv2, better=g.dir==='up'?d>0:d<0, same=Math.abs(d)<0.05;
       var etq = id==='4' && x.arrastre ? 'mismo mes del año anterior' : MES[+ant.substring(5,7)-1];
@@ -562,7 +576,8 @@ function pintar(i){
       if(!same && id!=='4'){ var rel=(better?1:-1)*Math.abs(d)/(g.max||1);
         if(better && (!resumen.mejor||rel>resumen.mejor.r)) resumen.mejor={ r:rel, t:g.nombre+' ('+(d>0?'+':'−')+fmt(Math.abs(d),uGap(g.unidad))+')' };
         if(!better && (!resumen.peor||rel<resumen.peor.r)) resumen.peor={ r:rel, t:g.nombre+' ('+(d>0?'+':'−')+fmt(Math.abs(d),uGap(g.unidad))+')' }; }
-    } else dl.textContent='';
+    } else if(cambioMetodo && v!=null){ dl.textContent='Nueva medición · sin comparación con '+MES[+ant.substring(5,7)-1]; dl.style.color='#4a4a4a'; }
+    else dl.textContent='';
     var det='';
     if(v!=null && I){
       if(I.fuente==='kanban'){
@@ -570,7 +585,10 @@ function pintar(i){
         else { var hr=I.hist[mes]; if(hr && hr.salidas) det='Cierre del mes · '+Number(hr.salidas).toLocaleString('en-US')+' salidas'+(hr.otif!=null?' · OTIF conjunto '+hr.otif+'%':''); }
       } else if(x.corte && I.corte && String(x.corte).substring(0,10)===String(I.corte).substring(0,10)) det=I.det||'';
     }
+    if(v!=null && I && I.fuente==='cobertura' && !(x&&x.ant)) det='Cifra principal: medicamentos, 3 CEDIS · clic para ver cada CEDIS';
+    if(x && x.ant) det='Solo CEDIS Panamá · método anterior';
     nt.textContent=det;
+    if(id==='2'||id==='3') pintarFamilias(id,mes,x);
     if(e.ok && e.stale && (mes===S.mesHoy || mes===String(e.ref).substring(0,7))){ sw.style.display=''; sw.textContent='Fuente desactualizada · corte '+fCorta(e.ref); } else sw.style.display='none';
     /* instrumentos */
     var f = v!=null ? cl(v/g.max) : 0, b=bandas(g), has=v!=null;
@@ -590,6 +608,22 @@ function pintar(i){
   var vie=S.reg.fuentes.filter(function(f){ var e=S.est[f.id]; return e&&e.ok&&e.stale; }).map(function(f){ return f.nombre.split(' · ')[0]+' ('+fCorta(S.est[f.id].ref)+')'; });
   if(vie.length) L.push('<li>Fuente desactualizada: <b>'+esc(vie.join(', '))+'</b>.</li>');
   $('lect').innerHTML=L.join('');
+}
+/* Chips por familia en las tarjetas 2 y 3: Medicamentos (cifra principal), Médico-quirúrgico y Laboratorio. */
+function famValores(id,mes){
+  var cob=S.src.cobertura; if(!cob) return null;
+  var h=cob.historico&&cob.historico[mes], o={};
+  if(mes===String(cob.corte).substring(0,7) && cob.detalle){ ['MED','MQ','LAB'].forEach(function(f){ var d=cob.detalle.NAC[f]; o[f]=id==='3'?d.cob:d.ago; }); return o; }
+  if(!h) return null;
+  o.MED=h[id]; ['MQ','LAB'].forEach(function(f){ var a=h.fam&&h.fam[f]; o[f]=a?a[id==='3'?0:1]:null; }); return o;
+}
+function pintarFamilias(id,mes,x){
+  var el=$('fm_'+id); if(!el) return;
+  var o=(x&&!x.ant)?famValores(id,mes):null, g=S.reg.indicadores[id];
+  if(!o){ el.innerHTML=''; return; }
+  var N={ MED:'Medicamentos', MQ:'Médico-quirúrgico', LAB:'Laboratorio' };
+  el.innerHTML=['MED','MQ','LAB'].map(function(f){ var v=o[f], e=estado(g,v), c=COL[e];
+    return '<span class="fc" style="background:'+c[2]+';color:'+c[1]+';border-color:'+c[0]+'"><span>'+N[f]+(f==='MED'?' ★':'')+'</span><b>'+esc(fmt(v,g.unidad))+'</b></span>'; }).join('');
 }
 function parar(){ if(S.timer){ clearInterval(S.timer); S.timer=null; $('bPlay').textContent='▶ Recorrer'; } }
 function recorrer(){
@@ -964,12 +998,13 @@ function vPlan(){
     else lleg=tr.n?'Entrega vencida sin registrar':'Sin OC registrada';
     return [r.cod,String(r.renglon||'').split(',').slice(0,2).join(','),r.ceros.join(', '),r.nac.saldo,r.nac.demandaMes,m,fin,tr.u||null,tr.prox||'',lleg,r.mover,r.origenes.join(' y ')]; });
   h+='<div class="kp">'+
-    kc(x2?estado(g['2'],x2.v):'con','Desabasto · CEDIS Panamá',x2?fmt(x2.v,'%'):'—','meta ≤ '+g['2'].meta+'% · corte '+(x2?fCorta(x2.corte):'—'))+
-    kc(x3?estado(g['3'],x3.v):'con','Cobertura · CEDIS Panamá',x3?fmt(x3.v,'m'):'—','mediana · meta ≥ '+g['3'].meta+' m')+
+    kc(x2?estado(g['2'],x2.v):'con',g['2'].nombre,x2?fmt(x2.v,'%'):'—',(x2&&x2.ant?'solo CEDIS Panamá · ':'medicamentos · ')+'meta ≤ '+g['2'].meta+'% · corte '+(x2?fCorta(x2.corte):'—'))+
+    kc(x3?estado(g['3'],x3.v):'con',g['3'].nombre,x3?fmt(x3.v,'m'):'—',(x3&&x3.ant?'solo CEDIS Panamá · ':'medicamentos · ')+'mediana · meta ≥ '+g['3'].meta+' m')+
     kc(L.length?'crit':'ok','Renglones vitales en cero en al menos un CEDIS',num(L.length),'renglones · '+num(L.reduce(function(a,r){ return a+r.ceros.length; },0))+' casos renglón y CEDIS')+
     kc('con','Traslados entre CEDIS sugeridos',num(k.totalTraslados),'entre los 3 CEDIS · '+num(k.urgentes)+' urgentes · '+num(k.unidadesUrgentes)+' unidades')+
     kc(k.invExceso?'bajo':'ok','Renglones en exceso',num(k.invExceso),'más de '+k.mesesExceso+' meses de inventario')+
     kc('con','Corte de la fuente',fCorta(k.corte),'Redistribución entre CEDIS · F8 al '+fCorta(k.corteF8))+'</div>';
+  h+=panelCobertura();
   /* Gráficos: cobertura nacional de los vitales en cero, CEDIS en cero, y si la OC llega antes del quiebre */
   var bk={a:0,b:0,c:0,d:0}; filas.forEach(function(f){ var m=f[5]; if(m==null) return; if(m<0.5) bk.a++; else if(m<1) bk.b++; else if(m<3) bk.c++; else bk.d++; });
   var ce={}; L.forEach(function(r){ r.ceros.forEach(function(c){ ce[c]=(ce[c]||0)+1; }); });
@@ -992,6 +1027,35 @@ function vPlan(){
   if(!S.src.transitos) h+='<div class="pn"><div class="ph"><h3>Quiebre contra la orden de compra y cuánto pedir · por conectar</h3></div>'+
     '<div style="font-size:13px">Para saber si la OC llega antes del quiebre y cuánto pedir, el simulador de reposición tiene que publicar sus alertas en un JSON, igual que las demás fuentes. Cuando exista, esta sección mostrará por renglón vital: OC en camino, fecha de llegada, días de hueco y cantidad sugerida.</div></div>';
   return h;
+}
+
+/* Cobertura y desabasto por CEDIS y familia (indicadores 2 y 3) + pedidos fuera de catálogo */
+function panelCobertura(){
+  var cob=S.src.cobertura, g=S.reg.indicadores;
+  if(!cob||!cob.detalle) return '<div class="pn"><div class="ph"><h3>Cobertura y desabasto · 3 CEDIS</h3></div><div style="font-size:13px">Fuente no disponible: kpi_cobertura_cedis.json.</div></div>';
+  var F=['MED','MQ','LAB'], C=['NAC','PA','DI','CH'], fz=cob.fueraCatalogo||{filas:[]};
+  var th='<tr><th>CEDIS</th>'+F.map(function(f){ return '<th style="text-align:center">'+esc(cob.familias[f])+(f==='MED'?' ★':'')+'</th>'; }).join('')+'</tr>';
+  var tb=C.map(function(c){ return '<tr'+(c==='NAC'?' style="font-weight:700"':'')+'><td>'+esc(cob.cedis[c])+'</td>'+F.map(function(f){ var d=cob.detalle[c][f];
+      if(!d||!d.n) return '<td style="text-align:center">—</td>';
+      return '<td style="text-align:center">'+chip(estado(g['3'],d.cob),fmt(d.cob,'m'))+' '+chip(estado(g['2'],d.ago),fmt(d.ago,'%')+' en cero')+
+        '<div class="sf" style="font-size:11px">'+num(d.n)+' renglones · '+fmt(d.cub,'%')+' con 1 mes o más</div></td>'; }).join('')+'</tr>'; }).join('');
+  var nf={}; fz.filas.forEach(function(r){ nf[r[2]]=(nf[r[2]]||0)+1; });
+  TABLAS.fuera={ cols:[{h:'Renglón',t:'txt',w:12},{h:'Descripción',t:'txt',w:50},{h:'Familia',t:'txt',w:18},{h:'Salida F8 / mes (u)',t:'num',w:16},{h:'CEDIS donde se pide sin manejarlo',t:'txt',w:30}],
+    filas:fz.filas.map(function(r){ return [r[0],r[1],cob.familias[r[2]]||r[2],r[3],r[4]]; }), oc:-1, od:1 };
+  var alerta=fz.filas.length?'<div class="kc" style="background:'+COL.bajo[2]+';margin-top:4px"><div class="l">Sugerencia para Planificación · pedidos que ningún CEDIS maneja</div><div class="vs"><div class="v" style="color:'+COL.bajo[1]+'">'+num(fz.filas.length)+'</div><div class="s">renglones pedidos en Formas 8 sin saldo desde junio ni catálogo en el CEDIS donde se piden ('+F.filter(function(f){ return nf[f]; }).map(function(f){ return esc(cob.familias[f])+' '+num(nf[f]); }).join(' · ')+'). Conviene revisar si son códigos nuevos, variantes de un código que sí se maneja o renglones que deben entrar al catálogo.</div></div></div>':'';
+  return '<div class="pn"><div class="ph"><h3>Cobertura y desabasto por CEDIS y familia · corte '+esc(fCorta(cob.corte))+'</h3><button type="button" data-cob="1">ⓘ Cómo se calcula</button>'+(fz.filas.length?'<button type="button" data-xls="fuera">Excel · fuera de catálogo</button>':'')+'</div>'+
+    '<table class="t"><thead>'+th+'</thead><tbody>'+tb+'</tbody></table>'+alerta+
+    '<div class="nota">Primer valor: meses de cobertura (mediana). Segundo: % de renglones en cero. ★ cifra principal de los indicadores 2 y 3: medicamentos, nacional. Fuente: Calculadora de Reposición (inventario y salida F8) y saldos en línea de los CEDIS.</div></div>';
+}
+function ayudaCobertura(){
+  var cob=S.src.cobertura;
+  $('mT').textContent='Cobertura y desabasto · 3 CEDIS · cómo se calcula';
+  $('mD').innerHTML='Cuántos meses alcanza el inventario al ritmo de salida de las Formas 8, y qué parte de los renglones está en cero, en <b>Panamá, Divisa y Chiriquí</b>. Se mide en <b>unidades</b>, no en dinero. Se separa por familia (<b>medicamentos</b>, <b>médico-quirúrgico</b> y <b>laboratorio</b>) para que una familia no esconda a otra; la cifra principal del tablero es medicamentos, nacional.';
+  $('mC').innerHTML='<b>1.</b> Por renglón: inventario ÷ salida mensual F8 (media de 90 días). Nacional = inventario de los 3 CEDIS ÷ salida de los 3 CEDIS.<br><b>2.</b> Solo cuentan los renglones que el CEDIS <b>maneja</b>: tuvo saldo mayor que cero desde junio en los saldos en línea, o está en el catálogo del Inventario Consolidado.<br><b>3.</b> Lo que se pide en Formas 8 pero ningún CEDIS maneja y está en cero no baja el indicador: se lista aparte como <b>pedidos fuera de catálogo</b>, para que Planificación revise si es un código nuevo, una variante de otro código o un renglón que debe entrar al catálogo.<br><b>4.</b> Por familia: la <b>mediana</b> de los meses (la mitad de los renglones está por encima y la mitad por debajo) y el <b>% en cero</b>.';
+  $('mM').textContent='Cobertura ≥ '+S.reg.indicadores['3'].meta+' mes · Desabasto ≤ '+S.reg.indicadores['2'].meta+'%';
+  $('mS').textContent='Calculadora de Reposición (matriz_snapshot) y saldos en línea de los CEDIS'+(cob?' · corte '+fCorta(cob.corte):'');
+  $('mF').textContent='Cada publicación de la Calculadora de Reposición';
+  $('ov').classList.add('on');
 }
 
 /* Presupuesto y pagos */
@@ -1065,9 +1129,13 @@ function accionSugerida(id){
     case '1a': return est.vencidosConStock ? 'Despachar las **'+num(est.vencidosConStock)+' Formas 8 atrasadas** que **ya tienen producto** en el almacén.' : 'Revisar la fase del Kanban con más pedidos atrasados.';
     case '1b': return est.vencidosCero ? '**'+num(est.vencidosCero)+' Formas 8 atrasadas esperan producto**: priorizar sus renglones en **compras y traslados**.' : 'Revisar renglones con faltante en los pedidos del mes.';
     case '9': return 'Revisar los renglones con **mayor cantidad no asignada** y su cobertura en los tres CEDIS.';
-    case '2': { var n=0, c={}; if(red&&red.f) red.f.forEach(function(x){ if(x.destinoEnCero && /PANAMA/i.test(x.destino) && !c[x.cod]){ c[x.cod]=1; n++; } });
-      return (inv&&inv.indicadores['2']?'**'+inv.indicadores['2'].detalle+'**. ':'')+(n?'**'+num(n)+'** de ellos se pueden **surtir hoy desde otro CEDIS** (Planificación).':''); }
-    case '3': return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra en tránsito** (Tránsitos de OC).';
+    case '2': { var cb=S.src.cobertura, n=0, c={}; if(red&&red.f) red.f.forEach(function(x){ if(x.destinoEnCero && !c[x.cod]){ c[x.cod]=1; n++; } });
+      if(!cb||!cb.detalle) return 'Revisar los renglones en cero con las órdenes de compra en tránsito.';
+      var pe=['PA','DI','CH'].map(function(k){ return [k,cb.detalle[k].MED.ago]; }).sort(function(a,b){ return b[1]-a[1]; })[0];
+      return '**'+cb.indicadores['2'].detalle+'**. El CEDIS con más medicamentos en cero es **'+cb.cedis[pe[0]]+'** ('+fmt(pe[1],'%')+')'+(n?'; **'+num(n)+'** renglones en cero en algún CEDIS se pueden **surtir hoy desde otro CEDIS** (Planificación)':'')+'.'; }
+    case '3': { var cb3=S.src.cobertura; if(!cb3||!cb3.detalle) return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra en tránsito** (Tránsitos de OC).';
+      var fz=(cb3.fueraCatalogo&&cb3.fueraCatalogo.filas.length)||0, lo=['MQ','LAB'].filter(function(f){ return cb3.detalle.NAC[f].cob<S.reg.indicadores['3'].meta; });
+      return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra en tránsito**'+(lo.length?'; bajo meta también **'+lo.map(function(f){ return cb3.familias[f]+' ('+fmt(cb3.detalle.NAC[f].cob,'m')+')'; }).join(' y ')+'**':'')+(fz?'. Revisar los **'+num(fz)+' pedidos fuera de catálogo** (Planificación)':'')+'.'; }
     case '5': { var L=proveedoresBajos(3); return L.length ? 'Gestionar con los proveedores de mayor valor bajo meta: '+L.map(function(x){ return '**'+x.p+'** ('+fmt(x.pct,'%')+')'; }).join(', ')+'.' : 'Revisar los proveedores bajo meta.'; }
     case '6': return 'Separar el tiempo de pedidos mensuales y urgencias para medir contra su meta.';
     case '7': return 'Sostener el ritmo de salidas del almacén.';
@@ -1083,7 +1151,7 @@ function vAlertas(){
   ['1a','1b','9','2','3','4','5','6','7','8','10'].forEach(function(id){
     var g=S.reg.indicadores[id], x=valorEn(id,mes); if(!x||x.vacio||x.v==null) return;
     var st=estado(g,x.v); if(st==='ok') return;
-    var pa=valorEn(id,mesAnt(mes)), dv=(pa&&!pa.vacio&&pa.v!=null&&!(pa.corte&&pa.corte===x.corte))?x.v-pa.v:null;
+    var pa=valorEn(id,mesAnt(mes)), dv=(pa&&!pa.vacio&&pa.v!=null&&!(pa.corte&&pa.corte===x.corte)&&!!pa.ant===!!x.ant)?x.v-pa.v:null;
     filas.push([id+' · '+g.nombre,x.v,(g.dir==='up'?'≥ ':'≤ ')+fmt(g.meta,g.unidad),textoGap(g,x.v).replace(' para llegar a la meta',''),st,accionSugerida(id),g.responsable||'',id,dv]);
   });
   filas.sort(function(a,b){ return (a[4]==='crit'?0:1)-(b[4]==='crit'?0:1); });
@@ -1104,7 +1172,7 @@ function vAlertas(){
 }
 function exportarTabla(key){
   var T=TABLAS[key]; if(!T) return;
-  var nom={ ind:['Indicadores_fuera_de_meta','Indicadores fuera de meta y acción sugerida'], plan:['Vitales_CEDIS_en_cero_planificacion','Vitales con un CEDIS en cero: inventario y cobertura nacional'], desp:['Despachos_por_unidad','Despachos por unidad ejecutora'], ue:['Nivel_servicio_por_unidad','Nivel de servicio por unidad ejecutora'], prov:['Proveedores_recibido','Proveedores: recibido y cumplimiento de entrega'] }[key];
+  var nom={ ind:['Indicadores_fuera_de_meta','Indicadores fuera de meta y acción sugerida'], plan:['Vitales_CEDIS_en_cero_planificacion','Vitales con un CEDIS en cero: inventario y cobertura nacional'], desp:['Despachos_por_unidad','Despachos por unidad ejecutora'], ue:['Nivel_servicio_por_unidad','Nivel de servicio por unidad ejecutora'], prov:['Proveedores_recibido','Proveedores: recibido y cumplimiento de entrega'], fuera:['Pedidos_fuera_de_catalogo_CEDIS','Pedidos en Formas 8 que ningún CEDIS maneja (fuera de catálogo)'] }[key];
   var filas=T.filas.map(function(r){ return r.slice(0,T.cols.length).map(function(v,i){ var c=T.cols[i]; if(key==='ind'&&i===4) return v==='crit'?'Crítico':'Bajo meta'; if(typeof v==='string') v=v.replace(/\*\*/g,''); return (v===''||v==null)?(c.vacio||''):v; }); });
   xlsInstitucional(nom[0],nom[1],[],T.cols.map(function(c){ return { h:c.h, t:c.t, w:c.w }; }),filas);
 }

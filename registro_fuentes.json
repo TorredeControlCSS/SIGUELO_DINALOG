@@ -1,6 +1,6 @@
 {
  "version": 1,
- "actualizado": "2026-10-09",
+ "actualizado": "2026-10-12",
  "descripcion": "Registro único de fuentes y metas del Tablero de Mando de la Dirección. Las metas viven SOLO aquí. YARVIS leerá este mismo archivo.",
  "fuentes": [
   {
@@ -9,14 +9,28 @@
    "url": "https://torredecontrolcss.github.io/Curvas_de_Inventario/kpi_inventario.json",
    "tipo": "kpi",
    "indicadores": [
-    "2",
-    "3",
     "10"
    ],
    "diasHabilesMax": 1,
    "tablero": {
     "nombre": "Curvas de Inventario",
     "url": "https://torredecontrolcss.github.io/Curvas_de_Inventario/"
+   }
+  },
+  {
+   "id": "cobertura",
+   "nombre": "Cobertura y desabasto · 3 CEDIS",
+   "url": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/kpi_cobertura_cedis.json",
+   "tipo": "kpi",
+   "indicadores": [
+    "2",
+    "3"
+   ],
+   "diasHabilesMax": 1,
+   "calculo": "Por familia (medicamentos, médico-quirúrgico, laboratorio) y CEDIS: cobertura = inventario ÷ salida mensual F8 (media de 90 días), en unidades; mediana por familia. Desabasto = % de renglones con salida que están en cero. Solo renglones que el CEDIS maneja (saldo > 0 desde junio o catálogo del Inventario Consolidado); lo demás se lista como pedidos fuera de catálogo. Cifra principal: medicamentos, nacional.",
+   "tablero": {
+    "nombre": "Tablero de Mando · Planificación",
+    "url": "https://torredecontrolcss.github.io/SIGUELO_DINALOG/tablero_mando.html#plan"
    }
   },
   {
@@ -170,7 +184,7 @@
   },
   "2": {
    "objetivo": "01",
-   "nombre": "Desabasto · CEDIS Panamá",
+   "nombre": "Desabasto · 3 CEDIS",
    "unidad": "%",
    "meta": 18,
    "dir": "down",
@@ -180,7 +194,7 @@
   },
   "3": {
    "objetivo": "01",
-   "nombre": "Cobertura · CEDIS Panamá",
+   "nombre": "Cobertura · 3 CEDIS",
    "unidad": "m",
    "meta": 1,
    "dir": "up",
