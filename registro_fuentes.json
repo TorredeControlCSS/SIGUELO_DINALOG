@@ -113,7 +113,7 @@
   {
    "id": "cuadre",
    "nombre": "Cuadre de entradas 561 · Kardex SAP-SAFIRO",
-   "url": "https://torredecontrolcss.github.io/REPOSICION_UE_CSS/kpi_cuadre_561.json",
+   "url": "https://torredecontrolcss.github.io/SIGUELO/kardex/kpi_cuadre_561.json",
    "tipo": "kpi",
    "indicadores": [
     "11"
