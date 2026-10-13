@@ -306,8 +306,12 @@ var INSUMOS = [
   { k:'salmi',      n:2, nombre:'ALMACÉN Y TORRE DE CONTROL · Reportes WMS SALMI',
     fuente:'WMS SALMI', resp:'Jefatura de Almacén',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
-    ayuda:'Trazabilidad, Reservas e Inventario Neto se descargan por área. Cargue cada archivo en su casilla.',
-    subreportes:['SALDOENLINEA','SOLICITUDES','DISTRIBUCION','TRAZ_MED','TRAZ_MQ','TRAZ_FRIO','TRAZ_ODO','RES_MED','RES_MQ','RES_FRIO','RES_ODO','NETO_MED','NETO_MQ','NETO_FRIO','NETO_ODO','VALORIZADO'] },
+    ayuda:'Trazabilidad se descarga por área: cargue cada archivo en su casilla. Reservas e Inventario Neto llegan en UN solo archivo de SALMI con los almacenes juntos (Módulo: Todos).',
+    /* 13-oct-2026 · Reservas e Inventario Neto: SALMI los entrega en un solo
+       archivo (Modulo: Todos). Las casillas usan las claves RES_MED y NETO_MED
+       que el puente ya conoce; el Motor reconoce el archivo unico por su
+       contenido (columna Modulo), no por el nombre. */
+    subreportes:['SALDOENLINEA','SOLICITUDES','DISTRIBUCION','TRAZ_MED','TRAZ_MQ','TRAZ_FRIO','TRAZ_ODO','RES_MED','NETO_MED','VALORIZADO'] },
   { k:'kardex',     n:3, nombre:'KARDEX · Reportes SAP-SAFIRO',
     fuente:'SAP-SAFIRO', resp:'Jefatura de Facturación / Kardex',
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv',
@@ -327,9 +331,9 @@ var ETIQ_SUB = {
   SALDOENLINEA:'Saldos en Línea', SOLICITUDES:'Periodo de Solicitudes', DISTRIBUCION:'Distribución',
   TRAZ_MED:'Trazabilidad · Medicamentos', TRAZ_MQ:'Trazabilidad · MQ',
   TRAZ_FRIO:'Trazabilidad · Cuarto Frío',  TRAZ_ODO:'Trazabilidad · Odontología',
-  RES_MED:'Reservas · Medicamentos',       RES_MQ:'Reservas · MQ',
+  RES_MED:'Reservas · archivo único (todos los almacenes)', RES_MQ:'Reservas · MQ',
   RES_FRIO:'Reservas · Cuarto Frío',       RES_ODO:'Reservas · Odontología',
-  NETO_MED:'Inv. Neto · Medicamentos',     NETO_MQ:'Inv. Neto · MQ',
+  NETO_MED:'Inventario Neto · archivo único (todos los almacenes)', NETO_MQ:'Inv. Neto · MQ',
   NETO_FRIO:'Inv. Neto · Cuarto Frío',     NETO_ODO:'Inv. Neto · Odontología',
   VALORIZADO:'Inventario Valorizado',
   MB51:'MB51 · Movimientos del Kardex',    MB52:'MB52 · Inventario por lote',
@@ -552,10 +556,18 @@ function leerTitulo_(file, listo){
   fr.readAsArrayBuffer(file.slice(0, 4*1024*1024));  // basta la cabecera del libro
 }
 /* Compara lo leído contra la huella esperada de la casilla. */
+/* 13-oct-2026 · Casillas de archivo unico: ademas del titulo, el encabezado
+   debe decir 'Modulo: Todos'. Un archivo de una sola area aqui dejaria fuera
+   a los demas almacenes (el Motor lo rechaza, pero se avisa antes de subir). */
+var UNICO = { 'salmi::RES_MED':true, 'salmi::NETO_MED':true };
 function revisarTitulo_(id, texto){
   var esperada=HUELLAS[id];
   if(!esperada || texto===null) return null;            // casilla sin huella verificada
-  if(texto.indexOf(nrmTit_(esperada))>=0) return { ok:true };
+  if(texto.indexOf(nrmTit_(esperada))>=0){
+    if(UNICO[id] && texto.indexOf('MODULO: TODOS')<0)
+      return { ok:false, otra:null, esperada:esperada, unico:true };
+    return { ok:true, esperada:esperada };
+  }
   var otra=null;
   for(var h in HUELLA_NOMBRE){
     if(h!==esperada && texto.indexOf(nrmTit_(h))>=0){ otra=h; break; }
@@ -620,6 +632,13 @@ function tomarArchivo(ins, sub, file){
         return;
       }
       HUELLA_MAL[id] = true;
+      if(r.unico){
+        mostrar(id, 'err', '⚠ Este archivo es de <b>un solo almacén</b>. Esta casilla espera el archivo único de SALMI, '+
+          'el que dice <b>«Módulo: Todos»</b> en el encabezado. Descárguelo de SALMI con Módulo = Todos.<br>'+
+          'Si está seguro, presione <b>Subir de todos modos</b> (el Motor lo rechazará si faltan almacenes).');
+        var b3 = el('btn_'+id); b3.className = 'btn rep'; b3.textContent = 'Subir de todos modos';
+        return;
+      }
       var quees = r.otra
         ? 'Este archivo parece ser <b>'+HUELLA_NOMBRE[r.otra]+'</b> ('+r.otra+')'
         : 'Este archivo no trae el título esperado';
@@ -1097,8 +1116,8 @@ function marcaFecha_(sel){
 var PROC_SUB = {
   f8:           ['SOLICITUDES'],
   distribucion: ['DISTRIBUCION'],
-  reservas:     ['RES_MED','RES_MQ','RES_FRIO','RES_ODO'],
-  inv_neto:     ['NETO_MED','NETO_MQ','NETO_FRIO','NETO_ODO'],
+  reservas:     ['RES_MED'],    // 13-oct: archivo unico
+  inv_neto:     ['NETO_MED'],
   trazabilidad: ['TRAZ_MED','TRAZ_MQ','TRAZ_FRIO','TRAZ_ODO'],
   saldos:       ['SALDOENLINEA']
 };
@@ -1344,9 +1363,9 @@ var PROCESOS = [
   { k:'distribucion', t:'Distribución',
     h:['<b>ASIGNACIONES_F8</b> · DIST_SALMI','<b>CALCULADORA</b> · DISTRIBUCIONES'] },
   { k:'reservas',     t:'Reservas',
-    h:['<b>ASIGNACIONES_F8</b> · RESERVAS','4 áreas en una hoja'] },
+    h:['<b>ASIGNACIONES_F8</b> · RESERVAS','archivo único de SALMI'] },
   { k:'inv_neto',     t:'Inventario Neto',
-    h:['<b>ASIGNACIONES_F8</b> · INVENTARIO_NETO','4 áreas en una hoja'] },
+    h:['<b>ASIGNACIONES_F8</b> · INVENTARIO_NETO','archivo único de SALMI'] },
   { k:'trazabilidad', t:'Trazabilidad',
     h:['<b>ASIGNACIONES_F8</b> · WMS_TRAZABILIDAD','4 áreas en una hoja'] }
 ];
