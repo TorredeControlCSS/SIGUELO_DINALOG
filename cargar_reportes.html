@@ -382,10 +382,13 @@ var NIVEL_CFG = {
            + 'es seguro, pero es la operación más pesada del sistema. Hágalo solo si el archivo anterior '
            + 'venía incompleto. Presione otra vez para confirmar.' },
   D: { confirma:true,  btn:'Cargar corte de inventario', tono:'err',
-       aviso:'<b>Este corte ya fue cargado y procesado.</b> La curva de inventario solo admite cortes '
-           + 'posteriores al último registrado, así que <b>volver a subir la misma fecha no corrige el dato</b>: '
-           + 'el archivo se guarda pero el cálculo lo ignora. Si el corte anterior venía mal, avise a Torre de '
-           + 'Control para depurar la serie. Presione otra vez si aun así desea archivarlo.' },
+       /* 13-oct-2026 · el texto anterior decía que volver a subir la misma fecha
+          no corregía el dato. No es así: curvasPaso1 purga y recarga el ÚLTIMO
+          corte (se vio el 13-oct). Un corte anterior al último sí se ignora. */
+       aviso:'<b>Ya hay una carga de este reporte en la fecha seleccionada.</b> Si el archivo trae el '
+           + '<b>mismo corte que el último de la curva</b>, ese día se <b>reemplaza</b> con el archivo nuevo '
+           + '(no se duplica). Si trae un corte <b>anterior</b> al último, el cálculo lo ignora y se conserva '
+           + 'lo que ya estaba. Presione otra vez para confirmar.' },
   E: { confirma:false, btn:'Cargar archivo', tono:'info',
        aviso:'Este archivo se almacena para consulta. No alimenta ningún tablero por ahora.' }
 };
@@ -511,6 +514,8 @@ var HUELLAS = {
   'salmi::TRAZ_MQ':   'REQUISICIONES',
   'salmi::TRAZ_FRIO': 'REQUISICIONES',
   'salmi::TRAZ_ODO':  'REQUISICIONES',
+  /* 13-oct-2026 · verificado contra 02_SALMI_2026-10-06_VALORIZADO_v2.xlsx */
+  'salmi::VALORIZADO': 'INVENTARIO FISICO - VALORIZADO',
   /* Los exports de SAP-SAFIRO no traen fila de titulo: la fila 1 ya es la
      cabecera. La firma se toma de una columna que solo existe en uno de los
      dos reportes, asi que confundir las casillas se detecta siempre.
@@ -526,6 +531,7 @@ var HUELLA_NOMBRE = {
   'PERIODO DE DISTRIBUCION':'Distribución',
   'CANTIDADES RESERVADAS':'Reservas',
   'INVENTARIO FISICO - DISPONIBLE':'Inventario Neto',
+  'INVENTARIO FISICO - VALORIZADO':'Inventario Valorizado (curva)',
   'REQUISICIONES':'Trazabilidad',
   'CLASE DE MOVIMIENTO':'Kardex MB51 (movimientos)',
   'LIBRE UTILIZACION':'Kardex MB52 (inventario por lote)',
@@ -579,6 +585,39 @@ function revisarTitulo_(id, texto){
   return { ok:false, otra:otra, esperada:esperada };
 }
 
+/* 13-oct-2026 · FECHA DEL CORTE DE LA CURVA
+   La curva toma la fecha de corte de la etiqueta «Fecha Inventario:» de
+   adentro del reporte (INV_VALORIZADO hace lo mismo), no del nombre del
+   archivo ni del día en que se sube. El 13-oct se subió un reporte generado
+   con Fecha Inventario 12/10/2026: la curva reemplazó el 12-oct y no avanzó
+   al 13. Aquí se lee esa misma etiqueta y, si no coincide con la fecha de
+   carga, se avisa antes de subir. SALMI la escribe como texto dd/mm/aaaa;
+   si algún día llega como fecha de Excel (número), también se entiende. */
+var FECHA_CORTE = { 'salmi::VALORIZADO':true };
+var AVISO_FECHA = {};   // id → 'fechaArchivo|fechaCarga' ya advertida
+function fechaInventario_(texto){
+  if(!texto) return null;
+  var m=texto.match(/FECHA INVENTARIO:?\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if(m) return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+  var n=texto.match(/FECHA INVENTARIO:?\s*(\d{5})(?![\d\/])/);
+  if(n){ var d=new Date(Date.UTC(1899,11,30)+(+n[1])*86400000); return d.toISOString().slice(0,10); }
+  return null;
+}
+function fmtDMA_(iso){ var p=String(iso).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
+function avisoFechaCorte_(id, fArch, fCarga){
+  AVISO_FECHA[id]=fArch+'|'+fCarga;
+  var antes = fArch < fCarga;
+  mostrar(id, 'err',
+    '⚠ <b>La fecha del reporte no es la de hoy.</b> Adentro dice <b>Fecha Inventario: '+fmtDMA_(fArch)+'</b> '+
+    'y la fecha de carga es <b>'+fmtDMA_(fCarga)+'</b>.<br>'+
+    (antes
+      ? 'Si lo sube, la curva <b>no avanzará al '+fmtDMA_(fCarga)+'</b>: lo toma como el corte del '+fmtDMA_(fArch)+'.<br>'
+      : 'Es una fecha posterior a la de carga.<br>')+
+    'Lo correcto: generar otra vez el reporte en SALMI con <b>Fecha Inventario = '+fmtDMA_(fCarga)+'</b>.<br>'+
+    'Si está seguro de que es el reporte correcto, presione <b>Subir de todos modos</b>.');
+  var b=el('btn_'+id); b.className='btn rep'; b.textContent='Subir de todos modos';
+}
+
 function enlazarCarga(ins, sub){
   var id=idFila(ins,sub);
   var dz=el('dz_'+id), fi=el('file_'+id), bt=el('btn_'+id);
@@ -593,6 +632,8 @@ function enlazarCarga(ins, sub){
     if(e.target.files[0]) tomarArchivo(ins, sub, e.target.files[0]);
   });
   bt.addEventListener('click', function(){
+    var fA = ARCHIVOS[id] && ARCHIVOS[id].fechaInv, fC = el('fechaRep').value || hoyISO();
+    if (FECHA_CORTE[id] && fA && fA !== fC && AVISO_FECHA[id] !== fA+'|'+fC) { avisoFechaCorte_(id, fA, fC); return; }
     var nv = nivelDe(id);
     if (YA_CARGADO[id] && nv.confirma && !CONFIRMA[id]) {
       CONFIRMA[id] = true;
@@ -626,10 +667,21 @@ function tomarArchivo(ins, sub, file){
 
     // H6 · el título del archivo decide si está en la casilla correcta
     HUELLA_MAL[id] = false;
+    AVISO_FECHA[id] = null;
     leerTitulo_(file, function(txt){
       if(!ARCHIVOS[id] || ARCHIVOS[id].nombre!==file.name) return;   // ya cambió de archivo
       var r = revisarTitulo_(id, txt);
       if(!r) return;                                                  // sin huella que comparar
+      if(r.ok && FECHA_CORTE[id]){
+        var fA = fechaInventario_(txt), fC = el('fechaRep').value || hoyISO();
+        ARCHIVOS[id].fechaInv = fA;
+        if(fA && fA !== fC){ avisoFechaCorte_(id, fA, fC); return; }
+        if(fA){
+          mostrar(id, 'ok', 'Archivo listo (' + Math.round(file.size/1024) + ' KB) · título verificado: <b>'+
+            HUELLA_NOMBRE[r.esperada]+'</b> · Fecha Inventario <b>'+fmtDMA_(fA)+'</b>. Presione «Cargar archivo».');
+          return;
+        }
+      }
       if(r.ok){
         mostrar(id, 'ok', 'Archivo listo (' + Math.round(file.size/1024) + ' KB) · título verificado: <b>'+
           (HUELLA_NOMBRE[r.esperada]||r.esperada)+'</b>. Presione «Cargar archivo».');
