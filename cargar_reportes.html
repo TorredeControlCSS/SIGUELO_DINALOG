@@ -123,6 +123,10 @@
          padding:5px 9px;line-height:1.35;margin-bottom:2px;}
   /* bloques de carga (uno por reporte) */
   .subs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:9px;}
+  /* 13-oct-2026 · SALMI tiene 10 casillas: dos filas de 5, sin huecos. */
+  .subs.cinco{grid-template-columns:repeat(5,minmax(0,1fr));}
+  @media(max-width:1200px){.subs.cinco{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media(max-width:640px){.subs.cinco{grid-template-columns:1fr;}}
   .carga{border:1px solid #dfe5ec;border-radius:4px;padding:9px 10px;background:#fafcff;
          display:flex;flex-direction:column;gap:8px;}
   .carga-t{font-size:12px;font-weight:700;color:var(--azul);display:flex;align-items:center;gap:7px;}
@@ -445,7 +449,7 @@ function bloqueCarga(ins, sub){
 function pintarTarjetas(){
   el('grid').innerHTML = INSUMOS.map(function(ins){
     var cuerpo = ins.subreportes
-      ? '<div class="subs">'+ins.subreportes.map(function(s){ return bloqueCarga(ins,s); }).join('')+'</div>'
+      ? '<div class="subs'+(ins.subreportes.length%5===0?' cinco':'')+'">'+ins.subreportes.map(function(s){ return bloqueCarga(ins,s); }).join('')+'</div>'
       : bloqueCarga(ins, null);
     var ayuda = ins.ayuda ? '<div class="ayuda">'+ins.ayuda+'</div>' : '';
     var cuantos = ins.subreportes ? '<span class="cnt" id="cnt_'+ins.k+'">0/'+ins.subreportes.length+'</span>' : '';
