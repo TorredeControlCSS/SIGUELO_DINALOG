@@ -67,6 +67,15 @@ header p{margin:0;font-size:12px;color:#cfe0f3}
 .fts{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
 .fts span{font-size:11.5px;background:var(--azP);color:var(--az2);padding:3px 7px;border-radius:2px}
 .fts span.des{background:var(--amP);color:var(--am)}
+/* 1.1.0 · calificación de la respuesta */
+.cal{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px solid var(--bd2);font-size:12.5px;color:var(--tx3)}
+.cal .pq{margin-right:4px}
+.cal button{font:inherit;font-size:12.5px;border:0;border-radius:999px;padding:4px 12px;cursor:pointer;background:var(--card2);color:var(--tx2)}
+.cal button[data-cal="MAL"].on{background:var(--rjP);color:var(--rj)}.cal button[data-cal="REGULAR"].on{background:var(--amP);color:var(--am)}.cal button[data-cal="BIEN"].on{background:var(--okP);color:var(--ok)}
+.cal .por{flex-basis:100%;display:flex;gap:6px;margin-top:4px}
+.cal .por input{flex:1;min-width:0;font:inherit;font-size:13px;border:1px solid var(--bd);border-radius:10px;padding:6px 10px;background:var(--card);color:var(--tx)}
+.cal .por button{background:var(--azP);color:var(--az2)}
+.cal .ok{color:var(--ok)}.cal .err{color:var(--rj)}
 .det{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px}
 .det em{font-style:normal;font-size:12px;color:var(--tx3);margin-right:2px}
 .aviso{font-size:12px;color:var(--am);margin-top:6px}
@@ -216,7 +225,7 @@ html.auto #entrada{display:none}
     <button id="mic" type="button" title="Dictar la pregunta" aria-label="Dictar la pregunta" hidden><svg class="i"><use href="#ic-mic"/></svg></button>
     <textarea id="q" rows="1" placeholder="Escriba su pregunta" aria-label="Pregunta"></textarea>
     <button id="env" type="button">Enviar</button>
-  </div><div class="pie ancho">Yarvis usa solo los datos publicados del ecosistema y, si un dato no existe, lo dice. Yarvis puede cometer errores: verifique las cifras importantes en el Tablero de Mando.</div></div>
+  </div><div class="pie ancho">Yarvis usa solo los datos publicados del ecosistema y, si un dato no existe, lo dice. Yarvis puede cometer errores: verifique las cifras importantes en el Tablero de Mando.<span id="ver"></span></div></div>
 </section>
 </div>
 
@@ -319,7 +328,25 @@ function cuerpoRespuesta(j){
   var fts=(j.fuentes||[]).map(function(f){ var des=f.estado==='desactualizada'; return '<span'+(des?' class="des"':'')+'>'+esc(f.nombre)+(f.corte?' · corte '+esc(f.corte):'')+(des?' · desactualizada':'')+'</span>'; }).join('');
   return '<div class="b"><div class="quien">Yarvis</div>'+formato(j.respuesta)+(j.aviso?'<div class="aviso">'+esc(j.aviso)+'</div>':'')+
     (j.tabla&&j.tabla.filas?bloqueTabla(j.tabla):'')+(j.serie&&j.serie.puntos?bloqueSerie(j.serie):'')+
-    detalle(j)+(fts?'<div class="fts">'+fts+'</div>':'')+'</div>';
+    detalle(j)+(fts?'<div class="fts">'+fts+'</div>':'')+barraCal(j)+'</div>';
+}
+/* 1.1.0 · "¿Le sirvió esta respuesta?": Mal / Regular / Bien y un motivo opcional. Se puede cambiar. */
+function barraCal(j){
+  if(!j||!j.id) return '';
+  var c=j.cal||'', b=function(v,t){ return '<button type="button" data-cal="'+v+'"'+(c===v?' class="on"':'')+'>'+t+'</button>'; };
+  return '<div class="cal" data-calid="'+esc(j.id)+'"><span class="pq">¿Le sirvió esta respuesta?</span>'+b('MAL','Mal')+b('REGULAR','Regular')+b('BIEN','Bien')+
+    '<span class="ok" data-calok>'+(c?'· Gracias, quedó registrada':'')+'</span>'+
+    '<div class="por"'+(c==='MAL'||c==='REGULAR'?'':' hidden')+'><input type="text" maxlength="500" placeholder="¿Qué estuvo mal? (opcional)" aria-label="Qué estuvo mal" value="'+esc(j.motivo||'')+'"><button type="button" data-calenv>Enviar</button></div></div>';
+}
+function calificar(bar,cal,motivo){
+  var id=bar.getAttribute('data-calid'), ok=bar.querySelector('[data-calok]');
+  bar.querySelectorAll('[data-cal]').forEach(function(x){ x.classList.toggle('on',x.getAttribute('data-cal')===cal); });
+  bar.querySelector('.por').hidden=!(cal==='MAL'||cal==='REGULAR');
+  ok.className='ok'; ok.textContent='· Guardando…';
+  (S.conv.m||[]).forEach(function(m){ if(m.j&&m.j.id===id){ m.j.cal=cal; if(motivo!==undefined) m.j.motivo=motivo; } }); guardarConvAct();
+  llamar({ pin:S.pin, accion:'calificar', id:id, calificacion:cal, motivo:motivo||'' },20000).then(function(r){
+    if(r&&r.ok){ ok.textContent='· Gracias, quedó registrada'; } else { ok.className='err'; ok.textContent='· '+((r&&r.error)||'No se pudo guardar'); } })
+    .catch(function(){ ok.className='err'; ok.textContent='· Sin conexión: no se guardó'; });
 }
 /* "Ver el detalle en": la vista del Tablero de Mando y el tablero del ecosistema de cada fuente citada,
    para que el usuario siga con consultas más específicas donde vive la información granular. */
@@ -342,7 +369,9 @@ $('lista').addEventListener('click',function(e){
     $('tw_'+k).innerHTML=htmlTabla(k); return; }
   var g=e.target.closest('[data-graf]'); if(g){ var k2=g.getAttribute('data-graf'), gr=$('gr_'+k2), tw=$('tw_'+k2);
     if(gr.hidden){ gr.innerHTML=graficoBarras(k2); gr.hidden=false; tw.hidden=true; g.innerHTML=ic('tablaV')+'Ver tabla'; } else { gr.hidden=true; tw.hidden=false; g.innerHTML=ic('bar')+'Ver gráfico'; } return; }
-  var x=e.target.closest('[data-xls]'); if(x){ excel(x.getAttribute('data-xls')); }
+  var x=e.target.closest('[data-xls]'); if(x){ excel(x.getAttribute('data-xls')); return; }
+  var cb=e.target.closest('[data-cal]'); if(cb){ var bar=cb.closest('[data-calid]'), inp=bar.querySelector('.por input'); var cv=cb.getAttribute('data-cal'); calificar(bar,cv,cv==='BIEN'?'':(inp?inp.value:'')); if(inp&&!bar.querySelector('.por').hidden) inp.focus(); return; }
+  var ce=e.target.closest('[data-calenv]'); if(ce){ var bar2=ce.closest('[data-calid]'), on=bar2.querySelector('[data-cal].on'); if(on) calificar(bar2,on.getAttribute('data-cal'),bar2.querySelector('.por input').value); }
 });
 
 /* ── Excel institucional (ExcelJS bajo demanda) ── */
@@ -387,12 +416,14 @@ function cargarHoy(){ llamar({ pin:S.pin, accion:'sugerencias' }).then(function(
 function nuevaConv(){ S.conv={ id:'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), t:'', m:[] }; S.tablas={}; vacio(); pintarLista(); guardarConvAct(); }
 /* La conversación en curso se guarda en el equipo: si el teléfono cierra la app al cambiar de pantalla,
    al volver aparece tal como estaba (hasta 12 horas después). */
+function verVersion(v){ var e=$('ver'); if(e&&v) e.textContent=' · Yarvis '+v; }
 function guardarConvAct(){ try{ localStorage.setItem('yv_conv_act',JSON.stringify({ t:Date.now(), quien:S.nombre, conv:S.conv })); }catch(e){ try{ localStorage.removeItem('yv_conv_act'); }catch(x){} } }
 function restaurarConv(){
   try{ var g=JSON.parse(localStorage.getItem('yv_conv_act')||'null'); if(!g||!g.conv||Date.now()-g.t>12*3600e3||(g.quien&&S.nombre&&g.quien!==S.nombre)) return false;
     S.conv=g.conv; S.tablas={}; if(!S.conv.m.length){ vacio(); return true; }
     $('lista').innerHTML=''; S.conv.m.forEach(pintarPar); $('nueva').hidden=false; setTimeout(abajo,50); return true; }catch(e){ return false; }
 }
+$('lista').addEventListener('keydown',function(e){ if(e.key!=='Enter') return; var inp=e.target.closest('.cal .por input'); if(!inp) return; e.preventDefault(); var bar=inp.closest('[data-calid]'), on=bar.querySelector('[data-cal].on'); if(on) calificar(bar,on.getAttribute('data-cal'),inp.value); });
 $('nueva').addEventListener('click',function(){ nuevaConv(); $('q').focus(); });
 function llamar(cuerpo,ms){
   /* tiempo máximo de espera: si el servidor no contesta, se avisa en vez de quedarse esperando */
@@ -413,7 +444,8 @@ function preguntar(texto){
   var hist=S.conv.m.slice(-6).map(function(m){ return { p:m.p, r:m.j.respuesta }; });
   llamar({ pin:S.pin, pregunta:texto, historial:hist, conversacion:S.conv.id }).then(function(j){
     if(!j.ok){ esp.className='msg yv error'; esp.innerHTML='<div class="b">'+esc(j.error||'Yarvis no pudo responder.')+'</div>'; if(/PIN/i.test(j.error||'')){ try{ localStorage.removeItem('yv_pin'); }catch(e){} } return; }
-    var m={ p:texto, j:{ respuesta:j.respuesta, fuentes:j.fuentes, aviso:j.aviso, tabla:j.tabla, serie:j.serie, vista:j.vista } };
+    var m={ p:texto, j:{ respuesta:j.respuesta, fuentes:j.fuentes, aviso:j.aviso, tabla:j.tabla, serie:j.serie, vista:j.vista, id:j.id||'', cal:'' } };
+    verVersion(j.version);
     esp.innerHTML=cuerpoRespuesta(m.j);
     if(!S.conv.m.length) S.conv.t=texto.slice(0,80); S.conv.m.push(m); guardarConvAct();
     /* la conversación sube al primer lugar de la lista, con su número de preguntas */
@@ -445,7 +477,7 @@ function entrar(pin,silencioso){
     S.pin=pin; try{ S.nombre=localStorage.getItem('yv_nombre')||''; }catch(e){}
     mostrarApp(true);
     return llamar({ pin:pin, accion:'entrar' }).then(function(j){
-      if(j&&j.ok){ if(j.nombre&&j.nombre!==S.nombre){ S.nombre=j.nombre; try{ localStorage.setItem('yv_nombre',S.nombre); }catch(e){} $('salir').title='Salir ('+S.nombre+')'; } return; }
+      if(j&&j.ok){ verVersion(j.version); if(j.nombre&&j.nombre!==S.nombre){ S.nombre=j.nombre; try{ localStorage.setItem('yv_nombre',S.nombre); }catch(e){} $('salir').title='Salir ('+S.nombre+')'; } return; }
       try{ localStorage.removeItem('yv_pin'); localStorage.removeItem('yv_conv_act'); }catch(e){}
       S.pin=''; document.documentElement.classList.remove('auto'); $('app').classList.remove('on'); $('entrada').style.display='flex'; $('rec').checked=false;
       $('errE').textContent=(j&&j.error)||'Su PIN ya no es válido. Escríbalo de nuevo.';
@@ -454,7 +486,7 @@ function entrar(pin,silencioso){
   $('entrar').disabled=true; $('entrar').textContent='Verificando…';
   return llamar({ pin:pin, accion:'entrar' }).then(function(j){
     if(!j.ok) throw new Error(j.error||'PIN no válido.');
-    S.pin=pin; S.nombre=j.nombre||'';
+    S.pin=pin; S.nombre=j.nombre||''; verVersion(j.version);
     try{ localStorage.setItem('yv_nombre',S.nombre); if($('rec').checked) localStorage.setItem('yv_pin',pin); else localStorage.removeItem('yv_pin'); }catch(e){}
     mostrarApp(false); $('q').focus();
   }).catch(function(e){
