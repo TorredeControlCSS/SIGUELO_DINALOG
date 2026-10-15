@@ -956,6 +956,24 @@ function cargarHistorial(){
 }
 
 function pintarResumen(res){
+  /* 15-oct-2026 · El servidor todavía cuenta las 16 casillas de antes de la
+     consolidación del 13-oct (Reservas e Inventario Neto por área). Las
+     casillas válidas son las de INSUMOS[].subreportes: el contador, el estado
+     y el resumen se calculan solo con esas. Las que ya no existen se ignoran. */
+  res = (res||[]).map(function(r){
+    var ins=INSUMOS.filter(function(x){return x.k===r.insumo;})[0];
+    if(!r || !r.subreportes || !ins || !ins.subreportes) return r;
+    var subs=r.subreportes.filter(function(s){ return ins.subreportes.indexOf(s.nombre)>=0; });
+    /* Solo se toca el insumo cuyo servidor trae casillas que ya no existen
+       (SALMI). Kardex no se toca: ahí el MM60 es mensual y el servidor ya da
+       RECIBIDO con 2/3, criterio que no cambia. */
+    if(subs.length===r.subreportes.length) return r;
+    var ok=subs.filter(function(s){ return !!s.recibido; }).length, tot=ins.subreportes.length;
+    var r2={}; for(var p in r) r2[p]=r[p];
+    r2.subreportes=subs; r2.completos=ok; r2.total_sub=tot;
+    r2.estado = ok>=tot ? 'RECIBIDO' : (ok>0 ? 'PARCIAL' : 'PENDIENTE');
+    return r2;
+  });
   var recibidos=res.filter(function(r){return r.estado==='RECIBIDO';}).length;
   var parciales=res.filter(function(r){return r.estado==='PARCIAL';}).length;
   var pend=res.filter(function(r){return r.estado==='PENDIENTE';}).length;
