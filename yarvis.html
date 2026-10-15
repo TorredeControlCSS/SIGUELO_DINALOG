@@ -335,17 +335,19 @@ function barraCal(j){
   if(!j||!j.id) return '';
   var c=j.cal||'', b=function(v,t){ return '<button type="button" data-cal="'+v+'"'+(c===v?' class="on"':'')+'>'+t+'</button>'; };
   return '<div class="cal" data-calid="'+esc(j.id)+'"><span class="pq">¿Le sirvió esta respuesta?</span>'+b('MAL','Mal')+b('REGULAR','Regular')+b('BIEN','Bien')+
-    '<span class="ok" data-calok>'+(c?'· Gracias, quedó registrada':'')+'</span>'+
-    '<div class="por"'+(c==='MAL'||c==='REGULAR'?'':' hidden')+'><input type="text" maxlength="500" placeholder="¿Qué estuvo mal? (opcional)" aria-label="Qué estuvo mal" value="'+esc(j.motivo||'')+'"><button type="button" data-calenv>Enviar</button></div></div>';
+    '<span class="ok" data-calok>'+(c?'· Gracias, quedó registrada'+(j.motivo?' con su comentario':''):'')+'</span>'+
+    '<div class="por"'+((c==='MAL'||c==='REGULAR')&&!j.motivo?'':' hidden')+'><input type="text" maxlength="500" placeholder="¿Qué estuvo mal? (opcional)" aria-label="Qué estuvo mal" value="'+esc(j.motivo||'')+'"><button type="button" data-calenv>Enviar</button></div></div>';
 }
-function calificar(bar,cal,motivo){
+function calificar(bar,cal,motivo,cerrar){
   var id=bar.getAttribute('data-calid'), ok=bar.querySelector('[data-calok]');
   bar.querySelectorAll('[data-cal]').forEach(function(x){ x.classList.toggle('on',x.getAttribute('data-cal')===cal); });
   bar.querySelector('.por').hidden=!(cal==='MAL'||cal==='REGULAR');
   ok.className='ok'; ok.textContent='· Guardando…';
   (S.conv.m||[]).forEach(function(m){ if(m.j&&m.j.id===id){ m.j.cal=cal; if(motivo!==undefined) m.j.motivo=motivo; } }); guardarConvAct();
   llamar({ pin:S.pin, accion:'calificar', id:id, calificacion:cal, motivo:motivo||'' },20000).then(function(r){
-    if(r&&r.ok){ ok.textContent='· Gracias, quedó registrada'; } else { ok.className='err'; ok.textContent='· '+((r&&r.error)||'No se pudo guardar'); } })
+    if(r&&r.ok){ ok.textContent='· Gracias, quedó registrada'+(motivo?' con su comentario':'');
+      /* con el motivo ya enviado la línea se cierra; tocar Mal o Regular otra vez la abre para corregirlo */
+      if(cerrar&&motivo) bar.querySelector('.por').hidden=true; } else { ok.className='err'; ok.textContent='· '+((r&&r.error)||'No se pudo guardar'); } })
     .catch(function(){ ok.className='err'; ok.textContent='· Sin conexión: no se guardó'; });
 }
 /* "Ver el detalle en": la vista del Tablero de Mando y el tablero del ecosistema de cada fuente citada,
@@ -371,7 +373,7 @@ $('lista').addEventListener('click',function(e){
     if(gr.hidden){ gr.innerHTML=graficoBarras(k2); gr.hidden=false; tw.hidden=true; g.innerHTML=ic('tablaV')+'Ver tabla'; } else { gr.hidden=true; tw.hidden=false; g.innerHTML=ic('bar')+'Ver gráfico'; } return; }
   var x=e.target.closest('[data-xls]'); if(x){ excel(x.getAttribute('data-xls')); return; }
   var cb=e.target.closest('[data-cal]'); if(cb){ var bar=cb.closest('[data-calid]'), inp=bar.querySelector('.por input'); var cv=cb.getAttribute('data-cal'); calificar(bar,cv,cv==='BIEN'?'':(inp?inp.value:'')); if(inp&&!bar.querySelector('.por').hidden) inp.focus(); return; }
-  var ce=e.target.closest('[data-calenv]'); if(ce){ var bar2=ce.closest('[data-calid]'), on=bar2.querySelector('[data-cal].on'); if(on) calificar(bar2,on.getAttribute('data-cal'),bar2.querySelector('.por input').value); }
+  var ce=e.target.closest('[data-calenv]'); if(ce){ var bar2=ce.closest('[data-calid]'), on=bar2.querySelector('[data-cal].on'); if(on) calificar(bar2,on.getAttribute('data-cal'),bar2.querySelector('.por input').value,true); }
 });
 
 /* ── Excel institucional (ExcelJS bajo demanda) ── */
@@ -423,7 +425,7 @@ function restaurarConv(){
     S.conv=g.conv; S.tablas={}; if(!S.conv.m.length){ vacio(); return true; }
     $('lista').innerHTML=''; S.conv.m.forEach(pintarPar); $('nueva').hidden=false; setTimeout(abajo,50); return true; }catch(e){ return false; }
 }
-$('lista').addEventListener('keydown',function(e){ if(e.key!=='Enter') return; var inp=e.target.closest('.cal .por input'); if(!inp) return; e.preventDefault(); var bar=inp.closest('[data-calid]'), on=bar.querySelector('[data-cal].on'); if(on) calificar(bar,on.getAttribute('data-cal'),inp.value); });
+$('lista').addEventListener('keydown',function(e){ if(e.key!=='Enter') return; var inp=e.target.closest('.cal .por input'); if(!inp) return; e.preventDefault(); var bar=inp.closest('[data-calid]'), on=bar.querySelector('[data-cal].on'); if(on) calificar(bar,on.getAttribute('data-cal'),inp.value,true); });
 $('nueva').addEventListener('click',function(){ nuevaConv(); $('q').focus(); });
 function llamar(cuerpo,ms){
   /* tiempo máximo de espera: si el servidor no contesta, se avisa en vez de quedarse esperando */
