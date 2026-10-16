@@ -400,6 +400,8 @@ var TAB = {
         r:'Cada Unidad Ejecutora reporta su consumo mensual en pantalla o subiendo un Excel; Planificación lo valida y aprueba, y el valor aprobado alimenta el Motor de Asignación, con trazabilidad de cada envío.' },
   cal:{ n:'Calculadora de Reposición UE', p:0, u:GH+'REPOSICION_UE_CSS/reposicion_ue.html',
         r:'Herramienta de la Unidad Ejecutora para proyectar su consumo y colocar sus pedidos con base técnica, con visibilidad de los tránsitos de lo que ya pidió.' },
+  abr:{ n:'Abastecimiento en Red', p:1, u:GH+'REPOSICION_UE_CSS/abastecimiento_red.html',
+        r:'Cubre lo que cada Unidad Ejecutora necesita con el inventario de su red: lo que debe pedir a su CEDIS (Forma 8), lo que puede recibir o ceder entre unidades de su misma red (Forma 7) y lo que queda sin fuente para Planificación.' },
   red:{ n:'Redistribución entre CEDIS', p:0, u:GH+'REPOSICION_UE_CSS/redistribucion_cedis.html',
         r:'Identifica los destinos en cero que un CEDIS con consumo real puede surtir y propone los traslados entre CEDIS.' },
   tra:{ n:'Trazabilidad de OC y Tránsitos', p:0, u:GH+'seguire/transitos.html',
@@ -466,7 +468,7 @@ var ETAPAS = [
 var GRUPOS = {
   ue:{ a:'ue', t:'Unidades Ejecutoras', resp:'Unidades Ejecutoras de la red · fuera de la Dirección',
        d:'Reciben la entrega, consumen y reportan su consumo cada mes. Con base en sus saldos y la proyección de su consumo colocan sus pedidos, que regresan a Planificar como nueva demanda.',
-       ins:['Saldos en línea','Formas 8'], nota:'El consumo lo reporta cada Unidad Ejecutora en el Registro de Consumos; Planificación lo valida y aprueba antes de que llegue al Motor.', k:['rcu','cal'] },
+       ins:['Saldos en línea','Formas 8'], nota:'El consumo lo reporta cada Unidad Ejecutora en el Registro de Consumos; Planificación lo valida y aprueba antes de que llegue al Motor.', k:['rcu','cal','abr'] },
   b0:{ a:'adm', t:'Talento humano', resp:'Administración · Recursos humanos',
        d:'Mide cómo trabaja la gente de la Dirección: productividad por área, tiempos y beneficios.',
        ins:['Reloj biométrico'], k:['rh','pro','mis'] },
@@ -595,7 +597,7 @@ function pintarMovil(){
          '<div><b>'+esc(e.t)+'</b><span>'+esc(e.resp)+' · '+plural(e.k.length)+'</span></div>'+
          '<span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot"></div></div>';
   });
-  h += '</div><div class="m-ue-w a-ue"><button type="button" class="m-btn" data-ref="ue"><div><b>Unidades Ejecutoras</b><span>Reciben la entrega; sus pedidos regresan a Planificar como nueva demanda · 1 tablero</span></div><span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot"></div></div><div class="m-franjas">';
+  h += '</div><div class="m-ue-w a-ue"><button type="button" class="m-btn" data-ref="ue"><div><b>Unidades Ejecutoras</b><span>Reciben la entrega; sus pedidos regresan a Planificar como nueva demanda · '+plural(GRUPOS.ue.k.length)+'</span></div><span class="chev" aria-hidden="true">&#9656;</span></button><div class="slot"></div></div><div class="m-franjas">';
   ['b0','b2','b3'].forEach(function(r){
     var g = GRUPOS[r];
     h += '<div class="a-'+g.a+'"><button type="button" class="m-btn" data-ref="'+r+'"><div><b>'+esc(g.t)+'</b><span>'+
