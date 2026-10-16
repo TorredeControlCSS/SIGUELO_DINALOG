@@ -784,8 +784,32 @@ function enviarArchivo(ins, sub, arch, pin){
         var txt = 'Archivo almacenado: <span class="mono">'+r.archivo+'</span>'
           + (r.cargado_por?('<br>Registrado a nombre de <b>'+r.cargado_por+'</b>'):'');
         if(r.extemporaneo) txt += '<br><b>Carga extemporánea:</b> '+r.dias_atraso+' día'+(r.dias_atraso===1?'':'s')+' de atraso.';
+        /* 16-oct-2026 · Biométrico: el archivo en Drive no basta. Se muestra lo
+           que RH_MASTER respondió (rh_proceso), que antes se descartaba: así la
+           casilla no queda en verde cuando el dato no llegó a EVENTS_RAW. */
+        var rhLanzar = false;
+        if(ins.k==='biometrico'){
+          var rp = r.rh_proceso;
+          if(rp && rp.ok && rp.eventos_nuevos!=null){
+            txt += '<br><b>Integrado a RH:</b> '+rp.eventos_nuevos+' marcaciones nuevas'
+                 + (rp.colaboradores!=null?(' · '+rp.colaboradores+' colaboradores'):'')
+                 + (rp.desde?(' · '+rp.desde+' a '+rp.hasta):'')
+                 + (rp.ultima_marcacion?('<br>El reloj queda con marcaciones hasta el <b>'+rp.ultima_marcacion+'</b>.'):'');
+            rhLanzar = true;
+          } else if(rp && rp.ok){
+            tipo='warn';
+            txt += '<br><b>RH lo recibió</b> pero no confirmó cuántas marcaciones entraron. Revise el tablero de RH.';
+          } else {
+            tipo='err';
+            txt += '<br><b>No llegó a RH:</b> '+((rp&&rp.error)?String(rp.error):'RH_MASTER no respondió.')
+                 + (rp&&rp.rechazado?'':'<br>El archivo quedó guardado en Drive; puede reintentarse.');
+          }
+        }
         txt += '<br>Enviado en '+seg()+' s.';
         mostrar(id,tipo,txt);
+        /* Con el dato ya en EVENTS_RAW, se lanza la publicación del tablero con
+           el mismo flujo del botón Actualizar (mismo PIN, misma verificación). */
+        if(rhLanzar){ try{ setTimeout(lanzarRH_, 400); }catch(eRH){} }
         ARCHIVOS[id]=null;
         el('dzt_'+id).textContent='Seleccionar archivo';
         el('dzt_'+id).title='';
