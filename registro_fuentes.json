@@ -1,6 +1,6 @@
 {
  "version": 1,
- "actualizado": "2026-10-12",
+ "actualizado": "2026-10-21",
  "descripcion": "Registro único de fuentes y metas del Tablero de Mando de la Dirección. Las metas viven SOLO aquí. YARVIS leerá este mismo archivo.",
  "fuentes": [
   {
@@ -289,7 +289,6 @@
    "dir": "down",
    "max": 2,
    "instrumento": "thermo",
-   "notaMeta": "Meta del Plan en revisión: posible error de escala (0.01% vs 1%)",
    "responsable": "Paola Moreno"
   }
  },
