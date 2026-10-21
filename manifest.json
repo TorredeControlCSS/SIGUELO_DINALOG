@@ -1,6 +1,7 @@
 {
-  "name": "SÍGUELO — Portal Central DINALOG",
-  "short_name": "SÍGUELO",
+  "id": "./",
+  "name": "SIGUELO · Portal Central DINALOG",
+  "short_name": "Portal SIGUELO",
   "description": "Sistema Integrado de Gestión Unificada y Evaluación Logística · CEDIS Panamá",
   "lang": "es",
   "start_url": "./index.html",

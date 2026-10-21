@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="SIGUELO">
+<meta name="apple-mobile-web-app-title" content="Portal SIGUELO">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <!-- ===== /PWA ===== -->
 <style>
@@ -243,6 +243,7 @@
     <input class="buscar" id="buscar" type="search" placeholder="Buscar tablero" aria-label="Buscar tablero">
     <button class="btn-barra" id="btnInicio" type="button" data-accion="inicio">Vista inicial</button>
     <button class="btn-barra" id="btnTutorial" type="button">Gu&iacute;a</button>
+    <button class="btn-barra" id="btnInstalar" type="button" style="display:none;" title="Instalar el Portal SIGUELO como aplicación">Instalar app</button>
   </div>
 
   <div class="escena">
@@ -408,6 +409,8 @@ var TAB = {
         r:'Captura inteligente de órdenes de compra y solicitudes de entrega, con el tránsito de cada OC.' },
   seg:{ n:'SEGUIR — Seguimiento de Requisiciones', p:1, u:GH+'seguire/',
         r:'Sistema de seguimiento inteligente de requisiciones.' },
+  age:{ n:'Agenda de Citas de Proveedores', p:0, u:GH+'SIGUELO/',
+        r:'Agenda diaria y por rango de las citas de entrega confirmadas en el CEDIS Panamá; se instala como app en el teléfono del equipo de Recepción.' },
   sol:{ n:'Solicitud de Cita', p:0, u:GH+'SIGUELO/solicitud_cita.html',
         r:'Formulario del proveedor para agendar la entrega de renglones en el CEDIS Panamá, con la visual de sus citas y de las órdenes de compra emitidas.' },
   con:{ n:'Panel de Confirmación de Citas', p:0, u:GH+'SIGUELO/panel_confirmacion.html',
@@ -454,7 +457,7 @@ var ETAPAS = [
     ins:['Solicitudes de entrega','Órdenes de compra'], k:['tra','seg'] },
   { ref:'e2', a:'aba', t:'Recibir del proveedor', resp:'Abasto · Recepción',
     d:'Agenda, confirma y registra la entrada de los renglones que entrega el proveedor.',
-    ins:['Solicitudes de cita de los proveedores','Entradas semanales de recepción','Bitácora del control documental'], k:['sol','con','ent','trz'] },
+    ins:['Solicitudes de cita de los proveedores','Entradas semanales de recepción','Bitácora del control documental'], k:['age','sol','con','ent','trz'] },
   { ref:'e3', a:'adm', t:'Registrar existencias', resp:'Administración · Kardex y facturación',
     d:'Registra los movimientos y el inventario en SAP-SAFIRO a través del kardex.',
     ins:['MB51','MB52','MM60','Inventario valorizado SALMI'], k:['kar','csa'] },
@@ -796,6 +799,15 @@ $('#panel').innerHTML = htmlInicial();
 
 <!-- ===== Registro del Service Worker (PWA) ===== -->
 <script>
+/* Instalación como app: el botón aparece solo cuando el navegador lo permite
+   (Chrome/Edge en Android y escritorio). Si ya corre instalada, no se muestra. */
+(function(){
+  var aviso=null, b=document.getElementById('btnInstalar');
+  var instalada=window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+  window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); aviso=e; if(b && !instalada) b.style.display=''; });
+  window.addEventListener('appinstalled',function(){ aviso=null; if(b) b.style.display='none'; });
+  if(b) b.addEventListener('click',function(){ if(!aviso) return; aviso.prompt(); aviso.userChoice.then(function(){ aviso=null; b.style.display='none'; }); });
+})();
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", function () {
     navigator.serviceWorker.register("sw.js")
