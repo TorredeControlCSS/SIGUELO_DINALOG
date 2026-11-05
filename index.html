@@ -429,6 +429,8 @@ var TAB = {
         r:'Asigna las requisiciones F8 con un modelo de inteligencia de demanda combinado con prioridad clínica y nivel de desabastecimiento en la UE.' },
   kan:{ n:'Tablero Kanban de Despacho F8', p:0, u:GH+'ASIGNACION_F8/kanban_tablero.html',
         r:'Sigue cada Forma 8 por sus etapas de despacho, desde la recepción hasta la entrega en la Unidad Ejecutora.' },
+  men:{ n:'Tablero de Mensuales', p:0, u:GH+'ASIGNACION_F8/tablero_mensuales.html',
+        r:'Agrupa las Formas 8 mensuales de cada Unidad Ejecutora (G1–G5 y G11) y sigue su preparación en la mesa del almacén con la firma de cada grupo; funciona sin internet en la pantalla del almacén.' },
   pro:{ n:'Productividad por Área', p:1, u:GH+'SIGUELO_DINALOG/productividad.html',
         r:'Productividad de cada área de la Dirección en tareas completadas frente a horas trabajadas.' },
   rh: { n:'Análisis de Tiempos', p:0, u:GH+'RH_BIOMETRICO/',
@@ -464,7 +466,7 @@ var ETAPAS = [
   { ref:'e4', a:'aba', t:'Asignar y despachar', resp:'Abasto · Almacén, distribución y despacho',
     d:'Convierte las Formas 8 en asignaciones priorizadas y las sigue etapa por etapa hasta la entrega en la UE.',
     ins:['Solicitudes F8','Trazabilidad por área','Reservas por área','Inventario neto por área','Cronograma de transporte'],
-    nota:'Por área: Medicamentos (MED), Médico-quirúrgico (MQ), Odontología (ODO) y Cuarto Frío.', k:['f8','mot','kan'] }
+    nota:'Por área: Medicamentos (MED), Médico-quirúrgico (MQ), Odontología (ODO) y Cuarto Frío.', k:['f8','mot','kan','men'] }
 ];
 
 /* Capas transversales */
