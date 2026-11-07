@@ -1426,7 +1426,7 @@ function marcasSellos_(){
    mismo momento. Si ese archivo no trae 'generado', la marca queda vacía a
    propósito: eso es una línea en el publicador, no un motivo para castigar la
    conexión del almacén con dos megas en cada carga. */
-var F8_ESTADO_JSON = 'https://torredecontrolcss.github.io/Curvas_de_Inventario/f8_estado.json';
+var F8_ESTADO_JSON = 'https://torrecontrolcss.org/Curvas_de_Inventario/f8_estado.json';
 function curSelloLigero_(ok, fail){
   fetch(F8_ESTADO_JSON + '?t=' + Date.now(), { cache: 'no-store' })
     .then(function(r){ return r.ok ? r.text() : Promise.reject(r.status); })
@@ -1723,7 +1723,7 @@ var ENT_POLL=null, ENT_GEN0=null;
 /* El panel de carga vive en el repo SIGUELO_DINALOG y el JSON en SIGUELO, así
    que la ruta tiene que ser absoluta: una relativa daba 404 y hacía parecer
    fallida una publicación que sí había ocurrido. */
-var ENT_JSON='https://torredecontrolcss.github.io/SIGUELO/entradas_recepcion.json';
+var ENT_JSON='https://torrecontrolcss.org/SIGUELO/entradas_recepcion.json';
 function entSt_(txt,col){ var m=el('entst'); if(m){ m.textContent=txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; m.style.fontSize='11px'; m.style.lineHeight='1.5'; } }
 function entBar_(on){ var b=el('entbar'); if(b) b.className='pc-bar'+(on?' on':''); }
 function entFin_(ok,txt){
@@ -1792,7 +1792,7 @@ function fmtMil_(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
    comparte CITAS_URL. La confirmacion NO consulta el estado del proceso sino
    el sello 'generado' del indice.json publicado: se verifica el resultado, no
    la intencion. Si el proceso corrio pero no publico, el boton no dice listo. */
-var KDX_JSON='https://torredecontrolcss.github.io/SIGUELO/kardex/indice.json';
+var KDX_JSON='https://torrecontrolcss.org/SIGUELO/kardex/indice.json';
 var KDX_POLL=null, KDX_GEN0=null, KDX_FIN0=null;
 
 function barraKardex_(){
@@ -2030,7 +2030,7 @@ function lanzarKardex_(){
    vuelve a pedir si venció. */
 var RH_GAS   = 'https://script.google.com/macros/s/AKfycby_lXwc1VIzyj5qV2kxaZBzhiBiHQ3wPbRG3raRov_Ij2lFEtBnqTGb_1DmCglx37V_/exec';
 var RH_TOKEN = 'RH_DINALOG';
-var RH_JSON_URL = 'https://torredecontrolcss.github.io/RH_BIOMETRICO/rh_data.json';
+var RH_JSON_URL = 'https://torrecontrolcss.org/RH_BIOMETRICO/rh_data.json';
 var RH_POLL=null, RH_GEN0=null;
 
 function barraRH_(){
@@ -2136,7 +2136,7 @@ function seguirRH_(){
    corre en diferido y aquí se verifica contra el sello del JSON publicado,
    igual que Entradas. */
 var CURVAS_URL='https://script.google.com/macros/s/AKfycbwnK1uyq6Q5XdQ6eWzTNaoaVeJi_IAzT7d6T1rVkDIYE1JM6jBmvXqN19B6iRe20H4YPQ/exec';
-var CURVAS_JSON='https://torredecontrolcss.github.io/Curvas_de_Inventario/curvas_inventario.json';
+var CURVAS_JSON='https://torrecontrolcss.org/Curvas_de_Inventario/curvas_inventario.json';
 var CUR_POLL=null, CUR_GEN0=null;
 
 function cardCurvas_(){
