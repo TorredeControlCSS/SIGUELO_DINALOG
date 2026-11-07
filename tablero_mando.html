@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tablero de Mando de la Dirección · DINALOG</title>
-<link rel="icon" href="https://torredecontrolcss.github.io/REPOSICION_UE_CSS/favicon.ico">
+<link rel="icon" href="https://torrecontrolcss.org/REPOSICION_UE_CSS/favicon.ico">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <!--
   TABLERO DE MANDO DE LA DIRECCIÓN · Panel ejecutivo · v1 · 01-oct-2026
@@ -258,7 +258,7 @@ nav .tabs{display:flex;gap:4px;min-width:0}
 (function(){
 'use strict';
 var REG_URL = 'registro_fuentes.json';
-var DIC_URL = 'https://torredecontrolcss.github.io/REPOSICION_UE_CSS/renglones_dic.json';
+var DIC_URL = 'https://torrecontrolcss.org/REPOSICION_UE_CSS/renglones_dic.json';
 var LOGO = 'https://raw.githubusercontent.com/TorredeControlCSS/REPOSICION_UE_CSS/main/icons/icon-192.png';
 var MES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 var MESL = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -700,9 +700,9 @@ $('bYarvis').addEventListener('click',function(){ window.open('yarvis.html','_bl
 
 /* ══ VISTAS DE DETALLE ════════════════════════════════════════════════════ */
 var VISTA_IND={ '1a':'desp','1b':'desp','9':'desp','6':'desp','7':'desp','2':'plan','3':'plan','8':'plan','10':'plan','4':'pres','11':'pres','5':'pres' };
-var DETALLE={ alertas:'https://torredecontrolcss.github.io/REPOSICION_UE_CSS/redistribucion_cedis.html',
-  desp:'https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html', ue:'https://torredecontrolcss.github.io/ASIGNACION_F8/kanban_tablero.html',
-  plan:'https://torredecontrolcss.github.io/REPOSICION_UE_CSS/simulador_reposicion.html', pres:'https://torredecontrolcss.github.io/SIGUELO/panel_entradas.html' };
+var DETALLE={ alertas:'https://torrecontrolcss.org/REPOSICION_UE_CSS/redistribucion_cedis.html',
+  desp:'https://torrecontrolcss.org/ASIGNACION_F8/kanban_tablero.html', ue:'https://torrecontrolcss.org/ASIGNACION_F8/kanban_tablero.html',
+  plan:'https://torrecontrolcss.org/REPOSICION_UE_CSS/simulador_reposicion.html', pres:'https://torrecontrolcss.org/SIGUELO/panel_entradas.html' };
 var TABLAS={};
 function bal(x){ return 'B/. '+(Math.abs(x)>=1e6 ? (Math.round(x/1e5)/10).toLocaleString('en-US')+' MM' : Math.round(x).toLocaleString('en-US')); }
 function num(x){ return Number(x||0).toLocaleString('en-US'); }
@@ -762,7 +762,7 @@ function totUE(){ var tot=(S.src.kanban&&S.src.kanban.ueTotales)||{}, o={}; Obje
 /* Fecha prometida por UE: sale del detalle del Kanban (kanban/tablero.json, ~1.8 MB).
    Se baja SOLO al abrir Despachos, una vez por sesión. fechaComprometida = la que fija
    el supervisor en el Kanban ("F. prometida"); sin ella, el pedido atrasado no tiene fecha. */
-var KAN_DET='https://torredecontrolcss.github.io/ASIGNACION_F8/kanban/tablero.json';
+var KAN_DET='https://torrecontrolcss.org/ASIGNACION_F8/kanban/tablero.json';
 function cargarPromesas(){
   if(S.promEstado) return; S.promEstado='cargando';
   cargar(KAN_DET).then(function(j){
@@ -884,7 +884,7 @@ function dibujarMapaUE(){
    se baja solo al abrir esta vista). Se excluyen las confirmaciones retroactivas de limpieza
    ("entrega en julio", "LIMPIEZA DE DATOS"…), que llevan la fecha en que se confirmaron y no la
    de la entrega. Cotejado con los Informes de la bahía: 24, 25 y 29-sep iguales; 28-sep +3; 30-sep +1. */
-var ENTREG_URL='https://torredecontrolcss.github.io/ASIGNACION_F8/entregados/entregados.json';
+var ENTREG_URL='https://torrecontrolcss.org/ASIGNACION_F8/entregados/entregados.json';
 var RETRO=/^\s*(entregas?\s+(de\s+|en\s+)?(julio|agosto|septiembre)|limpieza de datos)/i;
 function cargarEntregas(){
   if(S.entP) return S.entP;
