@@ -1,5 +1,5 @@
 {
- "fuente": "Mi Farma Digital (TorredeControlCSS/mifarmadigital, data.json · inst): coordenadas de cada unidad ejecutora",
+ "fuente": "Mapa Nacional de Disponibilidad de Medicamentos (antes Mi Farma Digital; TorredeControlCSS/mifarmadigital, data.json · inst): coordenadas de cada unidad ejecutora",
  "generado": "2026-10-01",
  "nota": "Nombre de la unidad tal como aparece en el Kanban -> coordenadas. Sin coordenadas confiables: ULAPS LAS TABLAS (en el origen apunta a Bocas del Toro) y Policlínica Dr. Rodrigo Hidalgo González (no está en el origen). Editar aquí para agregar o corregir.",
  "ue": {
