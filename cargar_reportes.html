@@ -328,7 +328,18 @@ var INSUMOS = [
     per:'Diaria, al cierre de turno', acepta:'.xlsx,.xls,.csv,.pdf' },
   { k:'transporte', n:5, nombre:'TRANSPORTE · Cronograma de despachos y entregas',
     fuente:'Reporte de Excel', resp:'Jefatura de Transporte',
-    per:'Semanal', acepta:'.xlsx,.xls,.csv,.pdf', semanal:true }
+    per:'Semanal', acepta:'.xlsx,.xls,.csv,.pdf', semanal:true },
+  /* 10-nov-2026 · Seguimiento de compras: dos libros de Excel que alimentan los
+     tableros SEGUIRE y Cumplimiento de Entregas (SÍGUELO, SEGUIMIENTO_TABLEROS.gs).
+     Se cargan como los demás; la tarjeta de su recuadro publica el tablero. */
+  { k:'consolidado', n:6, nombre:'PLANIFICACIÓN · Consolidado de Suministros',
+    fuente:'Libro de Excel del consolidado', resp:'Departamento de Planificación',
+    per:'Semanal', acepta:'.xlsx', semanal:true,
+    ayuda:'Indique en la fecha del reporte el día de corte del consolidado: el tablero mide los vencimientos de las solicitudes contra esa fecha.' },
+  { k:'incumplimientos', n:7, nombre:'SEGUIMIENTO · Libro de Incumplimientos de entregas',
+    fuente:'Libro de Excel de Seguimiento', resp:'Departamento de Seguimiento',
+    per:'Diaria', acepta:'.xlsx',
+    ayuda:'Cargue el libro completo, con sus hojas Base de Datos, Entradas y CATALOGO. El tablero y el correo diario calculan el resultado de cada nota contra la fecha de hoy.' }
 ];
 
 var ETIQ_SUB = {
@@ -472,7 +483,8 @@ function pintarTarjetas(){
         ayuda + (ins.k==='salmi' ? barraProcesos_() : '')
               + (ins.k==='recepcion' ? barraEntradas_() : '')
               + (ins.k==='biometrico' ? barraRH_() : '')
-              + (ins.k==='kardex' ? barraKardex_() : '') + cuerpo +
+              + (ins.k==='kardex' ? barraKardex_() : '')
+              + ((typeof SEG_TAB!=='undefined' && SEG_TAB[ins.k]) ? barraSeg_(ins.k) : '') + cuerpo +
       '</div>'+
     '</div>');
   }).join('');
@@ -827,6 +839,7 @@ function enviarArchivo(ins, sub, arch, pin){
            matriz_snapshot.json llevaban desde el 31-ago sin publicarse mientras
            el equipo cargaba todo a diario. */
         try { cadDispararPorCasilla_(id); } catch(eCad){}
+        try { segDispararPorCasilla_(id); } catch(eSeg){}
       } else {
         fallo('Rechazado: '+((r&&r.error)||'respuesta no válida'));
       }
@@ -1712,6 +1725,7 @@ function enlazarProcesos_(){
   var kb=el('kdxbt'); if(kb) kb.onclick=lanzarKardex_;
   var cb=el('curbt'); if(cb) cb.onclick=lanzarCurvas_;
   var rb=el('rhbt'); if(rb) rb.onclick=lanzarRH_;
+  try{ segEnlazar_(); }catch(eSeg){}
 }
 
 /* ── Entradas de Mercancía: lanza y VERIFICA contra el JSON publicado ──
@@ -1777,6 +1791,103 @@ function lanzarEntradas_(){
   }
 }
 function fmtMil_(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+
+/* ── Seguimiento de compras: Consolidado e Incumplimientos · 10-nov-2026 ──
+   Mismo patrón que Entradas: la casilla guarda el archivo en INGESTA y su
+   tarjeta lanza la publicación en SÍGUELO (?action=segPublicar). La
+   confirmación es el sello _meta.generado del JSON publicado en el repo
+   seguire, no la respuesta del lanzamiento. Si la publicación se aborta (el
+   archivo trae muchas menos filas que lo publicado, o es de un corte
+   anterior), la tarjeta lo dice con el motivo que dejó SÍGUELO. */
+var SEG_TAB = {
+  consolidado:     { t:'cons', nm:'Tablero SEGUIRE', json:'https://torrecontrolcss.org/seguire/data/consolidado.json',
+                     hj:'<b>SÍGUELO</b> · seguire/data/consolidado.json<br>SEGUIRE · Seguimiento de Compras', diario:false },
+  incumplimientos: { t:'inc', nm:'Cumplimiento de Entregas', json:'https://torrecontrolcss.org/seguire/data/cumplimiento_entregas.json',
+                     hj:'<b>SÍGUELO</b> · seguire/data/cumplimiento_entregas.json<br>Tablero y correo diario de Cumplimiento de Entregas', diario:true }
+};
+var SEG_POLL = {}, SEG_GEN0 = {};
+function barraSeg_(k){
+  var c = SEG_TAB[k];
+  return '<div class="procbox">'+
+    '<div class="procbox-h">Actualizar '+c.nm+'</div>'+
+    '<div class="procbox-s">Cargue primero el archivo abajo. Al cargar desde este panel se actualiza solo; '+
+      'el botón queda como respaldo. El proceso tarda cerca de un minuto.</div>'+
+    '<div class="procgrid"><div class="proccard" id="pccard_seg_'+k+'">'+
+      '<div class="pc-nm">'+c.nm+'</div>'+
+      '<div class="pc-hj">'+c.hj+'</div>'+
+      '<div class="pc-bar" id="segbar_'+k+'"><i></i></div>'+
+      '<div class="pc-st" id="segst_'+k+'">Sin ejecutar.</div>'+
+      '<button class="pc-bt" id="segbt_'+k+'">Actualizar</button>'+
+    '</div></div>'+
+  '</div>';
+}
+function segSt_(k,txt,col){ var m=el('segst_'+k); if(m){ m.textContent=txt; m.style.color=col||'#6b7a88'; m.style.fontWeight=col?'600':'400'; m.style.fontSize='11px'; m.style.lineHeight='1.5'; } }
+function segBar_(k,on){ var b=el('segbar_'+k); if(b) b.className='pc-bar'+(on?' on':''); }
+function segLeer_(k,ok,fail){
+  fetch(SEG_TAB[k].json+'?t='+Date.now(),{cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function(j){ ok(j ? { generado:j._meta&&j._meta.generado, filas:j.rows?j.rows.length:null, corte:j.corte } : null); })
+    .catch(function(){ if(fail) fail(); });
+}
+function segFin_(k,ok,txt){
+  if(SEG_POLL[k]){ clearInterval(SEG_POLL[k]); SEG_POLL[k]=null; }
+  segBar_(k,false); segSt_(k,txt, ok?'#2e7d32':'#a3331f');
+  var card=el('pccard_seg_'+k), bt=el('segbt_'+k);
+  if(card) card.className='proccard '+(ok?'ok':'err');
+  if(bt){ bt.disabled=false; bt.className='pc-bt '+(ok?'ok':'err'); bt.textContent=ok?'✓ Listo':'Reintentar'; }
+}
+function lanzarSeg_(k){
+  var c=SEG_TAB[k], bt=el('segbt_'+k); if(!c||!bt) return;
+  if(CITAS_URL.indexOf('http')!==0){ segSt_(k,'sin URL','#a3331f'); return; }
+  bt.disabled=true; bt.textContent='Procesando'; bt.className='pc-bt';
+  var card=el('pccard_seg_'+k); if(card) card.className='proccard run';
+  segBar_(k,true); segSt_(k,'leyendo tablero actual…','#1e5a9e');
+  if(SEG_POLL[k]){ clearInterval(SEG_POLL[k]); SEG_POLL[k]=null; }
+  segLeer_(k, function(m0){ SEG_GEN0[k]=m0?m0.generado:null; arrancar_(); }, function(){ SEG_GEN0[k]=null; arrancar_(); });
+  function arrancar_(){
+    segSt_(k,'lanzando…','#1e5a9e');
+    var t0=Date.now();
+    jsonpG_(CITAS_URL+'?action=segPublicar&tablero='+c.t+'&callback=?', function(r){
+      if(r && r.ok===false) segFin_(k,false,'SÍGUELO no aceptó la publicación: '+(r.error||'sin detalle'));
+    }, function(){});
+    var t=0;
+    SEG_POLL[k]=setInterval(function(){
+      t+=6;
+      segLeer_(k, function(m){
+        if(m && m.generado && m.generado!==SEG_GEN0[k]){
+          segFin_(k,true,'✓ '+(m.filas!=null?fmtMil_(m.filas)+' filas':'publicado')+(m.corte?' · corte '+m.corte:'')+' · '+String(m.generado).slice(11,16)+' PTY');
+          return;
+        }
+        if(t%18===0) jsonpG_(CITAS_URL+'?action=segEstado&callback=?', function(e){
+          var x=e&&e.estado&&e.estado[c.t];
+          if(x && (x.estado==='abortado'||x.estado==='error') && x.fin && Date.parse(String(x.fin).replace(' ','T')+'-05:00')>=t0-60000)
+            segFin_(k,false,(x.estado==='abortado'?'No se publicó: ':'Error: ')+(x.error||'sin detalle'));
+        }, function(){});
+        segSt_(k,(t<50?'esperando al servidor… ':'procesando… ')+t+' s','#1e5a9e');
+        if(t>=240) segFin_(k,false,'no se confirmó en 4 min — revise el registro de SÍGUELO');
+      }, function(){
+        segSt_(k,'procesando… '+t+' s','#1e5a9e');
+        if(t>=240) segFin_(k,false,'no se pudo leer el tablero publicado');
+      });
+    },6000);
+  }
+}
+/* Al abrir la página: marca de cuándo se publicó cada tablero. */
+function segEnlazar_(){
+  Object.keys(SEG_TAB).forEach(function(k){
+    var b=el('segbt_'+k); if(!b) return;
+    b.onclick=function(){ lanzarSeg_(k); };
+    segLeer_(k, function(m){
+      if(!m || !m.generado){ segSt_(k,'aún sin publicar','#6b7a88'); return; }
+      var mk = SEG_TAB[k].diario ? marcaFecha_(m.generado) : { txt:'publicado '+String(m.generado).slice(0,16)+' PTY', col:'#6b7a88' };
+      segSt_(k, mk.txt+(m.corte?' · corte '+m.corte:''), mk.col);
+    }, function(){ segSt_(k,'aún sin publicar','#6b7a88'); });
+  });
+}
+/* Lo llama enviarArchivo cuando la casilla recibió su archivo. */
+function segDispararPorCasilla_(id){
+  if(SEG_TAB[id]) setTimeout(function(){ lanzarSeg_(id); }, 400);
+}
 
 /* Precalentado. El arranque en frio de Apps Script cuesta 20-30 s y lo pagaba
    la primera persona que tecleaba su PIN. Se dispara al abrir el panel, sin
