@@ -56,14 +56,27 @@
    "nombre": "Entradas de Mercancía por Recepción",
    "url": "https://torrecontrolcss.org/SIGUELO/entradas_recepcion.json",
    "tipo": "derivado",
-   "indicadores": [
-    "5"
-   ],
+   "indicadores": [],
    "diasHabilesMax": 7,
    "calculo": "Por mes de recepción: filas con cumpl = 'A TIEMPO' ÷ filas con cumpl informado",
    "tablero": {
     "nombre": "Entradas de Mercancía",
     "url": "https://torrecontrolcss.org/SIGUELO/panel_entradas.html"
+   }
+  },
+  {
+   "id": "cumplimiento",
+   "nombre": "Cumplimiento de Entregas · libro de Incumplimientos",
+   "url": "https://torrecontrolcss.org/seguire/data/cumplimiento_entregas.json",
+   "tipo": "derivado",
+   "indicadores": [
+    "5"
+   ],
+   "diasHabilesMax": 2,
+   "calculo": "Por mes de vencimiento de cada nota de solicitud de entrega: notas con saldo 0 y última entrada ≤ vencimiento ÷ (notas con saldo 0 + notas con saldo vencido al corte). Las notas en plazo no cuentan. Saldo vencido = saldo × precio de la orden.",
+   "tablero": {
+    "nombre": "Cumplimiento de Entregas de Proveedores",
+    "url": "https://torrecontrolcss.org/seguire/cumplimiento.html"
    }
   },
   {

@@ -273,7 +273,7 @@ var DEF = {
   '3':['Cuántos meses alcanza el inventario de los 3 CEDIS al ritmo de salida. Cifra principal: medicamentos; médico-quirúrgico y laboratorio se muestran aparte.','Por renglón: inventario de los 3 CEDIS ÷ salida mensual F8 de los 3 CEDIS (media de 90 días), en unidades. Por familia: la mediana. Solo cuentan los renglones que algún CEDIS maneja (saldo desde junio o catálogo del Inventario Consolidado).','Cada publicación de la Calculadora de Reposición'],
   '4':['Presupuesto ejecutado sobre el presupuesto modificado.','Estimado = (ejecutado del último GR55 + valor de las entradas contables 101 − 102 del MB51 desde el día siguiente a su corte) ÷ presupuesto modificado. Las entradas 561/562 no tienen presupuesto asignado y no cuentan. Cuando Finanzas entregue un GR55 nuevo, se reemplaza el ancla y el kardex suma desde ese corte.','GR55 (carga manual) + Kardex MB51'],
   '11':['Producto recibido en CDPA con movimiento 561 (entrada sin pedido ni partida presupuestaria) que todavía no se regulariza con su 562. Está en el almacén pero no en la ejecución presupuestaria.','Por motivo declarado en SAP: valor de los 561 menos sus 562, acumulado desde el inicio del kardex (5-may). Valor al cierre de cada mes con los movimientos hasta ese día. Los 562 de motivos cuyo 561 es anterior al kardex no restan.','Cada publicación de la Calculadora (lee el kardex MB51)'],
-  '5':['Entregas de proveedores recibidas dentro de su fecha de entrega.','Entregas a tiempo ÷ entregas comparables, por mes de recepción.','Cada carga de recepción'],
+  '5':['Notas de solicitud de entrega a los CEDIS cumplidas dentro de su fecha de término.','Notas cumplidas a tiempo ÷ (notas cumplidas + notas vencidas con saldo), por mes de vencimiento. Una nota con saldo vencido cuenta como no cumplida. Debajo, el saldo vencido en balboas.','Cada carga del libro de Incumplimientos'],
   '6':['Días que tarda el ciclo de atención de un pedido.','Mediana de días del ciclo de los pedidos del mes, según el Kanban. Aún no separa pedido mensual y urgencia.','Cada publicación del Kanban'],
   '7':['Formas 8 que salen del almacén por día hábil.','Salidas del mes ÷ días hábiles transcurridos.','Cada publicación del Kanban'],
   '8':['Traslados que llevarían un renglón a un CEDIS que hoy está en cero.','Traslados sugeridos hacia un CEDIS en cero (Redistribución entre CEDIS).','Cada carga de saldos'],
@@ -336,6 +336,31 @@ function ejecEstimada(){
   return { dias:n, corteGR55:c, gr55:pr.ejecutado, neto:neto, ejecutado:ej, modificado:pr.modificado, pct:r1(100*ej/pr.modificado), hasta:hasta||c, s561:s561, s562:s562, porMes:porMes, almacenes:M.almacenes||{} };
 }
 function finMasUno(c){ var d=fISO(c); if(!d) return c; d.setDate(d.getDate()+1); return d.toISOString().substring(0,10); }
+/* ── #5 · libro de Incumplimientos (seguire/data/cumplimiento_entregas.json): una fila por nota de solicitud de entrega.
+   Misma regla del tablero Cumplimiento de Entregas: saldo 0 y última entrada ≤ vencimiento = a tiempo; saldo 0 después = con atraso;
+   saldo > 0 y vencida al corte = vencida (no cumplida). Las notas en plazo no cuentan. ── */
+function notasCumplimiento(){
+  var j=S.src.cumplimiento; if(!j||!j.rows||!j.cols) return null;
+  var ix={}; j.cols.forEach(function(c,i){ ix[c]=i; }); var corte=j.corte||'', out=[];
+  j.rows.forEach(function(r){ var v=r[ix.venc]; if(!v) return; var sal=+r[ix.saldo]||0, u=r[ix.ult], e;
+    if(sal<=0) e=(u&&u<=v)?'at':'ct'; else if(v<corte) e='ven'; else return;
+    out.push({ mes:String(v).substring(0,7), e:e, prov:r[ix.prov]||'(sin proveedor)', val:sal>0?sal*(+r[ix.precio]||0):0, et:+r[ix.et]||0 }); });
+  return { corte:corte, notas:out, gen:(j._meta&&j._meta.generado)||'' };
+}
+function cumplimientoNotas(){
+  var N=notasCumplimiento(); if(!N) return null;
+  var pm={}, ta=0, tt=0, sv=0, nv=0, sinNot=0;
+  N.notas.forEach(function(x){ if(x.mes>N.corte.substring(0,7)) return; if(!pm[x.mes]) pm[x.mes]=[0,0]; pm[x.mes][1]++; tt++;
+    if(x.e==='at'){ pm[x.mes][0]++; ta++; } if(x.e==='ven'){ nv++; sv+=x.val; if(!x.et) sinNot++; } });
+  var s={}; Object.keys(pm).forEach(function(m){ s[m]={ v:Math.round(1000*pm[m][0]/pm[m][1])/10, corte:(N.corte.substring(0,7)===m?N.corte:m+'-cierre') }; });
+  S.c5={ ta:ta, tt:tt, sv:sv, nv:nv, sinNot:sinNot, corte:N.corte };
+  return { serie:s, det:'Saldo vencido: '+bal(sv)+' en '+num(nv)+' notas ('+num(sinNot)+' sin notificar a Compras). Acumulado del año: '+(tt?Math.round(1000*ta/tt)/10:'—')+'% ('+num(ta)+' de '+num(tt)+' notas)', fuente:'cumplimiento', corte:N.corte, flujo:'notas de solicitud de entrega vencidas' };
+}
+function proveedoresVencidos(n){
+  var N=notasCumplimiento(); if(!N) return [];
+  var P={}; N.notas.forEach(function(x){ if(x.e!=='ven') return; if(!P[x.prov]) P[x.prov]={ v:0, n:0 }; P[x.prov].v+=x.val; P[x.prov].n++; });
+  return Object.keys(P).map(function(k){ return { p:k, v:P[k].v, n:P[k].n }; }).sort(function(a,b){ return b.v-a.v; }).slice(0,n);
+}
 function prepararIndicadores(){
   var I={}, src=S.src;
   var inv=src.inventario, kan=src.kanban, man=src.manual;
@@ -362,8 +387,10 @@ function prepararIndicadores(){
     else I['4']={ serie:serieKpi(man,'4'), det:'Cifra preliminar: GR55 de julio presentado en el Plan. Pendiente de los datos de Finanzas.', fuente:'manual', corte:man.corte, arrastre:true }; }
   var cu=src.cuadre;
   if(cu && cu.indicadores){ var s11=serieKpi(cu,'11'); I['11']={ serie:s11, det:(cu.indicadores['11']||{}).detalle, fuente:'cuadre', corte:cu.corte, foto:true }; }
+  var C5=cumplimientoNotas();
+  if(C5){ I['5']=C5; }
   var ent=src.recepcion;
-  if(ent && ent.rows){
+  if(!C5 && ent && ent.rows){
     var pm={}, ta=0, tt=0;
     ent.rows.forEach(function(x){ if(!x.cumpl) return; var m=x.periodo; if(!pm[m]) pm[m]=[0,0]; pm[m][1]++; tt++; if(x.cumpl==='A TIEMPO'){ pm[m][0]++; ta++; } });
     var s={}, corte=(ent._meta&&ent._meta.corte)||'';
@@ -398,13 +425,14 @@ function evaluarFuentes(){
     if(j){
       var ref = f.id==='kanban' ? String(j.generado||'').substring(0,10)
               : f.id==='recepcion' ? ((j._meta&&j._meta.corte)||'')
+              : f.id==='cumplimiento' ? (j.corte||'')
               : f.id==='transitos' ? String((j._meta&&j._meta.generado)||'').substring(0,10)
               : f.id==='redistribucion' ? ((j.kpi&&j.kpi.corte)||'')
               : (j.corte||'');
       var d=fISO(ref); e.ref=ref; e.dh = d ? diasHabiles(d,hoy) : 99; e.stale = e.dh > f.diasHabilesMax;
       var g='';
       if(f.id==='redistribucion' && j.generado){ g=new Date(j.generado).toLocaleString('sv-SE',{timeZone:'America/Panama'}); }
-      else if(f.id==='recepcion'){ g=(j._meta&&j._meta.generado)||''; }
+      else if(f.id==='recepcion'||f.id==='cumplimiento'){ g=(j._meta&&j._meta.generado)||''; }
       else if(f.id==='transitos'){ g=String((j._meta&&j._meta.generado)||'').replace(' PTY',''); }
       else if(f.tipo!=='manual'){ g=String(j.generado||''); }
       g=String(g).substring(0,16);
@@ -1147,7 +1175,8 @@ function vPres(){
     kc(pr?estado(g4,pctE):'con',E4?'Ejecutado estimado':'Ejecutado (dev. + pag.)',pr?bal(ejV):'—',(pr?fmt(pctE,'%'):'')+(E4?' · GR55 + kardex al '+fCorta(E4.hasta):' · meta ≥ '+g4.meta+'% · preliminar'))+
     kc('con','Comprometido',pr?bal(pr.comprometido):'—',pr?fmt(pctC,'%')+' del modificado':'')+
     kc('ok','Recibido en el año',ent?bal(rec):'—','Recepción · corte '+fCorta(corteE))+
-    kc(estado(g5,pAn),'Proveedores a tiempo',pAn!=null?fmt(pAn,'%'):'—',num(ta)+' de '+num(tt)+' · meta ≥ '+g5.meta+'%')+
+    (S.c5?kc(estado(g5,S.c5.tt?Math.round(1000*S.c5.ta/S.c5.tt)/10:null),'Notas cumplidas a tiempo',S.c5.tt?fmt(Math.round(1000*S.c5.ta/S.c5.tt)/10,'%'):'—',num(S.c5.ta)+' de '+num(S.c5.tt)+' notas · saldo vencido '+bal(S.c5.sv)):
+     kc(estado(g5,pAn),'Proveedores a tiempo',pAn!=null?fmt(pAn,'%'):'—',num(ta)+' de '+num(tt)+' · meta ≥ '+g5.meta+'%'))+
     (E4?kc('bajo','Entradas sin presupuesto (561)',bal(E4.s561),'desde '+fCorta(finMasUno(E4.corteGR55))+' · no cuentan'):kc('con','Pendiente de pago','—','sin fuente: Finanzas'))+'</div>';
   /* ciclo de pago */
   var paso=function(t,v,s,est){ var c=COL[est]; return '<div style="background:'+c[2]+'"><b>'+esc(t)+'</b><em style="color:'+c[1]+'">'+esc(v)+'</em><span>'+esc(s)+'</span></div>'; };
@@ -1168,7 +1197,7 @@ function vPres(){
     '<div class="nota">'+(E4?'Ejecutado estimado = GR55 al '+fCorta(E4.corteGR55)+' + valor de las entradas contables (101 − 102) del MB51 desde el '+fCorta(finMasUno(E4.corteGR55))+'. Las entradas 561 (sin pedido ni presupuesto asignado) no suman: es una lectura financiera, no operativa. Kardex de '+Object.keys(E4.almacenes).join(', ')+'. ':'')+'Las etapas sin fuente dependen de que Finanzas registre el trámite de pago.</div></div>';
   /* Serie de tiempo de #5: línea mes a mes con su valor y la meta rotulada */
   var ms=I5?Object.keys(I5.serie).sort():[];
-  var izq='<div class="pn" style="min-width:0"><div class="ph"><h3>Proveedores a tiempo por mes · '+(ms[0]||'').substring(0,4)+(corteE?' · corte '+fCorta(corteE):'')+'</h3></div>'+
+  var izq='<div class="pn" style="min-width:0"><div class="ph"><h3>'+(S.c5?'Notas de entrega cumplidas a tiempo por mes de vencimiento':'Proveedores a tiempo por mes')+' · '+(ms[0]||'').substring(0,4)+((S.c5?S.c5.corte:corteE)?' · corte '+fCorta(S.c5?S.c5.corte:corteE):'')+'</h3></div>'+
     lineas(ms.map(function(m){ return { l:MES[+m.substring(5,7)-1], v:I5.serie[m].v }; }),g5)+'</div>';
   /* tabla por proveedor */
   var P={};
@@ -1212,7 +1241,8 @@ function accionSugerida(id){
       return 'Cruzar los renglones de **menor cobertura** con las **órdenes de compra / solicitudes de entrega en tránsito**'+(lo.length?'; bajo meta también **'+lo.map(function(f){ return cb3.familias[f]+' ('+fmt(cb3.detalle.NAC[f].cob,'m')+')'; }).join(' y ')+'**':'')+(fz?'. Revisar los **'+num(fz)+' pedidos fuera de catálogo** (Planificación)':'')+'.'; }
     case '11': { var cu=S.src.cuadre; if(!cu) return ''; var f=cu.motivos&&cu.motivos.filas||[];
       return 'Regularizar con su partida presupuestaria las entradas 561 pendientes, empezando por las de mayor valor'+(f.length?' (**'+String(f[0][0])+'**: '+bal(f[0][3])+')':'')+'. Lista completa en Excel en la vista Presupuesto y pagos.'; }
-    case '5': { var L=proveedoresBajos(3); return L.length ? 'Gestionar con los proveedores de mayor valor bajo meta: '+L.map(function(x){ return '**'+x.p+'** ('+fmt(x.pct,'%')+')'; }).join(', ')+'.' : 'Revisar los proveedores bajo meta.'; }
+    case '5': { var V=proveedoresVencidos(3); if(V.length) return 'Gestionar el **saldo vencido** de '+V.map(function(x){ return '**'+x.p+'** ('+bal(x.v)+', '+num(x.n)+' notas)'; }).join(', ')+(S.c5&&S.c5.sinNot?' y **notificar a Compras las '+num(S.c5.sinNot)+' notas vencidas** que aún no se notifican':'')+'. Detalle en Cumplimiento de Entregas.';
+      var L=proveedoresBajos(3); return L.length ? 'Gestionar con los proveedores de mayor valor bajo meta: '+L.map(function(x){ return '**'+x.p+'** ('+fmt(x.pct,'%')+')'; }).join(', ')+'.' : 'Revisar los proveedores bajo meta.'; }
     case '6': return 'Separar el tiempo de pedidos mensuales y urgencias para medir contra su meta.';
     case '7': return 'Sostener el ritmo de salidas del almacén.';
     case '8': return rk ? 'Ejecutar los **'+num(rk.urgentes)+' traslados urgentes** entre CEDIS ('+num(rk.unidadesUrgentes)+' unidades).' : 'Ejecutar los traslados urgentes entre CEDIS.';
