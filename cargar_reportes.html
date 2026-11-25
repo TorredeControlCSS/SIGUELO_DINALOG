@@ -644,6 +644,17 @@ function enlazarCarga(ins, sub){
     if(e.target.files[0]) tomarArchivo(ins, sub, e.target.files[0]);
   });
   bt.addEventListener('click', function(){
+    if (ins.k === 'recepcion' && ARCHIVOS[id]) {
+      var rc = ARCHIVOS[id].rc;
+      if (rc === 'pend') { mostrar(id, 'info', '<span class="spinner"></span>Revisando qué CEDIS trae el archivo… presione de nuevo en un momento.'); return; }
+      if (rc && rc.ok && !ARCHIVOS[id].rcOk) {
+        ARCHIVOS[id].rcOk = true;
+        mostrar(id, rc.tono === 'err' ? 'err' : 'warn', rc.html + '<br><b>Presione de nuevo para confirmar.</b>');
+        bt.className = 'btn rep';
+        bt.textContent = rc.tono === 'err' ? 'Subir de todos modos' : 'Confirmar: reemplazar ' + rc.lista;
+        return;
+      }
+    }
     var fA = ARCHIVOS[id] && ARCHIVOS[id].fechaInv, fC = el('fechaRep').value || hoyISO();
     if (FECHA_CORTE[id] && fA && fA !== fC && AVISO_FECHA[id] !== fA+'|'+fC) { avisoFechaCorte_(id, fA, fC); return; }
     var nv = nivelDe(id);
@@ -676,6 +687,9 @@ function tomarArchivo(ins, sub, file){
     _b.textContent = YA_CARGADO[id] ? nivelDe(id).btn : 'Cargar archivo';
     el('dzt_'+id).title = file.name;
     mostrar(id, 'info', 'Archivo listo (' + Math.round(file.size/1024) + ' KB). Presione «Cargar archivo».');
+
+    // 25-nov-2026 · Recepción: qué CEDIS trae el archivo y cuál se reemplaza
+    if (ins.k === 'recepcion') analizarRecepcion_(id, file);
 
     // H6 · el título del archivo decide si está en la casilla correcta
     HUELLA_MAL[id] = false;
@@ -721,6 +735,89 @@ function tomarArchivo(ins, sub, file){
   };
   lector.onerror=function(){ mostrar(id,'err','No se pudo leer el archivo.'); };
   lector.readAsDataURL(file);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  25-nov-2026 · RECEPCIÓN POR CEDIS
+ *  Los tres CEDIS no envían su informe el mismo día. SÍGUELO reemplaza solo
+ *  los CEDIS que trae el archivo (columna CEDIS; sin ella, todo es CEDIS
+ *  Panamá) y conserva lo publicado de los demás. Antes de subir, la página
+ *  lee el archivo, dice qué CEDIS trae y cuál se reemplaza, y pide confirmar.
+ * ═══════════════════════════════════════════════════════════════════ */
+var CEDIS_NOM = { PANAMA:'CEDIS Panamá', DIVISA:'CEDIS Divisa', CHIRIQUI:'CEDIS Chiriquí' };
+var REC_FREC = ['FECHA DE INGRESO RECEPCION','FECHA INGRESO RECEPCION','FECHA DE RECEPCION'];
+function rcNorm_(v){ return String(v==null?'':v).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
+function rcCedis_(v){ var u=rcNorm_(v); if(/DIVIS|CDDI/.test(u)) return 'DIVISA'; if(/CHIRIQ|CDCH/.test(u)) return 'CHIRIQUI'; return 'PANAMA'; }
+function rcFecha_(v){
+  if (v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+  if (typeof v === 'number' && v > 40000 && v < 80000) return new Date(Math.round((v-25569)*86400000)).toISOString().slice(0,10);
+  return null;
+}
+function rcN_(n){ return Number(n||0).toLocaleString('es-PA'); }
+function analizarRecepcion_(id, file){
+  ARCHIVOS[id].rc = 'pend';
+  if (typeof XLSX === 'undefined') { ARCHIVOS[id].rc = null; return; }
+  var fr = new FileReader();
+  fr.onload = function(){
+    var res = { por:{}, conColumna:false, sospecha:'' };
+    try {
+      var wb = XLSX.read(new Uint8Array(fr.result), { type:'array', cellDates:true });
+      var pista = rcNorm_(file.name + ' ' + wb.SheetNames.join(' '));
+      wb.SheetNames.forEach(function(nh){
+        var filas = XLSX.utils.sheet_to_json(wb.Sheets[nh], { header:1, raw:true, blankrows:false });
+        var cab = -1, iF = -1, iC = -1;
+        for (var r=0; r<Math.min(20, filas.length); r++) {
+          var h = (filas[r]||[]).map(rcNorm_), f = -1, pv = false;
+          h.forEach(function(c, i){ if (c.indexOf('PROVEEDOR') === 0) pv = true; if (f < 0 && REC_FREC.indexOf(c) >= 0) f = i; });
+          if (pv && f >= 0) { cab = r; iF = f; iC = h.indexOf('CEDIS'); break; }
+          pista += ' ' + h.join(' ');
+        }
+        if (cab < 0) return;
+        if (iC >= 0) res.conColumna = true;
+        for (var k=cab+1; k<filas.length; k++) {
+          var fx = rcFecha_((filas[k]||[])[iF]); if (!fx) continue;
+          var c = iC >= 0 ? rcCedis_(filas[k][iC]) : 'PANAMA';
+          var o = res.por[c] = res.por[c] || { n:0, corte:'' };
+          o.n++; if (fx > o.corte) o.corte = fx;
+        }
+      });
+      if (!res.conColumna) { var m = pista.match(/DIVIS|CDDI|CHIRIQ|CDCH|SISCONI/); if (m) res.sospecha = /DIVIS|CDDI/.test(m[0]) ? 'DIVISA' : 'CHIRIQUI'; }
+    } catch (e) { if (ARCHIVOS[id]) ARCHIVOS[id].rc = null; return; }
+    fetch(ENT_JSON + '?t=' + Date.now(), { cache:'no-store' }).then(function(r){ return r.json(); })
+      .then(function(j){ rcMostrar_(id, file, res, (j && j._meta) || {}, (j && j.rows) || []); })
+      .catch(function(){ rcMostrar_(id, file, res, {}, []); });
+  };
+  fr.onerror = function(){ if (ARCHIVOS[id]) ARCHIVOS[id].rc = null; };
+  fr.readAsArrayBuffer(file);
+}
+function rcMostrar_(id, file, res, meta, rows){
+  if (!ARCHIVOS[id] || ARCHIVOS[id].nombre !== file.name) return;      // ya cambió de archivo
+  var pub = {}, pc = meta.porCedis || {};
+  Object.keys(pc).forEach(function(k){ pub[k] = { n: pc[k].lineas, corte: pc[k].corte || '' }; });
+  if (rows.length) rows.forEach(function(r){ var k = r.cedis || 'PANAMA'; if (pub[k] && !pc[k].corte && r.fRec > pub[k].corte) pub[k].corte = r.fRec; });
+  var trae = ['PANAMA','DIVISA','CHIRIQUI'].filter(function(k){ return res.por[k]; });
+  if (!trae.length) { ARCHIVOS[id].rc = null; return; }
+  var lista = trae.map(function(k){ return CEDIS_NOM[k] || k; }).join(', ');
+  var tono = 'warn', h = 'Este archivo trae ' + trae.map(function(k){
+      return '<b>' + (CEDIS_NOM[k]||k) + '</b>: ' + rcN_(res.por[k].n) + ' líneas, última recepción ' + fmtDMA_(res.por[k].corte); }).join(' · ') + '.';
+  var pubTxt = function(k){ return pub[k] ? ' (hoy publicado: ' + rcN_(pub[k].n) + ' líneas' + (pub[k].corte ? ', hasta ' + fmtDMA_(pub[k].corte) : '') + ')' : ' (hoy no hay nada publicado)'; };
+  h += trae.length === 3 ? '<br>Al cargarlo se reemplazan <b>los tres CEDIS</b>.'
+                         : '<br>Al cargarlo se reemplaza <b>solo ' + trae.map(function(k){ return (CEDIS_NOM[k]||k) + '</b>' + pubTxt(k) + '<b>'; }).join(' y ') + '</b>.';
+  var quedan = Object.keys(pub).filter(function(k){ return trae.indexOf(k) < 0; });
+  if (quedan.length) h += ' ' + quedan.map(function(k){ return (CEDIS_NOM[k]||k) + ' (' + rcN_(pub[k].n) + ' líneas)'; }).join(' y ') + (quedan.length > 1 ? ' quedan' : ' queda') + ' como está' + (quedan.length > 1 ? 'n' : '') + '.';
+  trae.forEach(function(k){
+    if (pub[k] && pub[k].corte && res.por[k].corte < pub[k].corte) {
+      var d = Math.round((new Date(pub[k].corte) - new Date(res.por[k].corte)) / 86400000);
+      if (d > 3) { tono = 'err'; h += '<br><b>Atención:</b> la última recepción de ' + (CEDIS_NOM[k]||k) + ' en este archivo es más vieja que la publicada (' + d + ' días). Parece un archivo anterior; SÍGUELO no lo publicará.'; }
+    }
+  });
+  if (res.sospecha) {
+    tono = 'err';
+    h = 'Este archivo parece ser de <b>' + CEDIS_NOM[res.sospecha] + '</b>, pero no trae la columna CEDIS: se tomaría como CEDIS Panamá y <b>reemplazaría el Panamá publicado</b>.<br>Páselo primero a la plantilla estándar (con la columna CEDIS) y cárguelo de nuevo.';
+  }
+  ARCHIVOS[id].rc = { ok:true, tono:tono, html:h, lista:lista };
+  ARCHIVOS[id].rcOk = false;
+  if (!HUELLA_MAL[id]) mostrar(id, tono === 'err' ? 'err' : 'info', h);
 }
 
 function mostrar(k, tipo, texto){
